@@ -21,20 +21,19 @@ translations and the GitHub repository -- and the icon was redrawn without
 the bird the old name stood for: a roof over three rising bars
 (`Tools/makeicon.swift` says why).
 
-"Perch" survives on purpose in exactly the places that face installed
-copies, and nowhere else:
+Perch does not update itself to Roost. Its updater is compiled into it and
+asks for an asset named `Perch.dmg`; v1.1.0 briefly published one as a bridge,
+and it was withdrawn at Sagar's request, so installed copies stay on 1.0.19
+until their owner installs Roost. "Perch" survives in the places that meet
+such a Mac, and nowhere else:
 
-- `Roost/Startup/FormerName.swift` and `FormerNameMigration.swift` carry a Mac
-  across once: the old preference domain is copied into the new one with
-  `com.sagar.perch` rewritten in its keys, `Application Support/Perch` is
-  moved, and a bundle that arrives as `Perch.app` moves itself to
-  `Roost.app` and relaunches. The marker goes in the *old* domain, so
-  "Reset settings" cannot bring Perch's settings back.
-  `Tools/formername-test.swift` holds the decisions to that.
-- `release.yaml` publishes `Perch.dmg` beside `Roost.dmg`. The updater in
-  1.0.19 and older is compiled into those copies: it asks for that asset
-  and copies `Perch.app` out of it. Removing the bridge strands every one of
-  them on its last version, silently.
+- `Roost/Startup/FormerName.swift` and `FormerNameMigration.swift` carry the
+  user's data across once: the old preference domain is copied into the new
+  one with `com.sagar.perch` rewritten in its keys, and
+  `Application Support/Perch` is moved. The marker goes in the *old* domain,
+  so "Reset settings" cannot bring Perch's settings back. Settings import
+  renames keys the same way, so a backup exported from Perch still restores
+  window positions. `Tools/formername-test.swift` holds the decisions.
 - The install, local-install and uninstall scripts remove `Perch.app` and its
   data, so a Mac does not end up running two copies holding the same hotkeys.
 - The "Perch is now Roost" notice, shown once in place of "updated".

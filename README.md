@@ -11,7 +11,7 @@
   no telemetry and nothing to pay.
 </p>
 
-<p align="center"><sub>Formerly <strong>Perch</strong>. An installed Perch updates itself to Roost and keeps every setting.</sub></p>
+<p align="center"><sub>Formerly <strong>Perch</strong>. Install Roost with the command below: it replaces Perch and keeps every setting.</sub></p>
 
 <p align="center">
   <a href="https://github.com/sagardn/Roost/releases/latest"><img src="https://img.shields.io/github/v/release/sagardn/Roost?style=for-the-badge&label=release&color=0E9BA8" alt="Latest release"></a>

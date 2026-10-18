@@ -106,36 +106,17 @@ jobs:
             dist/Roost.dmg
           shasum -a 256 dist/Roost.dmg | tee dist/Roost.dmg.sha256
 
-      - name: Package Perch.dmg, the bridge from the old name
-        # Copies from 1.0.19 and older were called Perch, and their updater is
-        # compiled into them: it asks for an asset named "Perch.dmg" and copies
-        # "Perch.app" out of it over itself. Without this they would never see
-        # another release. The bundle inside is this build under the old folder
-        # name; Roost/Startup/FormerName.swift moves it to Roost.app on its
-        # first launch. No Applications link -- only the updater reads this one.
-        run: |
-          mkdir -p dist/bridge
-          cp -R build/Build/Products/Release/Roost.app dist/bridge/Perch.app
-          hdiutil create \
-            -volname Perch \
-            -srcfolder dist/bridge \
-            -ov -format UDZO \
-            dist/Perch.dmg
-          shasum -a 256 dist/Perch.dmg | tee dist/Perch.dmg.sha256
-
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/Roost.dmg
             dist/Roost.dmg.sha256
-            dist/Perch.dmg
-            dist/Perch.dmg.sha256
           generate_release_notes: true
           body: |
-            Roost was called Perch until 1.0.19. A Perch install updates
-            itself to Roost as usual and keeps its settings; ignore the
-            Perch.dmg below, which is only there for those older copies.
+            Roost was called Perch until 1.0.19. Perch does not update itself
+            to Roost: install it with the command below, which removes Perch,
+            and Roost brings Perch's settings across on its first launch.
 
             ## Install
 

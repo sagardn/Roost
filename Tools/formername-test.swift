@@ -2,7 +2,7 @@
 //  formername-test.swift
 //
 //  Exercises the move from the app's old name: which settings come across,
-//  under what keys, how often, and when the bundle renames itself.
+//  under what keys, and how often.
 //
 //  Run:  cat Roost/Startup/FormerName.swift Tools/formername-test.swift | swift -
 //
@@ -60,20 +60,6 @@ check("which holds after Reset settings has emptied the new domain",
       plan.defaults(old: marked, current: [:], newIdentifier: newID) == nil
         && plan.defaults(old: old, current: [:], newIdentifier: newID) != nil)
 check("the marker is not copied into the new domain", merged[FormerName.markerKey] == nil)
-
-print("The bundle's name")
-let perchApp = URL(fileURLWithPath: "/Applications/Perch.app")
-check("Perch.app moves to Roost.app beside it",
-      plan.renamedBundle(perchApp, roostExists: { _ in false })?.path == "/Applications/Roost.app")
-check("unless a Roost.app is already there",
-      plan.renamedBundle(perchApp, roostExists: { _ in true }) == nil)
-check("Roost.app stays where it is",
-      plan.renamedBundle(URL(fileURLWithPath: "/Applications/Roost.app"), roostExists: { _ in false }) == nil)
-check("so does a copy someone renamed themselves",
-      plan.renamedBundle(URL(fileURLWithPath: "/Applications/Roost 2.app"), roostExists: { _ in false }) == nil)
-check("in ~/Applications as well as /Applications",
-      plan.renamedBundle(URL(fileURLWithPath: "/Users/a/Applications/Perch.app"),
-                         roostExists: { _ in false })?.path == "/Users/a/Applications/Roost.app")
 
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

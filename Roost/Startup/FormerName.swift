@@ -2,7 +2,7 @@ import Foundation
 
 /// Carries a Mac across from the app's old name, Perch, once.
 ///
-/// The rename changed three things a running copy keeps state under, and
+/// The rename changed two things a running copy keeps state under, and
 /// each would have looked to the user like Roost had forgotten them:
 ///
 /// - **The bundle identifier**, `com.sagar.perch` to `com.sagar.roost`. Every
@@ -11,19 +11,17 @@ import Foundation
 ///   resets, so nothing would have been recovered later either.
 /// - **`~/Library/Application Support/Perch`**, which holds `apps.json` and the
 ///   clipboard history.
-/// - **The bundle's own name.** Copies of 1.0.19 and older update themselves by
-///   fetching `Perch.dmg` and copying `Perch.app` out of it over their own
-///   bundle, and that script is in the installed binary, not here. So the
-///   release also publishes the new app under the old asset and bundle names,
-///   and the first thing it does is notice it is called `Perch.app` and move
-///   itself to `Roost.app`.
+///
+/// Installing Roost does not replace Perch: Perch's updater asks for a
+/// `Perch.dmg` that no release publishes, so nothing ever writes Roost over
+/// it. The install scripts remove `Perch.app`; this brings across what it
+/// left in the user's Library.
 ///
 /// The decisions are pure and live in `Plan`, so `Tools/formername-test.swift`
 /// can check them; `migrate()`, in `FormerNameMigration.swift`, is the glue.
 enum FormerName {
 
     static let oldIdentifier = "com.sagar.perch"
-    static let oldBundleName = "Perch.app"
     static let oldSupportFolder = "Perch"
 
     /// Written into the *old* domain, not the new one. "Reset settings"
@@ -67,15 +65,6 @@ enum FormerName {
                 if merged[key] == nil { merged[key] = renamedKeys(value, to: newIdentifier) }
             }
             return merged
-        }
-
-        /// Where a bundle that arrived as `Perch.app` should be, or nil when it
-        /// should stay put -- because it is not called that, or because a
-        /// `Roost.app` is already beside it, which is not ours to replace.
-        static func renamedBundle(_ bundle: URL, roostExists: (URL) -> Bool) -> URL? {
-            guard bundle.lastPathComponent == FormerName.oldBundleName else { return nil }
-            let target = bundle.deletingLastPathComponent().appendingPathComponent("Roost.app")
-            return roostExists(target) ? nil : target
         }
     }
 }

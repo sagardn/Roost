@@ -90,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
         let began = Date()
         // Before anything reads a preference: the old name's settings have to
         // be in place before `Preferences` is first asked for one.
-        guard FormerName.migrate() else { exit(0) }
+        FormerName.migrate()
         let delegate = AppDelegate()
         delegate.launchBegan = began
         let app = NSApplication.shared

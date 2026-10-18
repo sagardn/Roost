@@ -5,10 +5,10 @@ system monitor. It is being made fully independent of the project it was
 forked from, and that migration governs how new work is done.
 
 It was called **Perch** until 1.0.19. The name still appears, deliberately,
-where installed copies are met -- the `FormerName` migration, the `Perch.dmg`
-bridge in `release.yaml`, the install scripts -- and `docs/ARCHITECTURE.md` ▸
-The name lists them. Do not "finish the rename" there: removing the bridge
-strands every installed Perch on its last version.
+where a Mac that ran Perch is met -- the `FormerName` settings migration and
+the install and uninstall scripts -- and `docs/ARCHITECTURE.md` ▸ The name
+lists them. Do not "finish the rename" there: it is what brings a Perch user's
+settings across.
 
 Read `docs/ARCHITECTURE.md` before changing anything structural. It records
 which parts of the tree are independent, which are still derived, and how far

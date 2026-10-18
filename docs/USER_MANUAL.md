@@ -1,8 +1,9 @@
 # Roost — User Manual
 
-> Roost was called **Perch** until version 1.0.19. Updating from Perch moves
-> the app to `/Applications/Roost.app` and brings your settings, launcher list
-> and clipboard history with it. Two things do not come across, because macOS
+> Roost was called **Perch** until version 1.0.19. Perch does not update itself
+> to Roost: install Roost with the command in the README, which removes Perch.
+> On its first launch Roost brings your settings, launcher list and clipboard
+> history across. Two things do not come across, because macOS
 > keeps them by app identity: the Accessibility permission (allow Roost in
 > System Settings ▸ Privacy & Security ▸ Accessibility) and Start at login
 > (turn it on again in Settings).
