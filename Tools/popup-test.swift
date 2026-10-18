@@ -4,7 +4,7 @@
 //  Exercises the words the popups lead with.
 //
 //  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift Roost/UI/Events.swift \
-//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
 //            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Roost/Monitor/ProcessNetwork.swift Roost/UI/Alert.swift \
 //            Roost/Launcher/Notify.swift Roost/Monitor/ProcessControl.swift \

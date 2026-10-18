@@ -4,7 +4,7 @@
 //  Exercises the rule that decides when a reading over its threshold is worth
 //  telling somebody about.
 //
-//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
 //            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
 //            Roost/Monitor/MemoryReadings.swift Roost/Monitor/Thresholds.swift \
 //            Tools/threshold-test.swift | swift -

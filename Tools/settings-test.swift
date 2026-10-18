@@ -4,7 +4,8 @@
 //  Exercises Preferences: key compatibility with what Kit's Store wrote,
 //  defaults, round-tripping, export/import and reset.
 //
-//  Run:  cat Roost/Settings/Preferences.swift Tools/settings-test.swift | swift -
+//  Run:  cat Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
+//            Tools/settings-test.swift | swift -
 //
 //  Every case runs against a scratch UserDefaults suite, so running the tests
 //  cannot touch the settings of the Roost installed on this machine.
@@ -85,6 +86,22 @@ do {
     check("and all of them, not a chosen list", p3.combinedSpacing == "small")
 } catch {
     check("export/import round trip", false)
+}
+
+do {
+    let oldKey = "NSWindow Frame com.sagar.perch.Settings.WindowFrame"
+    let backup: [String: Any] = [oldKey: "0 0 10 10", "CPU_state": true]
+    let data = try PropertyListSerialization.data(fromPropertyList: backup, format: .xml, options: 0)
+    let targetName = "roost.settings.test.\(UUID().uuidString)"
+    let target = UserDefaults(suiteName: targetName)!
+    try Preferences(defaults: target, domain: targetName).importAll(data)
+    check("a Perch backup's window frames land under this app's identifier",
+          target.string(forKey: "NSWindow Frame \(targetName).Settings.WindowFrame") == "0 0 10 10")
+    check("and not under the old one", target.object(forKey: oldKey) == nil)
+    check("the rest of a Perch backup imports unchanged", target.bool(forKey: "CPU_state"))
+    UserDefaults.standard.removePersistentDomain(forName: targetName)
+} catch {
+    check("a Perch backup imports", false)
 }
 
 do {

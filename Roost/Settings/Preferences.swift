@@ -139,13 +139,22 @@ final class Preferences {
     ///
     /// Returns how many keys were written. Throws rather than failing quietly
     /// if the file is not a settings export at all.
+    ///
+    /// An export made by Perch, the app's old name, has the old bundle
+    /// identifier inside its window-frame keys. Written as they were, they
+    /// were keys nothing reads, so the import reported success and the windows
+    /// still forgot where they were. They go through the same renaming as the
+    /// first-launch migration.
     @discardableResult
     func importAll(_ data: Data) throws -> Int {
         let parsed = try PropertyListSerialization.propertyList(from: data, format: nil)
         guard let values = parsed as? [String: Any] else {
             throw CocoaError(.propertyListReadCorrupt)
         }
-        for (key, value) in values { defaults.set(value, forKey: key) }
+        for (key, value) in values {
+            defaults.set(FormerName.Plan.renamedKeys(value, to: domain),
+                         forKey: FormerName.Plan.renamed(key, to: domain))
+        }
         NotificationCenter.default.post(name: Preferences.didChange, object: nil)
         return values.count
     }

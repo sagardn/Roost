@@ -3,7 +3,7 @@
 //
 //  Exercises how the Dashboard's process table is ordered.
 //
-//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
 //            Roost/Monitor/ProcessCPU.swift \
 //            Roost/System/DashboardProcesses.swift \
 //            Tools/processtable-test.swift | swift -

@@ -4,7 +4,7 @@
 //  Exercises the first-run window's flow and what its presets write.
 //
 //  Run:  cat Roost/UI/Localized.swift \
-//            Roost/Settings/Preferences.swift \
+//            Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
 //            Roost/Monitor/MenuBarStyle.swift \
 //            Roost/Views/SetupFlow.swift \
 //            Tools/setup-test.swift | swift -

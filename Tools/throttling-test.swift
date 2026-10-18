@@ -5,7 +5,7 @@
 //  and the colour of the CPU figure in the menu bar.
 //
 //  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
-//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
 //            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Roost/Monitor/Throttling.swift Tools/throttling-test.swift | swift -
 //

@@ -4,7 +4,7 @@
 //  Exercises the runaway-app alert: when it fires, who it names, and that
 //  the CPU time it reads from the kernel is in the right unit.
 //
-//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
 //            Roost/Monitor/RunawayApps.swift Tools/runaway-test.swift | swift -
 //
 //  The unit check is the one that matters most. proc_pidinfo reports CPU

@@ -5,7 +5,7 @@
 //  stored style list.
 //
 //  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
-//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
 //            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Tools/widget-test.swift | swift -
 //

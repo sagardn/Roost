@@ -6,7 +6,7 @@
 //  filters, how the store survives a restart, a corrupt index and stray
 //  files, and how a restore puts an entry back.
 //
-//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
 //            Roost/Clipboard/ClipboardEntry.swift \
 //            Roost/Clipboard/ClipboardHistory.swift \
 //            Roost/Clipboard/ClipboardPasteboard.swift \
