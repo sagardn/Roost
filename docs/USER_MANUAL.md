@@ -23,6 +23,7 @@ hotkeys and it is a system monitor.
 
 ## Contents
 
+- [Installing](#installing)
 - [First run](#first-run)
 - [Keyboard shortcuts](#keyboard-shortcuts) — the complete list
 - [The search panel](#the-search-panel)
@@ -30,11 +31,48 @@ hotkeys and it is a system monitor.
 - [The trackpad gesture](#the-trackpad-gesture)
 - [The system monitor](#the-system-monitor)
 - [Clipboard history](#clipboard-history)
+- [Free up space](#free-up-space)
 - [Settings](#settings)
 - [Where Roost keeps things](#where-roost-keeps-things)
 - [Privacy](#privacy)
 - [Troubleshooting](#troubleshooting)
 - [Uninstalling](#uninstalling)
+
+---
+
+## Installing
+
+Paste this into Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sagardn/Roost/main/Tools/install.sh | bash
+```
+
+It downloads the latest release, verifies the disk image, quits and removes an
+older copy (including one still called Perch), installs Roost to
+`/Applications` and opens it. Roost needs **macOS 14 Sonoma or newer**.
+
+**Why a command rather than a download link.** Roost is signed ad hoc, not
+with a paid Apple Developer ID, so macOS refuses to open it when it arrives
+through a browser. The quarantine flag is added by the program that downloads
+a file, and `curl` does not add it, so this route never meets Gatekeeper.
+Nothing is disabled system-wide.
+
+**If you downloaded `Roost.dmg` with a browser** and macOS says "Apple could
+not verify…", click **Done**, open **System Settings → Privacy & Security**,
+scroll to **Security** and click **Open Anyway** beside Roost.
+
+**Updates** arrive by themselves: Roost checks its GitHub releases once a day
+and offers a new version in place. Settings → General changes how often, or
+turns it off.
+
+**Building from source** needs Xcode with the macOS 26 SDK:
+
+```bash
+git clone https://github.com/sagardn/Roost.git
+cd Roost
+xcodebuild -project Roost.xcodeproj -scheme Roost -configuration Release build
+```
 
 ---
 
@@ -519,6 +557,40 @@ deny, history shows as **Blocked by macOS**.
 
 ---
 
+## Free up space
+
+**Free up space** in the Settings sidebar has four tools, and one rule covers
+all of them: **everything Roost removes goes to the Bin**, so nothing is erased
+until you empty it.
+
+- **Large files** — the biggest files in your home folder, sorted by size and
+  filtered by kind: video, audio, images, archives, installers, documents. It
+  skips places that only look big — `node_modules`, `.git`, DerivedData —
+  because a thousand small files are not what filled your disk.
+- **Uninstall an app** — dragging an app to the Bin leaves its settings, caches
+  and saved state behind. Roost finds them by the app's **bundle identifier**
+  and says how sure it is: files matched by the identifier are ticked, a
+  helper's files are marked *probably this app*, and anything matched only by
+  the app's *name* is shown in orange and never ticked for you.
+- **Uninstall a command-line tool** — Homebrew formulae and casks, npm
+  globals, pipx apps and loose binaries in `~/.local/bin`, `~/go/bin` and
+  similar. A tool a package manager installed is removed with **that manager's
+  own command**, shown in full with Copy and Run beside it, because deleting
+  its files by hand leaves the manager believing it is still installed. Only
+  what you asked to install is listed, not its dependencies.
+- **AI assistants** — Claude, Codex, Copilot, Gemini, Grok, Cursor, opencode
+  and others keep conversations, cached models and downloaded installers.
+  Roost adds them up and lets you choose by age. Caches, logs and downloads
+  come ticked, because the tool rebuilds them; **conversations and downloaded
+  models never come ticked**, however large.
+
+**What it will not touch.** Matching is an allowlist: a file is offered only
+if its name follows a convention Roost recognises, so no credential, settings
+file or installed plugin can appear on the list. Roost never asks for Full
+Disk Access, so a few corners stay invisible to it.
+
+---
+
 ## Settings
 
 Open Settings from the **⚙︎** in any popup. The window has a sidebar in three
@@ -665,9 +737,14 @@ everything to the defaults after a confirmation, and restarts Roost.
 | Button | Action |
 |---|---|
 | ♥ **Support** | Opens Roost's Ko-fi page |
-| 🐜 **Report a bug** | Opens a new GitHub issue |
+| 🐜 **Report a bug** | Copies a diagnostics report to the clipboard and opens a new GitHub issue, so you can paste it in |
 | ⏸ **Pause** | Switches every module off and leaves a single Roost icon in the menu bar; click it to reopen Settings. Press again to resume — the modules that were on come back on. |
 | ⏻ | Quits Roost |
+
+The diagnostics report says which macOS and Roost you run, which Mac you have,
+which modules are on and which readings answered. It is built to carry nothing
+that identifies you — no serial number, Wi-Fi name, IP or MAC address, or
+volume names — and it is plain text, so read it before you send it.
 
 ---
 
