@@ -3,7 +3,7 @@
 //
 //  Exercises the startup argument parser.
 //
-//  Run:  cat Perch/Startup/LaunchArguments.swift \
+//  Run:  cat Roost/Startup/LaunchArguments.swift \
 //            Tools/launchargs-test.swift | swift -
 //
 //  Two of these arguments change state the moment they are seen -- --reset
@@ -24,7 +24,7 @@ func check(_ name: String, _ ok: Bool) {
 
 /// argv always starts with the executable path.
 func parse(_ args: String...) -> LaunchArguments {
-    LaunchArguments.parse(["/Applications/Perch.app/Contents/MacOS/Perch"] + args)
+    LaunchArguments.parse(["/Applications/Roost.app/Contents/MacOS/Roost"] + args)
 }
 
 // MARK: - Nothing

@@ -1,11 +1,11 @@
 name: Feature request
-description: Suggest something Perch should do
+description: Suggest something Roost should do
 labels: ["enhancement"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: What are you trying to do that Perch makes hard?
+      label: What are you trying to do that Roost makes hard?
       description: The problem, not the solution — it often has a simpler fix.
     validations:
       required: true

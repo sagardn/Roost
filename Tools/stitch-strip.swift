@@ -1,6 +1,6 @@
 import AppKit
-// Two crops of the same menu bar, side by side: Perch's items are separated
-// by another app's icon, and a README of Perch should not advertise it.
+// Two crops of the same menu bar, side by side: Roost's items are separated
+// by another app's icon, and a README of Roost should not advertise it.
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 3, let left = NSImage(contentsOfFile: args[0]),
       let right = NSImage(contentsOfFile: args[1]) else { exit(1) }

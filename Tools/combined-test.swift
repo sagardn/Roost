@@ -3,7 +3,7 @@
 //
 //  Exercises the combined menu bar item's layout and hit testing.
 //
-//  Run:  cat Perch/Monitor/CombinedLayout.swift \
+//  Run:  cat Roost/Monitor/CombinedLayout.swift \
 //            Tools/combined-test.swift | swift -
 //
 //  Combined mode draws several modules into one status item. Getting it wrong

@@ -4,8 +4,8 @@
 //  Exercises the sensor layer: the byte decoding, the family rule, and what
 //  survives the plausibility filter.
 //
-//  Run:  cat Perch/Monitor/Temperature.swift Perch/Monitor/SMCKit.swift \
-//            Perch/Monitor/SensorReadings.swift \
+//  Run:  cat Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
+//            Roost/Monitor/SensorReadings.swift \
 //            Tools/sensors-test.swift | swift -
 //
 //  A fake controller does most of the work here, and not for convenience:

@@ -4,9 +4,9 @@
 //  Exercises how command-line tools are identified and what is claimed as
 //  theirs.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Cleanup/LargeFiles.swift \
-//            Perch/Cleanup/AppLeftovers.swift \
-//            Perch/Cleanup/CommandLineTools.swift Tools/cli-tools-test.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/Cleanup/LargeFiles.swift \
+//            Roost/Cleanup/AppLeftovers.swift \
+//            Roost/Cleanup/CommandLineTools.swift Tools/cli-tools-test.swift | swift -
 //
 //  A command-line tool has no bundle identifier, so every match here is a
 //  name match -- which is exactly the loose matching the app uninstaller
@@ -175,7 +175,7 @@ print("\nWhat Homebrew was asked for")
 // Listing the other 43 buried the ones somebody recognises, and
 // `brew uninstall brotli` would have refused anyway because curl needs it.
 let scratch = URL(fileURLWithPath: NSTemporaryDirectory())
-    .appendingPathComponent("perch-cli-test-\(getpid())")
+    .appendingPathComponent("roost-cli-test-\(getpid())")
 
 func formula(_ name: String, receipt: String?) -> URL {
     let version = scratch.appendingPathComponent("\(name)/1.0.0")

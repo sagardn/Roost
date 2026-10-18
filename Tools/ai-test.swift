@@ -3,9 +3,9 @@
 //
 //  Exercises which of an AI assistant's files are offered for removal.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Cleanup/LargeFiles.swift \
-//            Perch/Cleanup/AppLeftovers.swift \
-//            Perch/Cleanup/AIAssistants.swift Tools/ai-test.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/Cleanup/LargeFiles.swift \
+//            Roost/Cleanup/AppLeftovers.swift \
+//            Roost/Cleanup/AIAssistants.swift Tools/ai-test.swift | swift -
 //
 //  These directories hold two things that look alike from the outside: a
 //  cache the tool rebuilds without noticing, and the credential that keeps
@@ -138,7 +138,7 @@ check("and nothing that is not an assistant is",
 print("\nA size that could not be read")
 
 let scratch = URL(fileURLWithPath: NSTemporaryDirectory())
-    .appendingPathComponent("perch-ai-test-\(getpid())")
+    .appendingPathComponent("roost-ai-test-\(getpid())")
 let fm = FileManager.default
 try? fm.createDirectory(at: scratch, withIntermediateDirectories: true)
 
@@ -203,9 +203,9 @@ do {
     }
 
     put(".claude/cache/old.bin", old)
-    put(".claude/projects/-Users-x-code-Perch/s.jsonl", old)
-    put(".claude/projects/-Users-x-code-Perch/2664aea4-1653-479d-b59f-2b3fccde87ff.jsonl", recent)
-    put(".claude/projects/-Users-x-code-Perch/memory/MEMORY.md", old)
+    put(".claude/projects/-Users-x-code-Roost/s.jsonl", old)
+    put(".claude/projects/-Users-x-code-Roost/2664aea4-1653-479d-b59f-2b3fccde87ff.jsonl", recent)
+    put(".claude/projects/-Users-x-code-Roost/memory/MEMORY.md", old)
     put(".codex/sessions/2026/07/01/rollout-a.jsonl", old)
     put(".codex/sessions/2026/10/09/rollout-b.jsonl", recent)
     put(".claude/logs/new.log", recent)
@@ -264,15 +264,15 @@ do {
 
     print("\nA conversation at a time")
     check("projects is not offered whole", item(".claude/projects") == nil)
-    let oldSession = item(".claude/projects/-Users-x-code-Perch/s.jsonl")
-    let newSession = item(".claude/projects/-Users-x-code-Perch/2664aea4-1653-479d-b59f-2b3fccde87ff.jsonl")
+    let oldSession = item(".claude/projects/-Users-x-code-Roost/s.jsonl")
+    let newSession = item(".claude/projects/-Users-x-code-Roost/2664aea4-1653-479d-b59f-2b3fccde87ff.jsonl")
     check("each session is its own entry", oldSession != nil && newSession != nil)
     check("the old one is offered at 90 days, the new one is not",
           at90.contains { $0.url == oldSession?.url } && !at90.contains { $0.url == newSession?.url })
     check("a project's memory is never offered",
-          item(".claude/projects/-Users-x-code-Perch/memory") == nil
+          item(".claude/projects/-Users-x-code-Roost/memory") == nil
             && !items.contains { $0.url.pathComponents.contains("memory") })
-    check("a session reads by its project", newSession?.displayName == "Perch · 2664aea4")
+    check("a session reads by its project", newSession?.displayName == "Roost · 2664aea4")
     let oldDay = item(".codex/sessions/2026/07/01/rollout-a.jsonl")
     check("dated folders are walked down to the day's sessions",
           oldDay != nil && item(".codex/sessions/2026") == nil)
@@ -283,7 +283,7 @@ do {
 
     print("\nChecked again before the Bin")
     let session = oldSession!
-    put(".claude/projects/-Users-x-code-Perch/s.jsonl", Date())   // written to after the scan
+    put(".claude/projects/-Users-x-code-Roost/s.jsonl", Date())   // written to after the scan
     let busy = AIAssistants.moveToBin([session], olderThan: 90, home: fake)
     check("written to since the scan: refused", busy.moved.isEmpty && busy.failed == [session.url])
     check("and left where it was", fm.fileExists(atPath: session.url.path))
@@ -332,7 +332,7 @@ print("\nWhat the age rule hides")
 // tool writes into constantly, so none of them is ever old.
 let now = Date()
 func aged(_ days: Int, _ kind: AIAssistants.Kind = .caches) -> AIAssistants.Item {
-    AIAssistants.Item(url: URL(fileURLWithPath: "/tmp/perch-age-\(days)-\(kind)"),
+    AIAssistants.Item(url: URL(fileURLWithPath: "/tmp/roost-age-\(days)-\(kind)"),
                       kind: kind, bytes: 1_000_000,
                       lastUsed: now.addingTimeInterval(-Double(days) * 86_400))
 }

@@ -4,7 +4,7 @@
 //  Exercises the independent updater: version ordering, feed decoding and
 //  checksum verification.
 //
-//  Run:  cat Perch/Update/Version.swift Perch/Update/Release.swift \
+//  Run:  cat Roost/Update/Version.swift Roost/Update/Release.swift \
 //            Tools/update-test.swift | swift -
 //
 //  Version and Release are compiled in from the app's own source, so these
@@ -41,14 +41,14 @@ check("patch versions compare as numbers, not text", Version("1.0.12")! > Versio
 print("Release.decode")
 let feed = """
 {"tag_name":"v1.0.12","body":"notes here","draft":false,"prerelease":false,
- "assets":[{"name":"Perch.dmg","browser_download_url":"https://example.invalid/Perch.dmg"},
-           {"name":"Perch.dmg.sha256","browser_download_url":"https://example.invalid/Perch.dmg.sha256"}]}
+ "assets":[{"name":"Roost.dmg","browser_download_url":"https://example.invalid/Roost.dmg"},
+           {"name":"Roost.dmg.sha256","browser_download_url":"https://example.invalid/Roost.dmg.sha256"}]}
 """
 do {
-    let r = try Release.decode(Data(feed.utf8), assetNamed: "Perch.dmg")
+    let r = try Release.decode(Data(feed.utf8), assetNamed: "Roost.dmg")
     check("reads the version", r.version == Version("1.0.12"))
     check("reads the notes", r.notes == "notes here")
-    check("finds the asset", r.downloadURL.absoluteString.hasSuffix("Perch.dmg"))
+    check("finds the asset", r.downloadURL.absoluteString.hasSuffix("Roost.dmg"))
     check("finds the checksum beside it", r.checksumURL?.absoluteString.hasSuffix(".sha256") == true)
 } catch {
     check("decodes a well-formed feed", false)
@@ -57,7 +57,7 @@ do {
 // An unreadable tag must be an error, never a quiet "you are up to date" --
 // that is the behaviour this replaces.
 do {
-    _ = try Release.decode(Data(#"{"tag_name":"nightly","assets":[]}"#.utf8), assetNamed: "Perch.dmg")
+    _ = try Release.decode(Data(#"{"tag_name":"nightly","assets":[]}"#.utf8), assetNamed: "Roost.dmg")
     check("an unreadable tag throws", false)
 } catch {
     check("an unreadable tag throws", (error as? Release.DecodeError) == .unreadableTag("nightly"))
@@ -65,15 +65,15 @@ do {
 
 do {
     let json = #"{"tag_name":"v1.0.0","assets":[{"name":"other.zip","browser_download_url":"https://e.invalid/x"}]}"#
-    _ = try Release.decode(Data(json.utf8), assetNamed: "Perch.dmg")
+    _ = try Release.decode(Data(json.utf8), assetNamed: "Roost.dmg")
     check("a missing asset throws", false)
 } catch {
-    check("a missing asset throws", (error as? Release.DecodeError) == .noAsset(named: "Perch.dmg"))
+    check("a missing asset throws", (error as? Release.DecodeError) == .noAsset(named: "Roost.dmg"))
 }
 
 do {
     let json = #"{"tag_name":"v9.9.9","draft":true,"assets":[]}"#
-    _ = try Release.decode(Data(json.utf8), assetNamed: "Perch.dmg")
+    _ = try Release.decode(Data(json.utf8), assetNamed: "Roost.dmg")
     check("a draft throws", false)
 } catch {
     check("a draft throws", (error as? Release.DecodeError) == .draft)
@@ -81,8 +81,8 @@ do {
 
 // A release with no checksum is still installable, just unverified.
 do {
-    let json = #"{"tag_name":"v1.0.0","assets":[{"name":"Perch.dmg","browser_download_url":"https://e.invalid/d"}]}"#
-    let r = try Release.decode(Data(json.utf8), assetNamed: "Perch.dmg")
+    let json = #"{"tag_name":"v1.0.0","assets":[{"name":"Roost.dmg","browser_download_url":"https://e.invalid/d"}]}"#
+    let r = try Release.decode(Data(json.utf8), assetNamed: "Roost.dmg")
     check("a release without a checksum decodes", r.checksumURL == nil)
 } catch {
     check("a release without a checksum decodes", false)

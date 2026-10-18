@@ -4,9 +4,9 @@
 //  Exercises the rule that decides when a reading over its threshold is worth
 //  telling somebody about.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-//            Perch/Monitor/Readings.swift Perch/Monitor/CPUReadings.swift \
-//            Perch/Monitor/MemoryReadings.swift Perch/Monitor/Thresholds.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
+//            Roost/Monitor/MemoryReadings.swift Roost/Monitor/Thresholds.swift \
 //            Tools/threshold-test.swift | swift -
 //
 //  All of this is hysteresis and counting, which is the kind of logic that
@@ -142,8 +142,8 @@ print("\nCPUThreshold")
 check("there are five watchable readings", CPUThreshold.allCases.count == 5)
 check("every one has a name", CPUThreshold.allCases.allSatisfy { !$0.title.isEmpty })
 check("the identifiers are the ones already in Notification Centre",
-      CPUThreshold.total.notificationID == "Perch_CPU_totalUsage"
-      && CPUThreshold.efficiency.notificationID == "Perch_CPU_eCoresUsage")
+      CPUThreshold.total.notificationID == "Roost_CPU_totalUsage"
+      && CPUThreshold.efficiency.notificationID == "Roost_CPU_eCoresUsage")
 check("total load is watchable on any Mac", CPUThreshold.total.isAvailable)
 check("the cluster readings follow the hardware",
       CPUThreshold.efficiency.isAvailable == (CPUReadings.clusters != nil))
@@ -236,8 +236,8 @@ check("pressure is a level, not a percentage",
       RAMThreshold.pressure.scale == .pressureLevel)
 check("swap is a size", RAMThreshold.swap.scale == .megabytes)
 check("the identifiers are the ones already in Notification Centre",
-      RAMThreshold.total.notificationID == "Perch_RAM_totalUsage"
-      && RAMThreshold.swap.notificationID == "Perch_RAM_swap")
+      RAMThreshold.total.notificationID == "Roost_RAM_totalUsage"
+      && RAMThreshold.swap.notificationID == "Roost_RAM_swap")
 check("total's old single key had a different name",
       RAMThreshold.total.legacyKey == "RAM_notifications_totalUsage")
 
@@ -323,7 +323,7 @@ print("\nGPUThreshold")
 
 check("GPU watches one reading", GPUThreshold.allCases.count == 1)
 check("the identifier is the one already in Notification Centre",
-      GPUThreshold.usage.notificationID == "Perch_GPU_usage")
+      GPUThreshold.usage.notificationID == "Roost_GPU_usage")
 check("it fires on the way up", !GPUThreshold.usage.below)
 check("it is a percentage", GPUThreshold.usage.scale == .percent)
 
@@ -341,7 +341,7 @@ print("\nDiskThreshold")
 
 check("Disk watches one reading", DiskThreshold.allCases.count == 1)
 check("the identifier is the one already in Notification Centre",
-      DiskThreshold.utilization.notificationID == "Perch_Disk_usage")
+      DiskThreshold.utilization.notificationID == "Roost_Disk_usage")
 check("the default is 80, later than a processor's",
       DiskThreshold.utilization.defaultValue == 80)
 

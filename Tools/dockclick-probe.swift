@@ -3,7 +3,7 @@
 //
 //  Reads the real Dock: the live half of dockclick-test.swift.
 //
-//  Run:  cat Perch/Launcher/DockClick.swift Tools/dockclick-probe.swift | swift -
+//  Run:  cat Roost/Launcher/DockClick.swift Tools/dockclick-probe.swift | swift -
 //
 //  A probe, not a suite -- the runner leaves *-probe files alone -- because
 //  it needs a desktop, a Dock, and Accessibility, and CI has none of them.

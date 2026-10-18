@@ -8,7 +8,7 @@ numbers are a reference point for one configuration, not an absolute.
 
 Same machine (MacBook Air 13", M2, 16 GB), macOS 27.0. Modules on: CPU, GPU,
 RAM, Disk, Network, Clipboard. Sensors off. Nine regular apps running, no
-Perch window open, nothing being typed.
+Roost window open, nothing being typed.
 
 | Measure | before | after |
 |---|---|---|
@@ -18,7 +18,7 @@ The app was doing nothing visible in either case. The cost was
 `Launcher`'s warm timer calling `WindowControl.warmStaleStates()` every two
 seconds: three apps per fire, each one blocking Accessibility IPC into that
 app, about 78 ms of main-thread IPC every two seconds for ever. It also woke
-every app it read, so the heat was not confined to Perch -- which is how it
+every app it read, so the heat was not confined to Roost -- which is how it
 was noticed, as a warm laptop rather than as a slow app.
 
 It could not do its job either, which is what settles it. Three apps every
@@ -61,7 +61,7 @@ reason -- the measurement said the change was not worth its risk:
 | Move `ClipboardCapture.read` and its SHA256 off the main thread | SHA256 is 2.1 ms at 5 MB, 10.7 ms at 25 MB (the largest image the limit accepts), 77.8 ms at 181 MB (never reached -- oversize returns before hashing) | 10.7 ms is inside one frame. A background read is also a race: `NSPasteboard` has no snapshot, so a read that lands after a second copy returns the new bytes under the old change count, and the only guard is discarding the capture -- a clipboard manager that loses entries when you copy twice quickly |
 | Make the Dashboard's card fill opaque | card 1.04:1 against the window, settings card 1.49:1 | The right fix was not opacity. The two fills are meant to be identical and differ tenfold, because `withAlphaComponent(0.14)` sets the alpha where SwiftUI's `.opacity(0.14)` multiplies the colour's own 0.1. `Surface` now sets it, and matches |
 
-## Re-measured 2026-10-15 — Perch 1.0.16
+## Re-measured 2026-10-15 — Roost 1.0.16
 
 Same machine (MacBook Air 13", M2, 16 GB), macOS 27.0 (26A428). Modules on:
 CPU, GPU, RAM, Disk, Network. Sensors off. Menu bar items separate, not
@@ -82,7 +82,7 @@ be noise.
 
 The reader poll interval row cited `Kit/module/reader.swift:57`. That file has
 not existed since `Kit/` was deleted. The 1-second tick is
-`MonitorBar.startTicking`, `Perch/Monitor/MonitorBar.swift:369`.
+`MonitorBar.startTicking`, `Roost/Monitor/MonitorBar.swift:369`.
 
 ### Costs worth knowing, measured the same day
 
@@ -97,10 +97,10 @@ not existed since `Kit/` was deleted. The 1-second tick is
 | `AIAssistants.find()` | 0.10 s for 2.7 GB | only walks what it offers |
 | Full test suite | 25.7 s, 32 suites | before every release |
 
-## The original run — 2026-10-09, Perch 1.0.11
+## The original run — 2026-10-09, Roost 1.0.11
 
 Measured on the same MacBook Air 13" (M2, 8 cores, 16 GB), macOS 27.0, installed
-at `/Applications/Perch.app`, ad-hoc signed. Modules on: CPU, GPU, RAM, Network.
+at `/Applications/Roost.app`, ad-hoc signed. Modules on: CPU, GPU, RAM, Network.
 Off: Disk, Sensors, Battery, Bluetooth. No popup or settings window was opened.
 
 Kept rather than replaced, because its method notes -- particularly the
@@ -125,8 +125,8 @@ whether or not anybody is looking.
 The three cold-start runs disagree by a factor of six. The app is ad-hoc signed
 and unnotarised, so Gatekeeper re-assesses the bundle on launch, and the bundle
 had just been replaced — that is almost certainly what the 43 s run measured,
-not Perch. A usable figure needs the same bundle launched repeatedly with no
-reinstall in between, and ideally the app's own `"Perch started in …"` line
+not Roost. A usable figure needs the same bundle launched repeatedly with no
+reinstall in between, and ideally the app's own `"Roost started in …"` line
 rather than polling for a menu bar window. **Treat startup as unmeasured.**
 
 ### A measurement trap worth recording
@@ -139,7 +139,7 @@ a spread of half a percent. `Tools/bench.sh` does it the second way.
 
 ## Where the time actually goes
 
-From `sample` over 15 s at idle (`/tmp/perch.sample.txt`). This is a sampling
+From `sample` over 15 s at idle (`/tmp/roost.sample.txt`). This is a sampling
 profiler, not Instruments — directional, good enough to pick a target, not
 precise attribution.
 
@@ -162,12 +162,12 @@ released — once per tick, forever. No `host_processor_info`, no `sysctl`, no
 IOKit. **The cost is in redrawing the menu bar, not in reading the hardware.**
 
 One Auto Layout path appears on a chart's own background queue
-(`com.sagar.perch.Charts.Line`), which is worth a second look on its own
+(`com.sagar.roost.Charts.Line`), which is worth a second look on its own
 merits: AppKit layout off the main thread is not safe regardless of its cost.
 
 ## What this means for the rebuild
 
-The independent layer in `Perch/Monitor/` currently replaces **readers** —
+The independent layer in `Roost/Monitor/` currently replaces **readers** —
 `CPUReadings`, `MemoryReadings`, `NetworkMonitor`, `GPUStats`, `Temperature`.
 The profile says readers are not where the 6 % is. Rewriting them is still
 worth doing for independence from the inherited architecture, but **it should not

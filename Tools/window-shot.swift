@@ -2,7 +2,7 @@
 //
 //  window-shot.swift
 //
-//  Prints the screen rect of Perch's frontmost panel, for screencapture -R.
+//  Prints the screen rect of Roost's frontmost panel, for screencapture -R.
 //
 //  Why not screencapture -l<windowid>: capturing a window on its own returns
 //  it with a transparent background, and these popups are glass -- the blur
@@ -14,7 +14,7 @@
 
 import AppKit
 
-let owner = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "Perch"
+let owner = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "Roost"
 
 guard let windows = CGWindowListCopyWindowInfo(
     [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {

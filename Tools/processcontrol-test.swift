@@ -4,7 +4,7 @@
 //  Exercises what the top-processes list is allowed to kill, and what a
 //  kill(2) result means.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Monitor/ProcessControl.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Monitor/ProcessControl.swift \
 //            Tools/processcontrol-test.swift | swift -
 //
 //  A force quit takes a process down without letting it save. The two ways

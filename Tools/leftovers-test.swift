@@ -3,8 +3,8 @@
 //
 //  Exercises which files an uninstaller claims belong to an app.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Cleanup/LargeFiles.swift \
-//            Perch/Cleanup/AppLeftovers.swift Tools/leftovers-test.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/Cleanup/LargeFiles.swift \
+//            Roost/Cleanup/AppLeftovers.swift Tools/leftovers-test.swift | swift -
 //
 //  This is the file where a mistake deletes somebody else's data. The removal
 //  itself is one call; deciding what to remove is the part that goes wrong,
@@ -128,7 +128,7 @@ print("\nAppLeftovers.find")
 
 do {
     let fm = FileManager.default
-    let home = fm.temporaryDirectory.appendingPathComponent("perch-home-\(UUID().uuidString)")
+    let home = fm.temporaryDirectory.appendingPathComponent("roost-home-\(UUID().uuidString)")
     defer { try? fm.removeItem(at: home) }
 
     func place(_ path: String, bytes: Int = 1_000) {

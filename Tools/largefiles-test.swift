@@ -4,7 +4,7 @@
 //  Exercises the large-file finder: what it ranks, what it treats as one
 //  thing, and what it leaves alone.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Cleanup/LargeFiles.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Cleanup/LargeFiles.swift \
 //            Tools/largefiles-test.swift | swift -
 //
 //  The walk itself is checked against a directory built here rather than
@@ -125,7 +125,7 @@ print("\nLargeFiles.scan")
 
 do {
     let fm = FileManager.default
-    let root = fm.temporaryDirectory.appendingPathComponent("perch-largefiles-\(UUID().uuidString)")
+    let root = fm.temporaryDirectory.appendingPathComponent("roost-largefiles-\(UUID().uuidString)")
     try! fm.createDirectory(at: root, withIntermediateDirectories: true)
     defer { try? fm.removeItem(at: root) }
 
@@ -231,7 +231,7 @@ print("\nLargeFiles.moveToBin")
 
 do {
     let fm = FileManager.default
-    let root = fm.temporaryDirectory.appendingPathComponent("perch-bin-\(UUID().uuidString)")
+    let root = fm.temporaryDirectory.appendingPathComponent("roost-bin-\(UUID().uuidString)")
     try! fm.createDirectory(at: root, withIntermediateDirectories: true)
     defer { try? fm.removeItem(at: root) }
 
@@ -262,7 +262,7 @@ do {
 
 do {
     // A path that is not there. One failure must not take the batch with it.
-    let missing = URL(fileURLWithPath: "/nonexistent/perch/\(UUID().uuidString)")
+    let missing = URL(fileURLWithPath: "/nonexistent/roost/\(UUID().uuidString)")
     let removal = LargeFiles.moveToBin([LargeFiles.Item(url: missing, bytes: 10)])
     check("a file that cannot be moved is reported, not thrown",
           removal.failed.count == 1 && removal.moved.isEmpty)

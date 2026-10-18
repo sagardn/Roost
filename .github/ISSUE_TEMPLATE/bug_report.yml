@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Perch behaves incorrectly
+description: Something in Roost behaves incorrectly
 labels: ["bug"]
 body:
   - type: markdown
@@ -12,7 +12,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Perch version
+      label: Roost version
       description: Settings → the version under the app name.
       placeholder: "1.0.0"
     validations:
@@ -65,4 +65,4 @@ body:
       label: Screenshot or log (optional)
       description: |
         A screenshot settles most UI reports. For a crash, Console.app →
-        Crash Reports → the newest Perch entry.
+        Crash Reports → the newest Roost entry.

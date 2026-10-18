@@ -1,8 +1,14 @@
 # Working in this repository
 
-Perch is a macOS menu bar app: an app launcher and window switcher, and a
+Roost is a macOS menu bar app: an app launcher and window switcher, and a
 system monitor. It is being made fully independent of the project it was
 forked from, and that migration governs how new work is done.
+
+It was called **Perch** until 1.0.19. The name still appears, deliberately,
+where installed copies are met -- the `FormerName` migration, the `Perch.dmg`
+bridge in `release.yaml`, the install scripts -- and `docs/ARCHITECTURE.md` ▸
+The name lists them. Do not "finish the rename" there: removing the bridge
+strands every installed Perch on its last version.
 
 Read `docs/ARCHITECTURE.md` before changing anything structural. It records
 which parts of the tree are independent, which are still derived, and how far
@@ -10,11 +16,11 @@ the migration has got.
 
 ## The one rule that matters
 
-**`Perch/Monitor/` is the real codebase. `Kit/` and `Modules/` are gone.**
+**`Roost/Monitor/` is the real codebase. `Kit/` and `Modules/` are gone.**
 
-- Put new monitoring features in `Perch/Monitor/`. Finding and removing
+- Put new monitoring features in `Roost/Monitor/`. Finding and removing
   things -- large files, apps, command-line tools -- is not monitoring and
-  lives in `Perch/Cleanup/`; see `docs/ARCHITECTURE.md` ▸ Cleanup for the
+  lives in `Roost/Cleanup/`; see `docs/ARCHITECTURE.md` ▸ Cleanup for the
   four rules that area holds to.
 - Never copy code out of the upstream project. Taking a file does not make it
   independent; it carries its authorship with it. Implement against the public
@@ -46,14 +52,14 @@ Tools/run-tests.sh            # all of them, about 25 seconds
 Tools/run-tests.sh disk       # just Tools/disk-test.swift
 ```
 
-Thirty-four suites, 1,515 assertions. `tests.yaml` runs the same script on every
+Thirty-seven suites, 1,619 assertions. `tests.yaml` runs the same script on every
 push, so a suite that fails fails the build.
 
 Pure logic gets a test. The pattern is a script compiled against the app's
 own source, so it cannot drift from what ships:
 
 ```bash
-cat Perch/Launcher/Gesture.swift Tools/gesture-test.swift | swift -
+cat Roost/Launcher/Gesture.swift Tools/gesture-test.swift | swift -
 ```
 
 A suite is `cat`ed together with everything it reads, so the list grows as a
@@ -107,7 +113,7 @@ python3 Tools/i18n.py scan   # en.lproj is in step with the code
 
 Both run in CI, and `scan` is the one that will catch you. Write a new
 `localized("…")` and it fails until the key is in
-`Perch/Supporting Files/en.lproj/Localizable.strings`; `python3 Tools/i18n.py
+`Roost/Supporting Files/en.lproj/Localizable.strings`; `python3 Tools/i18n.py
 fix` then carries it into the other 40. Rename a localised string and the old
 key becomes unused, which fails the same way — rename it in en.lproj in the
 same commit.
@@ -121,24 +127,24 @@ invisible to it and makes its unused list untrustworthy; `docs/ARCHITECTURE.md`
 
 ```bash
 # build without signing
-xcodebuild -project Perch.xcodeproj -scheme Perch -configuration Release \
+xcodebuild -project Roost.xcodeproj -scheme Roost -configuration Release \
   CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
 ```
 
 Releases are tag-driven: bump `MARKETING_VERSION` in the project **and**
-`CFBundleVersion` in `Perch/Supporting Files/Info.plist`, commit, then tag
+`CFBundleVersion` in `Roost/Supporting Files/Info.plist`, commit, then tag
 `vX.Y.Z`. CI fails the build if the tag and `MARKETING_VERSION` disagree.
 
 Releases are **ad-hoc signed**, so every release build changes its code hash
 and macOS drops its Accessibility grant. Local installs avoid that: install
-with `Tools/install-local.sh`, which signs with the self-signed "Perch Dev"
+with `Tools/install-local.sh`, which signs with the self-signed "Roost Dev"
 identity in the login keychain, so the grant survives every rebuild. The
 plain `xcodebuild` above produces an *unsigned* app; installing that one
 revokes the grant, and is not a regression in the hotkeys.
 
 ## Licensing
 
-Perch is MIT, © 2026 Sagar, and nothing in the tree is anyone else's: the
+Roost is MIT, © 2026 Sagar, and nothing in the tree is anyone else's: the
 last derived content -- the translations, `Tools/i18n.py`, the `Makefile`
 and a handful of assets -- was replaced or deleted when it was relicensed.
 `docs/ARCHITECTURE.md` records how that was audited.

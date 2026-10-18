@@ -4,8 +4,8 @@
 //  Exercises the runaway-app alert: when it fires, who it names, and that
 //  the CPU time it reads from the kernel is in the right unit.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-//            Perch/Monitor/RunawayApps.swift Tools/runaway-test.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//            Roost/Monitor/RunawayApps.swift Tools/runaway-test.swift | swift -
 //
 //  The unit check is the one that matters most. proc_pidinfo reports CPU
 //  time in Mach ticks, which on Apple silicon are 1/24 MHz rather than
@@ -59,7 +59,7 @@ do {
     check("a command-line tool is named by its file, with no app", tool.name == "node" && tool.bundle == nil)
     let system = RunawayApps.owner(of: "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder")
     check("a system app is still an app", system.name == "Finder")
-    // perch-06's real paths: a toolchain binary inside Xcode is not Xcode.
+    // roost-06's real paths: a toolchain binary inside Xcode is not Xcode.
     for tool in ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend",
                  "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
                  "/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild"] {
@@ -87,7 +87,7 @@ do {
     // A busy loop compiled here, outside /usr/bin: `yes` itself is macOS's
     // own and excluded from the alert -- the point of the exclusion -- and a
     // copied system binary loses its signature and will not run.
-    let copy = FileManager.default.temporaryDirectory.appendingPathComponent("perch-burner-\(getpid())")
+    let copy = FileManager.default.temporaryDirectory.appendingPathComponent("roost-burner-\(getpid())")
     let source = copy.appendingPathExtension("c")
     try! "int main(void) { volatile unsigned long n = 0; for (;;) n++; }".write(to: source, atomically: true, encoding: .utf8)
     let cc = Process()

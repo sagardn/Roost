@@ -3,10 +3,10 @@
 //
 //  Exercises the first-run window's flow and what its presets write.
 //
-//  Run:  cat Perch/UI/Localized.swift \
-//            Perch/Settings/Preferences.swift \
-//            Perch/Monitor/MenuBarStyle.swift \
-//            Perch/Views/SetupFlow.swift \
+//  Run:  cat Roost/UI/Localized.swift \
+//            Roost/Settings/Preferences.swift \
+//            Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Views/SetupFlow.swift \
 //            Tools/setup-test.swift | swift -
 //
 //  The first-run window is shown once per installation and then never again,
@@ -122,7 +122,7 @@ do {
 
 do {
     // The stored name is "speed", not "rates". The case was renamed when the
-    // shapes became Perch's; the raw value could not be, because it is in
+    // shapes became Roost's; the raw value could not be, because it is in
     // every existing install's preferences.
     let network = preset("Default").items.first { $0.module == "Network" }!
     check("the rates shape is stored under the name the old module system used",

@@ -4,9 +4,9 @@
 //  Clicks TextEdit in the launcher, over and over, and checks what happened
 //  to its windows each time: the live half of clicktoggle-test.swift.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Launcher/Notify.swift \
-//            Perch/Launcher/AppEntry.swift Perch/Launcher/ClickToggle.swift \
-//            Perch/Launcher/WindowControl.swift Tools/clicktoggle-probe.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/Launcher/Notify.swift \
+//            Roost/Launcher/AppEntry.swift Roost/Launcher/ClickToggle.swift \
+//            Roost/Launcher/WindowControl.swift Tools/clicktoggle-probe.swift | swift -
 //
 //  A probe, not a suite -- the runner leaves *-probe files alone -- because
 //  it needs what CI has neither of: a desktop, and a process granted
@@ -82,11 +82,11 @@ func putFinderInFront() {
 
 // Plain text files, so TextEdit opens a document window rather than the
 // iCloud open panel, and has nothing to ask about saving when it quits.
-let folder = FileManager.default.temporaryDirectory.appendingPathComponent("perch-clicktoggle-\(getpid())")
+let folder = FileManager.default.temporaryDirectory.appendingPathComponent("roost-clicktoggle-\(getpid())")
 try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 defer { try? FileManager.default.removeItem(at: folder) }
 let files = (1...2).map { folder.appendingPathComponent("window \($0).txt") }
-for file in files { try! "Perch click-toggle probe".write(to: file, atomically: true, encoding: .utf8) }
+for file in files { try! "Roost click-toggle probe".write(to: file, atomically: true, encoding: .utf8) }
 
 func open(_ file: URL) {
     let config = NSWorkspace.OpenConfiguration()

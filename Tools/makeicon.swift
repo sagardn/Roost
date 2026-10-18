@@ -1,18 +1,23 @@
 #!/usr/bin/env swift
 //
-//  Draws the Perch icon: a bird perched on the menu bar.
+//  Draws the Roost icon: a roof over three rising bars.
 //
-//  Two decisions worth keeping. The plate is Perch's own teal, #0E9BA8 --
-//  the colour a calm reading is drawn in, the one on the README badges, and
-//  a colour already validated for contrast and colour-vision deficiency in
-//  Palette.swift. The icon used a generic blue that appeared nowhere else in
-//  the app, so nothing on screen agreed with it.
+//  A roost is where a bird comes home to, high up -- which is where this app
+//  lives, at the top of the screen. So the mark is a roof, and under it the
+//  thing the app keeps watch over: readings, as bars. The tallest is amber,
+//  the colour a figure in the menu bar turns when it climbs, so the icon shows
+//  the app doing its job rather than naming it. No bird: the old icon was one,
+//  and the name it illustrated has gone.
 //
-//  And the load bars that used to sit behind the bird are gone. They were
-//  white at 17% over a gradient: invisible at 128pt, and at 32pt they only
-//  softened the one edge that has to survive -- the silhouette. An icon is
-//  read at 16 points far more often than at 512, so the mark is now a bird,
-//  a bar, and nothing else.
+//  Three concepts were drawn and compared at 256, 64, 32 and 16 pixels: a
+//  house traced by a reading line, a roof formed by the peak of a pulse, and
+//  this. The traced house turned into a thin generic outline at 32; the pulse
+//  read as a caret, not a home. Only this one kept both of its halves at
+//  16 pixels, which is the size an icon is read at most.
+//
+//  The plate is the app's own teal, #0E9BA8 -- the colour a calm reading is
+//  drawn in, already validated for contrast and colour-vision deficiency in
+//  Palette.swift -- so the icon and the menu bar agree.
 //
 //  Run it from anywhere -- paths are resolved from this file's own location:
 //
@@ -20,25 +25,27 @@
 //
 //  It writes the app's icon set:
 //
-//      Perch/.../Assets.xcassets/AppIcon.appiconset
+//      Roost/.../Assets.xcassets/AppIcon.appiconset
 //
 //  Everything is drawn in unit coordinates and scaled, so every size in the set
 //  is rendered natively rather than resampled from one big PNG, and the small
-//  sizes can drop detail that would only turn to mush.
+//  sizes can thicken what would otherwise turn to mush.
 //
 import AppKit
 
 // MARK: - palette
 
-/// Perch's own colours. `skyMid` is #0E9BA8 and `beakColor` #CE7C00 exactly
-/// -- the calm and warning colours from `Palette.swift`, not approximations,
-/// so the icon and the menu bar it draws are the same two colours.
+/// Roost's own colours. `skyMid` is #0E9BA8 exactly -- the calm colour from
+/// `Palette.swift`, not an approximation.
 let skyTop    = NSColor(srgbRed: 0.23, green: 0.80, blue: 0.85, alpha: 1)   // lifted #0E9BA8
 let skyMid    = NSColor(srgbRed: 0x0E / 255, green: 0x9B / 255, blue: 0xA8 / 255, alpha: 1)
 let skyBottom = NSColor(srgbRed: 0.02, green: 0.21, blue: 0.29, alpha: 1)   // deep teal, not navy
-let inkColor  = NSColor(srgbRed: 0.02, green: 0.16, blue: 0.22, alpha: 1)
-let birdColor = NSColor.white
-let beakColor = NSColor(srgbRed: 0xCE / 255, green: 0x7C / 255, blue: 0x00 / 255, alpha: 1)
+let markColor = NSColor.white
+/// Lighter than the menu bar's warning amber, #CE7C00. Measured against the
+/// plate behind the bar, from its foot to its top, #CE7C00 has a luminance
+/// contrast of 1.84 down to 1.04 -- the top of the bar was the plate's own
+/// brightness, held apart by hue alone. This is 2.79 to 1.46.
+let peakColor = NSColor(srgbRed: 0xF2 / 255, green: 0xA1 / 255, blue: 0x1F / 255, alpha: 1)
 
 // MARK: - the plate
 
@@ -62,99 +69,39 @@ func squircle(in r: NSRect, n: CGFloat = 4.7) -> NSBezierPath {
 
 // MARK: - the glyph
 
-/// Bird, perch and graph, in unit coordinates inside the icon plate.
+/// Roof and bars, in unit coordinates inside the icon plate.
 ///
-/// `detailed` is false for 16pt, where the wing, the eye and the graph are all
-/// under a pixel wide and only muddy the silhouette.
+/// `detailed` is false below 24 pixels, where the roof is thickened: at the
+/// large sizes' weight it is under a pixel and a half at 16, and anti-aliases
+/// into the plate.
 func drawGlyph(in r: NSRect, detailed: Bool) {
     let s = r.width
-    /// Scale about the plate's centre. The mark was drawn small inside its
-    /// plate and read as timid beside the system icons, which fill theirs.
-    let k: CGFloat = 1.12
-    /// Drops the scene so the space above the bird and below the bar match.
-    /// Measured off a render: it was 18% above and 33% below.
-    let dy: CGFloat = -0.088
-    func sx(_ x: CGFloat) -> CGFloat { 0.5 + (x - 0.5) * k }
-    func sy(_ y: CGFloat) -> CGFloat { 0.5 + (y - 0.5) * k + dy }
-    func p(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
-        NSPoint(x: r.minX + sx(x) * s, y: r.minY + sy(y) * s)
-    }
-    func box(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> NSRect {
-        NSRect(x: r.minX + sx(x) * s, y: r.minY + sy(y) * s,
-               width: w * k * s, height: h * k * s)
-    }
+    func p(_ x: CGFloat, _ y: CGFloat) -> NSPoint { NSPoint(x: r.minX + x * s, y: r.minY + y * s) }
 
-    // The perch: the menu bar the whole app lives on. Thicker than it was,
-    // because it is now one of only two shapes and has to carry its half.
-    let barH: CGFloat = 0.058
-    let bar = NSBezierPath(roundedRect: box(0.140, 0.296, 0.720, barH),
-                           xRadius: barH * k * s / 2, yRadius: barH * k * s / 2)
-    birdColor.setFill()
-    bar.fill()
+    // The roof. Round caps and join: a mitred peak this thick is a spike.
+    let roof = NSBezierPath()
+    roof.lineWidth = (detailed ? 0.075 : 0.10) * s
+    roof.lineCapStyle = .round
+    roof.lineJoinStyle = .round
+    roof.move(to: p(0.20, 0.54))
+    roof.line(to: p(0.50, 0.78))
+    roof.line(to: p(0.80, 0.54))
+    markColor.setStroke()
+    roof.stroke()
 
-    // Legs, short. A perched bird's legs are mostly hidden under it; the
-    // long ones this had made it read as a wader standing in water.
-    let legs = NSBezierPath()
-    legs.lineWidth = 0.034 * k * s
-    legs.lineCapStyle = .round
-    legs.move(to: p(0.468, 0.368)); legs.line(to: p(0.468, 0.436))
-    legs.move(to: p(0.560, 0.368)); legs.line(to: p(0.560, 0.436))
-    birdColor.setStroke()
-    legs.stroke()
-
-    // Body and tail, built from two plain shapes rather than one clever
-    // path. Three attempts at a single flowing outline each produced
-    // something else at 128pt -- a paper dart, then a crescent -- because a
-    // concave edge anywhere along the back reads as a raised wing. An oval
-    // and a wedge cannot do that.
-    birdColor.setFill()
-    NSBezierPath(ovalIn: box(0.356, 0.430, 0.396, 0.276)).fill()
-
-    let tail = NSBezierPath()
-    // The tip stays below the line of the back. Above it, the eye reads the
-    // tail as a raised wing instead, which was the fault in two earlier
-    // attempts at this shape.
-    tail.move(to: p(0.452, 0.640))
-    tail.line(to: p(0.252, 0.654))                       // tip, swept back
-    tail.line(to: p(0.424, 0.512))
-    tail.close()
-    tail.fill()
-
-    // Head, set into the shoulders rather than balanced on top.
-    let headR: CGFloat = 0.116
-    NSBezierPath(ovalIn: box(0.636 - headR, 0.700 - headR, headR * 2, headR * 2)).fill()
-
-    // Wing: a notch cut from the silhouette's own colour, not a grey slash
-    // across it. The old one was a pale fill that read as a smudge at any
-    // size below 128.
-    if detailed {
-        let wing = NSBezierPath()
-        // Wholly inside the body, and a cut of the plate's own colour rather
-        // than a pale tint: a wing fold, not a smudge.
-        wing.move(to: p(0.452, 0.556))
-        wing.curve(to: p(0.654, 0.508),
-                   controlPoint1: p(0.520, 0.580), controlPoint2: p(0.598, 0.552))
-        wing.curve(to: p(0.452, 0.556),
-                   controlPoint1: p(0.600, 0.470), controlPoint2: p(0.506, 0.506))
-        wing.close()
-        skyBottom.withAlphaComponent(0.20).setFill()
-        wing.fill()
-    }
-
-    // Beak: short and sharp. The old one was longer than the head was wide,
-    // which is a seagull; Perch is a small bird on a bar.
-    let beak = NSBezierPath()
-    beak.move(to: p(0.728, 0.742))
-    beak.line(to: p(0.838, 0.706))
-    beak.line(to: p(0.728, 0.678))
-    beak.close()
-    beakColor.setFill()
-    beak.fill()
-
-    // Eye
-    if detailed {
-        inkColor.setFill()
-        NSBezierPath(ovalIn: box(0.658, 0.726, 0.038, 0.038)).fill()
+    // The bars share a baseline and rise left to right, as a reading does in
+    // the order people read. The gaps are as wide as a third of a bar, so
+    // they survive at 32 pixels. The tallest stops 0.05 short of the roof's
+    // inner edge: at 0.36 it touched it, and a bar holding up the roof is a
+    // different picture from one sheltered under it.
+    let bars: [(x: CGFloat, height: CGFloat, color: NSColor)] = [
+        (0.285, 0.13, markColor), (0.440, 0.21, markColor), (0.595, 0.29, peakColor),
+    ]
+    for bar in bars {
+        let rect = NSRect(x: r.minX + bar.x * s, y: r.minY + 0.22 * s,
+                          width: 0.12 * s, height: bar.height * s)
+        bar.color.setFill()
+        NSBezierPath(roundedRect: rect, xRadius: rect.width * 0.22, yRadius: rect.width * 0.22).fill()
     }
 }
 
@@ -248,7 +195,7 @@ let root = URL(fileURLWithPath: #filePath)
 //    size that the catalog lists at both 1x and 2x; they have to stay as Xcode
 //    named them.
 let appicon = root
-    .appendingPathComponent("Perch/Supporting Files/Assets.xcassets/AppIcon.appiconset").path
+    .appendingPathComponent("Roost/Supporting Files/Assets.xcassets/AppIcon.appiconset").path
 
 let appiconVariants: [(String, CGFloat)] = [
     ("icon_16x16.png", 16),        ("icon_16x16@2x.png", 32),

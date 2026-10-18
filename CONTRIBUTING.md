@@ -1,16 +1,16 @@
-# Contributing to Perch
+# Contributing to Roost
 
 Pull requests are welcome. This file is the short version of what makes them
 easy to merge.
 
 ## Build it
 
-Perch needs **Xcode** and **macOS 14 or newer**.
+Roost needs **Xcode** and **macOS 14 or newer**.
 
 ```bash
-git clone https://github.com/sagardn/Perch.git
-cd Perch
-xcodebuild -project Perch.xcodeproj -scheme Perch -configuration Debug build
+git clone https://github.com/sagardn/Roost.git
+cd Roost
+xcodebuild -project Roost.xcodeproj -scheme Roost -configuration Debug build
 ```
 
 If `xcodebuild` reports the wrong developer directory, Xcode is installed but not
@@ -32,7 +32,7 @@ switcher code with the main app.
 | --- | --- |
 | `Kit/` | shared framework: charts, widgets, popup and window plumbing, `Store`, the colour palette in `Kit/constants.swift` |
 | `Modules/<Name>/` | one folder per metric — reader, popup, portal, widget, settings |
-| `Perch/` | the app itself: `AppDelegate`, the settings window, and `Perch/Launcher/` (search panel, hotkeys, window control) |
+| `Roost/` | the app itself: `AppDelegate`, the settings window, and `Roost/Launcher/` (search panel, hotkeys, window control) |
 | `Widgets/` | the macOS widget extension |
 
 A metric is usually drawn in four places — the menu bar widget, the popup, the
@@ -70,7 +70,7 @@ twice. Small fixes need no discussion — just send them.
 
 ## Translations
 
-Every string lives in `Perch/Supporting Files/<lang>.lproj/Localizable.strings`.
+Every string lives in `Roost/Supporting Files/<lang>.lproj/Localizable.strings`.
 To add a language, copy `en.lproj/Localizable.strings`, translate the values on
 the right of each `=`, and leave the keys untouched — a changed key silently
 falls back to English. The `i18n check` workflow verifies that every file has the
@@ -78,6 +78,6 @@ same keys.
 
 ## Credit
 
-Perch is MIT, © 2026 Sagar, and contributions are accepted under the same
+Roost is MIT, © 2026 Sagar, and contributions are accepted under the same
 licence. Please contribute only work you have the right to give: no code,
 translations or images copied from other projects.

@@ -3,7 +3,7 @@
 //
 //  Exercises the diagnostics report, and mostly what it must never contain.
 //
-//  Run:  cat Perch/System/SystemReport.swift Tools/report-test.swift | swift -
+//  Run:  cat Roost/System/SystemReport.swift Tools/report-test.swift | swift -
 //
 //  The report exists to be pasted into a public issue. Everything else about
 //  it is a convenience; this is the part that can do harm. So the sensitive

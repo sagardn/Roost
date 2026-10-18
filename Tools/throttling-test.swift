@@ -4,10 +4,10 @@
 //  Exercises how macOS's thermal state is shown: the word in the CPU popup
 //  and the colour of the CPU figure in the menu bar.
 //
-//  Run:  cat Perch/UI/Palette.swift Perch/UI/Localized.swift \
-//            Perch/Settings/Preferences.swift Perch/Monitor/MenuBarStyle.swift \
-//            Perch/Monitor/MenuBarWidget.swift Perch/Monitor/Readings.swift \
-//            Perch/Monitor/Throttling.swift Tools/throttling-test.swift | swift -
+//  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
+//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
+//            Roost/Monitor/Throttling.swift Tools/throttling-test.swift | swift -
 //
 //  The states cannot be produced on demand -- a Mac throttles when it is
 //  hot, not when a test asks -- so what is checked is the mapping, every

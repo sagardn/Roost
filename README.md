@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="Perch/Supporting%20Files/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width="128" alt="Perch icon">
+  <img src="Roost/Supporting%20Files/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width="128" alt="Roost icon">
 </p>
 
-<h1 align="center">Perch</h1>
+<h1 align="center">Roost</h1>
 
 <p align="center">
   <strong>Your Mac, at a glance and a keystroke.</strong><br>
@@ -11,8 +11,10 @@
   no telemetry and nothing to pay.
 </p>
 
+<p align="center"><sub>Formerly <strong>Perch</strong>. An installed Perch updates itself to Roost and keeps every setting.</sub></p>
+
 <p align="center">
-  <a href="https://github.com/sagardn/Perch/releases/latest"><img src="https://img.shields.io/github/v/release/sagardn/Perch?style=for-the-badge&label=release&color=0E9BA8" alt="Latest release"></a>
+  <a href="https://github.com/sagardn/Roost/releases/latest"><img src="https://img.shields.io/github/v/release/sagardn/Roost?style=for-the-badge&label=release&color=0E9BA8" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?style=for-the-badge&logo=apple" alt="macOS 14 or newer">
   <img src="https://img.shields.io/badge/Swift-native-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="Native Swift">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-CE7C00?style=for-the-badge" alt="MIT licence"></a>
@@ -32,7 +34,7 @@
 <br>
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="900" alt="Perch's Overview window: a health summary, then CPU, Memory, Network and Battery cards, with the module list and switches down the left">
+  <img src="docs/screenshots/dashboard.png" width="900" alt="Roost's Overview window: a health summary, then CPU, Memory, Network and Battery cards, with the module list and switches down the left">
 </p>
 
 <p align="center">
@@ -42,7 +44,7 @@
 <br>
 
 <p align="center">
-  <img src="docs/screenshots/menubar.png" width="347" alt="Perch in the menu bar: GPU, clipboard, disk, CPU and RAM readings coloured by load, with upload and download rates">
+  <img src="docs/screenshots/menubar.png" width="347" alt="Roost in the menu bar: GPU, clipboard, disk, CPU and RAM readings coloured by load, with upload and download rates">
 </p>
 
 <p align="center">
@@ -61,18 +63,18 @@
 
 ---
 
-## Why Perch
+## Why Roost
 
 Most Macs end up running three small utilities: one to launch and switch apps,
 one to show what the machine is doing, and one more for the shortcut neither
-of them has. Perch is all three, built as one native app.
+of them has. Roost is all three, built as one native app.
 
 <table>
   <tr>
     <td width="50%" valign="top">
       <h3>⚡️ Switch in a keystroke</h3>
       <code>⌃Space</code> opens a search panel wherever your pointer is. Type,
-      press Return, and Perch launches, focuses, minimises or restores the app —
+      press Return, and Roost launches, focuses, minimises or restores the app —
       whichever the moment needs. <code>⌃⌥←</code> and friends place the window
       once you are there.
     </td>
@@ -95,7 +97,7 @@ of them has. Perch is all three, built as one native app.
       <h3>🪶 Stay out of the way</h3>
       No Dock icon, no window you did not ask for, no account and no telemetry.
       The expensive work runs only while you are looking at it, and every
-      network call Perch makes is <a href="#privacy">listed and switchable</a>.
+      network call Roost makes is <a href="#privacy">listed and switchable</a>.
     </td>
   </tr>
 </table>
@@ -115,7 +117,7 @@ of them has. Perch is all three, built as one native app.
 - **Answers in the same panel** — type `12*8+5` or `5 km in miles` and the answer
   sits above your apps; ↩ copies it. Type `lock`, `sleep`, `dark` or `empty bin`
   for the system action. A query that could be an app's name stays an app search.
-- **One click, the right action** — Perch reads each app's state and does what you
+- **One click, the right action** — Roost reads each app's state and does what you
   meant. The same decision whether you click a row, press its hotkey, or click the
   app in your **Dock**:
 
@@ -131,13 +133,13 @@ of them has. Perch is all three, built as one native app.
 
 - **Your Dock learns the same trick** — macOS launches, raises and restores from a
   Dock click, but answers a click on the app you are *already in* by doing nothing.
-  Perch fills that one gap, so a second click puts the app away. Nothing is
-  intercepted: Perch only ever acts in the case macOS leaves empty, which is why
+  Roost fills that one gap, so a second click puts the app away. Nothing is
+  intercepted: Roost only ever acts in the case macOS leaves empty, which is why
   the rest of your Dock behaves exactly as it always has.
 
 - **Your own `⌃Tab`** — mark the three or four apps you live in, and `⌃Tab`
   cycles only those, most recent first. If another app already owns `⌃Tab`,
-  Perch notices, moves to `⌥Tab` and tells you.
+  Roost notices, moves to `⌥Tab` and tells you.
 - **Per-app hotkeys** — `⌃1` … `⌃9` jump straight to the apps you pin.
 - **Minimise and back** — `` ⌃` `` tucks the frontmost app away; press again to bring it back.
 - **Window snapping** — `⌃⌥←` / `⌃⌥→` put the window in the left or right half (press again
@@ -169,7 +171,7 @@ Wherever a popup lists processes, **right-click one** to **Quit** it politely or
 document with unsaved changes still gets to ask.
 
 **Right-click a reading itself** — in the menu bar or anywhere in its popup — for
-`Turn off CPU`, `Settings…`, `Pause`, and `Quit Perch`. Turning one off takes
+`Turn off CPU`, `Settings…`, `Pause`, and `Quit Roost`. Turning one off takes
 that reading out of the menu bar and leaves the other five alone.
 
 - **Nine shapes** for the menu bar: a figure, a line or bar chart, a ring, a
@@ -216,7 +218,7 @@ files and images, each with the app it came from and when.
   and a keyboard shortcut you choose. The menu bar item and the history are
   separate: history keeps working with the item hidden.
 - **Restoring.** Pick an entry to put it back on the clipboard ready for ⌘V, or
-  turn on **Paste for me** and have Perch paste it into the app you were in.
+  turn on **Paste for me** and have Roost paste it into the app you were in.
   Pinned entries stay put and are never pushed out by the limit.
 - **What is kept.** Text, links and files, optionally with their formatting;
   images up to 25 MB each, with previews. Larger images are left out rather
@@ -224,25 +226,25 @@ files and images, each with the app it came from and when.
 - **How long.** A limit on entries (200 by default) and an age (30 days), both
   yours to change. History can be kept after quitting or cleared each time.
 
-**Privacy.** History is written to `~/Library/Application Support/Perch/` and
+**Privacy.** History is written to `~/Library/Application Support/Roost/` and
 goes nowhere else. Copies an app marks as private — which is what password
 managers do — are never recorded, whatever the settings say. You can also name
-apps whose copies Perch should ignore. Turning history off stops capture and
+apps whose copies Roost should ignore. Turning history off stops capture and
 leaves what is already there; **Clear** removes it.
 
-> Perch can tell which app was *in front* when something was copied, not which
+> Roost can tell which app was *in front* when something was copied, not which
 > app copied it. And macOS decides whether apps may read the clipboard at all —
 > the **Reading the clipboard** row shows where you stand and opens the setting.
 
 ### Free up space
 
 <p align="center">
-  <img src="docs/screenshots/cleanup.png" width="900" alt="The Free up space page: Storage settings and Open Bin under 'What macOS can do', and large files, AI assistants and uninstall under 'What Perch can find'">
+  <img src="docs/screenshots/cleanup.png" width="900" alt="The Free up space page: Storage settings and Open Bin under 'What macOS can do', and large files, AI assistants and uninstall under 'What Roost can find'">
 </p>
 
 A full disk is the one problem a monitor can point at and then do something
 about. **Free up space** in the sidebar has four ways in, and a rule that
-covers all of them: **everything Perch removes goes to the Bin**, so a wrong
+covers all of them: **everything Roost removes goes to the Bin**, so a wrong
 guess costs you a trip to Finder rather than your data.
 
 - **Large files** — the biggest things in your home folder, sorted by size and
@@ -250,7 +252,7 @@ guess costs you a trip to Finder rather than your data.
   skips the places that only look big — `node_modules`, `.git`, DerivedData —
   because a thousand small files are not what filled your disk.
 - **Uninstall an app** — dragging an app to the Bin leaves its settings, caches
-  and saved state behind. Perch finds them by **bundle identifier**, which is
+  and saved state behind. Roost finds them by **bundle identifier**, which is
   unique, and tells you how sure it is: files matched by the identifier are
   ticked, a helper's files are *probably this app*, and anything matched only
   by the app's *name* is shown in orange and never ticked for you. An app
@@ -263,7 +265,7 @@ guess costs you a trip to Finder rather than your data.
   asked to install is listed — not the forty dependencies underneath it.
 - **AI assistants** — Claude, Codex, Copilot, Gemini, Grok, Cursor, opencode and
   the rest quietly keep every conversation, every cached model and every
-  installer they ever downloaded. Perch adds it up and lets you choose by age.
+  installer they ever downloaded. Roost adds it up and lets you choose by age.
   Caches, logs and downloads come ticked, because the tool rebuilds them without
   noticing; **conversations and downloaded models never come ticked**, however
   large, because only you know whether you want them back.
@@ -282,9 +284,9 @@ guess costs you a trip to Finder rather than your data.
 </table>
 
 > **What it will not touch.** Matching is an allowlist, not a block list — a
-> file is only offered if its name follows a convention Perch recognises. That
+> file is only offered if its name follows a convention Roost recognises. That
 > is why no credential, settings file or installed plugin can ever appear on
-> the list. Perch also never asks for Full Disk Access, so a few corners stay
+> the list. Roost also never asks for Full Disk Access, so a few corners stay
 > invisible to it; saving you a few hundred megabytes is not worth being able
 > to read every file you own.
 
@@ -295,14 +297,14 @@ guess costs you a trip to Finder rather than your data.
 Paste this into Terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sagardn/Perch/main/Tools/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sagardn/Roost/main/Tools/install.sh | bash
 ```
 
-It downloads the latest release, verifies the disk image, installs Perch to
-`/Applications` and launches it. Perch needs one permission, **Accessibility**,
+It downloads the latest release, verifies the disk image, installs Roost to
+`/Applications` and launches it. Roost needs one permission, **Accessibility**,
 to raise, minimise and restore windows, and asks for it the first time you do.
 
-**Requires macOS 14 Sonoma or newer.** Updates arrive by themselves: Perch checks
+**Requires macOS 14 Sonoma or newer.** Updates arrive by themselves: Roost checks
 its GitHub releases once a day and offers new versions in place.
 
 <details>
@@ -310,14 +312,14 @@ its GitHub releases once a day and offers new versions in place.
 
 <br>
 
-Perch is signed ad hoc rather than with a paid Apple Developer ID, so macOS
+Roost is signed ad hoc rather than with a paid Apple Developer ID, so macOS
 refuses to open it when it arrives through a browser. Quarantine is attached by
 the program that downloads a file — `curl` does not attach it, so this route
 never meets Gatekeeper. Nothing is disabled system-wide.
 
-If you downloaded `Perch.dmg` with a browser and macOS blocked it ("Apple could
+If you downloaded `Roost.dmg` with a browser and macOS blocked it ("Apple could
 not verify…"), click **Done**, then open **System Settings → Privacy & Security**,
-scroll to **Security** and click **Open Anyway** beside Perch.
+scroll to **Security** and click **Open Anyway** beside Roost.
 
 </details>
 
@@ -329,13 +331,13 @@ scroll to **Security** and click **Open Anyway** beside Perch.
 Requires Xcode with the macOS 26 SDK.
 
 ```bash
-git clone https://github.com/sagardn/Perch.git
-cd Perch
-xcodebuild -project Perch.xcodeproj -scheme Perch -configuration Release build
+git clone https://github.com/sagardn/Roost.git
+cd Roost
+xcodebuild -project Roost.xcodeproj -scheme Roost -configuration Release build
 ```
 
-Or open `Perch.xcodeproj` and use **Product → Archive → Distribute App → Copy App**,
-then move `Perch.app` to `/Applications`.
+Or open `Roost.xcodeproj` and use **Product → Archive → Distribute App → Copy App**,
+then move `Roost.app` to `/Applications`.
 
 </details>
 
@@ -345,12 +347,12 @@ then move `Perch.app` to `/Applications`.
 <br>
 
 ```bash
-sh /Applications/Perch.app/Contents/Resources/Scripts/uninstall.sh
+sh /Applications/Roost.app/Contents/Resources/Scripts/uninstall.sh
 ```
 
-This quits Perch and removes the app, its preferences and data, and the
+This quits Roost and removes the app, its preferences and data, and the
 Accessibility and notification grants macOS keeps for it, so a reinstall starts
-clean. Run it as yourself, not with `sudo` — Perch installs no helper or daemon.
+clean. Run it as yourself, not with `sudo` — Roost installs no helper or daemon.
 
 </details>
 
@@ -392,11 +394,11 @@ Every module popup can be given a shortcut of its own too. The
 
 ## Privacy
 
-No analytics, no telemetry, no crash reporting, no account. Perch talks to the
+No analytics, no telemetry, no crash reporting, no account. Roost talks to the
 network in three cases, and every one is under your control:
 
 - **Update check** — a plain read of
-  `api.github.com/repos/sagardn/Perch/releases/latest`, once a day. Nothing about
+  `api.github.com/repos/sagardn/Roost/releases/latest`, once a day. Nothing about
   your Mac is sent. Set **Check for updates** to **Never** and it stops.
 - **Connectivity check** — while the Network popup is open, a TCP handshake with
   `1.1.1.1` measures latency and whether the internet answers. No data is sent
@@ -409,14 +411,14 @@ network in three cases, and every one is under your control:
   and no request is made.
 
 **Clipboard history**, when you turn it on, is stored unencrypted in
-`~/Library/Application Support/Perch/` and is never sent anywhere. Copies an
+`~/Library/Application Support/Roost/` and is never sent anywhere. Copies an
 app marks as private are never recorded, and you can name further apps to
-ignore — but Perch cannot know what is *inside* what you copy, so treat the
+ignore — but Roost cannot know what is *inside* what you copy, so treat the
 history as what it is: a readable record of what you have copied, on a Mac
 whose user account already protects it. Turn it off, shorten its retention, or
 clear it whenever you like.
 
-Perch asks for **Accessibility** (to raise, minimise and restore windows) and
+Roost asks for **Accessibility** (to raise, minimise and restore windows) and
 asks for **Location** only if you press the button on the Wi-Fi name row, since
 macOS gives the network's name to no one else. It never asks for Full Disk
 Access.
@@ -430,12 +432,12 @@ Access.
 
 <br>
 
-You are on Perch **1.0.5 or older**. The updater in those versions only accepts
+You are on Roost **1.0.5 or older**. The updater in those versions only accepts
 an update when the running app carries an Apple Developer Team ID, which an
 ad-hoc-signed app never has, so it can never install one. Nothing a newer
 release does can change that check. Update once by hand with the install
 command above — it replaces the old copy and keeps your settings — and from
-then on the built-in updater works. Afterwards, remove Perch from **System
+then on the built-in updater works. Afterwards, remove Roost from **System
 Settings → Privacy & Security → Accessibility** with **−** and allow it again.
 
 </details>
@@ -446,9 +448,9 @@ Settings → Privacy & Security → Accessibility** with **−** and allow it ag
 <br>
 
 macOS has no "hotkey permission" — a global shortcut belongs to whichever app
-registered it first, and the loser is not told. Perch names any shortcut it
+registered it first, and the loser is not told. Roost names any shortcut it
 could not claim in a notice at launch, and moves its app cycle from `⌃Tab` to
-`⌥Tab` when something else owns it. Quit the app that owns the key, turn Perch's
+`⌥Tab` when something else owns it. Quit the app that owns the key, turn Roost's
 off in Settings, or check **System Settings → Keyboard → Keyboard Shortcuts…**
 for a system shortcut using the same keys.
 
@@ -460,12 +462,12 @@ for a system shortcut using the same keys.
 <br>
 
 That is **Accessibility**: **System Settings → Privacy & Security → Accessibility**
-→ turn **Perch** on.
+→ turn **Roost** on.
 
 If it was working and stopped after an update, the switch can look on while the
 grant no longer applies — macOS ties it to the app's signature, which changes
-with every ad-hoc-signed build. Select Perch, click **−**, then click **+**, choose
-`/Applications/Perch.app`, and reopen Perch.
+with every ad-hoc-signed build. Select Roost, click **−**, then click **+**, choose
+`/Applications/Roost.app`, and reopen Roost.
 
 </details>
 
@@ -486,15 +488,15 @@ search** must also be on. No permission is involved.
 <br>
 
 If you see `«` among your menu bar icons, macOS is hiding items that don't fit,
-newest first — so Perch can be running and invisible. Quit another menu bar app
+newest first — so Roost can be running and invisible. Quit another menu bar app
 or ⌘-drag items to make room. On macOS 26, also check **System Settings → Menu
-Bar** and make sure Perch is allowed. Finally, confirm the module is switched on
-in Perch's Settings sidebar.
+Bar** and make sure Roost is allowed. Finally, confirm the module is switched on
+in Roost's Settings sidebar.
 
 </details>
 
 <details>
-<summary><strong>Reducing Perch's energy use</strong></summary>
+<summary><strong>Reducing Roost's energy use</strong></summary>
 
 <br>
 
@@ -513,7 +515,7 @@ Press the **bug** button at the bottom of the Settings sidebar. It copies a
 diagnostics report to your clipboard and opens the issue form, so you can paste
 it straight in — it is the first thing anyone will ask for.
 
-The report says which macOS and Perch you are running, which Mac you have,
+The report says which macOS and Roost you are running, which Mac you have,
 which modules are on and which readings answered. It is built to carry nothing
 that identifies you: no serial number, no Wi-Fi name, no IP or MAC address, no
 volume names. The tests assert each of those by name. It is plain text, so read
@@ -521,13 +523,13 @@ it before you send it.
 
 ---
 
-## Support Perch
+## Support Roost
 
-Perch is free and stays free. If it saves you a few seconds a day, you can say
+Roost is free and stays free. If it saves you a few seconds a day, you can say
 thanks with a coffee — it goes straight into the time it takes to keep building it.
 
 <p align="center">
-  <a href="https://ko-fi.com/sagardn"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support Perch on Ko-fi"></a>
+  <a href="https://ko-fi.com/sagardn"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support Roost on Ko-fi"></a>
 </p>
 
 Starring the repository and telling a friend helps just as much.

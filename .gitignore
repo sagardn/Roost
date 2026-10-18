@@ -1,7 +1,7 @@
 .build/
 build/
-Perch.app/
+Roost.app/
 *.xcuserstate
 xcuserdata/
 .DS_Store
-launcher/Perch.iconset/
+launcher/Roost.iconset/

@@ -3,7 +3,7 @@ name: release
 # Tag a version and this publishes the release the in-app updater reads.
 #
 # The updater fetches api.github.com/repos/<owner>/<repo>/releases/latest and
-# looks for an asset named exactly "Perch.dmg", then compares the tag against
+# looks for an asset named exactly "Roost.dmg", then compares the tag against
 # the bundle's CFBundleShortVersionString (a leading "v" is stripped). So the
 # tag must match the version in the project: tag v1.0.1 when MARKETING_VERSION
 # is 1.0.1, or the app will never see the release.
@@ -21,7 +21,7 @@ jobs:
     # macos-26, not macos-15: the app calls NSGlassEffectView, which only
     # exists in the macOS 26 SDK. An older image fails at compile time, not at
     # runtime, so this cannot fall back to an older runner without dropping the
-    # glass -- see Perch/Monitor/Popup.swift.
+    # glass -- see Roost/Monitor/Popup.swift.
     runs-on: macos-26
 
     steps:
@@ -35,12 +35,12 @@ jobs:
           # so the first match belongs to whichever target happens to be listed
           # first -- which is how the v1.0.0 run failed this check while the app
           # itself was correctly at 1.0.0.
-          VERSION=$(xcodebuild -project Perch.xcodeproj -scheme Perch \
+          VERSION=$(xcodebuild -project Roost.xcodeproj -scheme Roost \
             -configuration Release -showBuildSettings 2>/dev/null \
             | awk '/ MARKETING_VERSION = /{print $3; exit}')
           echo "tag=$TAG app=$VERSION"
           if [ -z "$VERSION" ]; then
-            echo "::error::Could not read MARKETING_VERSION from the Perch scheme"
+            echo "::error::Could not read MARKETING_VERSION from the Roost scheme"
             exit 1
           fi
           if [ "$TAG" != "$VERSION" ]; then
@@ -58,8 +58,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild \
-            -project Perch.xcodeproj \
-            -scheme Perch \
+            -project Roost.xcodeproj \
+            -scheme Roost \
             -destination 'platform=macOS' \
             -configuration Release \
             -derivedDataPath build \
@@ -85,23 +85,40 @@ jobs:
         # had failed behind a tee showed up here, as "bundle format
         # unrecognized" on an app that was never finished.
         run: |
-          xattr -cr build/Build/Products/Release/Perch.app
-          if ! codesign --force --deep --sign - build/Build/Products/Release/Perch.app > sign.log 2>&1; then
+          xattr -cr build/Build/Products/Release/Roost.app
+          if ! codesign --force --deep --sign - build/Build/Products/Release/Roost.app > sign.log 2>&1; then
             sed 's/^/::error::/' sign.log
             exit 1
           fi
           cat sign.log
 
-      - name: Package Perch.dmg
+      - name: Package Roost.dmg
         # hdiutil rather than create-dmg: no extra dependency to clone, and the
         # updater only cares about the asset's name.
         run: |
           mkdir -p dist/stage
-          cp -R build/Build/Products/Release/Perch.app dist/stage/
+          cp -R build/Build/Products/Release/Roost.app dist/stage/
           ln -s /Applications dist/stage/Applications
           hdiutil create \
-            -volname Perch \
+            -volname Roost \
             -srcfolder dist/stage \
+            -ov -format UDZO \
+            dist/Roost.dmg
+          shasum -a 256 dist/Roost.dmg | tee dist/Roost.dmg.sha256
+
+      - name: Package Perch.dmg, the bridge from the old name
+        # Copies from 1.0.19 and older were called Perch, and their updater is
+        # compiled into them: it asks for an asset named "Perch.dmg" and copies
+        # "Perch.app" out of it over itself. Without this they would never see
+        # another release. The bundle inside is this build under the old folder
+        # name; Roost/Startup/FormerName.swift moves it to Roost.app on its
+        # first launch. No Applications link -- only the updater reads this one.
+        run: |
+          mkdir -p dist/bridge
+          cp -R build/Build/Products/Release/Roost.app dist/bridge/Perch.app
+          hdiutil create \
+            -volname Perch \
+            -srcfolder dist/bridge \
             -ov -format UDZO \
             dist/Perch.dmg
           shasum -a 256 dist/Perch.dmg | tee dist/Perch.dmg.sha256
@@ -110,19 +127,25 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/Roost.dmg
+            dist/Roost.dmg.sha256
             dist/Perch.dmg
             dist/Perch.dmg.sha256
           generate_release_notes: true
           body: |
+            Roost was called Perch until 1.0.19. A Perch install updates
+            itself to Roost as usual and keeps its settings; ignore the
+            Perch.dmg below, which is only there for those older copies.
+
             ## Install
 
             One command. Paste it in Terminal:
 
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/sagardn/Perch/main/Tools/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/sagardn/Roost/main/Tools/install.sh | bash
             ```
 
-            Perch is signed ad hoc rather than with a paid Apple Developer ID,
+            Roost is signed ad hoc rather than with a paid Apple Developer ID,
             so macOS will not open it when it arrives through a browser.
             Quarantine is attached by whatever downloads a file, not by the file
             itself — `curl` does not attach it, so this path never meets
@@ -131,32 +154,32 @@ jobs:
             <details>
             <summary>If you downloaded the DMG below and macOS blocked it</summary>
 
-            You will see **"Perch.app" Not Opened — Apple could not verify…**
+            You will see **"Roost.app" Not Opened — Apple could not verify…**
             with only *Move to Trash* and *Done*. Click **Done**; the app is
             fine, it simply is not notarised.
 
             On macOS 15 and later the old right-click → Open trick is gone.
             Instead: **System Settings → Privacy & Security → Security**, where
             a line now offers **Open Anyway**. Click it, authenticate, then open
-            Perch again.
+            Roost again.
 
             Or clear the flag on that one app:
 
             ```bash
-            xattr -dr com.apple.quarantine /Applications/Perch.app
+            xattr -dr com.apple.quarantine /Applications/Roost.app
             ```
 
             </details>
 
-            Perch then needs Accessibility (System Settings → Privacy &
+            Roost then needs Accessibility (System Settings → Privacy &
             Security → Accessibility) to move and minimise windows.
 
-            In-app updates are not affected by any of this: Perch downloads the
+            In-app updates are not affected by any of this: Roost downloads the
             DMG itself, and files an app writes are not quarantined.
 
             ## Updating
 
-            Perch checks this feed once per day and tells you when a release is
+            Roost checks this feed once per day and tells you when a release is
             newer. Settings → Check for updates changes or disables that.
 
             ### On 1.0.5 or older? Update once by hand
@@ -167,7 +190,7 @@ jobs:
             one.
 
             Those versions check that the running app and the download are
-            signed by the same Apple Developer team. Perch is signed ad hoc,
+            signed by the same Apple Developer team. Roost is signed ad hoc,
             so it has no team to read, and the check fails on the app's *own*
             signature before it ever looks at the download. Nothing we publish
             can satisfy it, which is why this needs one manual update rather
@@ -177,7 +200,7 @@ jobs:
             your settings:
 
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/sagardn/Perch/main/Tools/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/sagardn/Roost/main/Tools/install.sh | bash
             ```
 
             From 1.0.6 onward the updater verifies a SHA-256 checksum instead,
@@ -185,7 +208,7 @@ jobs:
             automatic after this once.
 
             One thing to do afterwards: an ad-hoc signature changes with every
-            build, so macOS drops Perch's Accessibility permission when the app
-            is replaced. Remove Perch from **System Settings → Privacy &
+            build, so macOS drops Roost's Accessibility permission when the app
+            is replaced. Remove Roost from **System Settings → Privacy &
             Security → Accessibility** with **−**, then allow it again, or the
             window and hotkey features stay silent.

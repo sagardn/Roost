@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# Perch performance baseline.
+# Roost performance baseline.
 #
 # Read-only: it launches the installed app and measures it. It changes no
 # settings and writes nothing into the bundle.
 #
-#   ./Tools/bench.sh            measure the installed /Applications/Perch.app
-#   APP=/path/to/Perch.app ./Tools/bench.sh
+#   ./Tools/bench.sh            measure the installed /Applications/Roost.app
+#   APP=/path/to/Roost.app ./Tools/bench.sh
 #
 # Idle CPU is measured from the *delta* in cumulative CPU time, not from
 # `ps %cpu` -- that column is the average since the process started, so it
@@ -14,19 +14,19 @@
 # Measured both ways on the same run: 8.0% vs the true 6.0%.
 #
 set -u
-APP="${APP:-/Applications/Perch.app}"
-BIN="$APP/Contents/MacOS/Perch"
+APP="${APP:-/Applications/Roost.app}"
+BIN="$APP/Contents/MacOS/Roost"
 WINDOWS=20   # seconds per sample window
 COUNT=6      # number of windows
 
 PID=$(pgrep -f "$BIN" | head -1)
 if [ -z "${PID:-}" ]; then
-  echo "Perch is not running; starting it"
+  echo "Roost is not running; starting it"
   open -a "$APP"
   sleep 25
   PID=$(pgrep -f "$BIN" | head -1)
 fi
-[ -z "${PID:-}" ] && { echo "could not find Perch"; exit 1; }
+[ -z "${PID:-}" ] && { echo "could not find Roost"; exit 1; }
 
 echo "pid $PID, up $(ps -o etime= -p "$PID" | tr -d ' ')"
 echo "sampling $COUNT x ${WINDOWS}s"
@@ -58,6 +58,6 @@ PY
 
 echo
 echo "profile (15s, heaviest frames):"
-sample "$PID" 15 -file /tmp/perch.sample.txt >/dev/null 2>&1
-grep -E "^\s+[0-9]{2,}\s" /tmp/perch.sample.txt | head -15
-echo "full call graph: /tmp/perch.sample.txt"
+sample "$PID" 15 -file /tmp/roost.sample.txt >/dev/null 2>&1
+grep -E "^\s+[0-9]{2,}\s" /tmp/roost.sample.txt | head -15
+echo "full call graph: /tmp/roost.sample.txt"

@@ -4,8 +4,8 @@
 //  Exercises the storage reader: the volume filter, the capacity arithmetic,
 //  and the rate the device counters are differenced into.
 //
-//  Run:  cat Perch/Monitor/Readings.swift Perch/Monitor/DiskReadings.swift \
-//            Perch/Cleanup/DiskCleanup.swift \
+//  Run:  cat Roost/Monitor/Readings.swift Roost/Monitor/DiskReadings.swift \
+//            Roost/Cleanup/DiskCleanup.swift \
 //            Tools/disk-test.swift | swift -
 //
 //  Two of these are the kind of wrong that looks right. A rate taken across a

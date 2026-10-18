@@ -6,7 +6,7 @@
 //  to start the app it is embedded in and get out of the way.
 //
 //  It exists because `SMAppService.loginItem` registers a *bundle*, and the
-//  bundle it registers has to be launchable on its own. Perch cannot register
+//  bundle it registers has to be launchable on its own. Roost cannot register
 //  itself as a login item and also control when it appears, so the helper is
 //  the indirection.
 //
@@ -25,7 +25,7 @@ else {
 // Already running, because the user opened it before login finished or macOS
 // restored it from the previous session. Asking the Workspace to open it a
 // second time is not harmful, but it is not free either, and the answer to
-// "is Perch running" is already known here.
+// "is Roost running" is already known here.
 if !NSRunningApplication.runningApplications(withBundleIdentifier: hostID).isEmpty {
     exit(0)
 }
@@ -44,7 +44,7 @@ let finished = DispatchSemaphore(value: 0)
 var failure: Error?
 
 let configuration = NSWorkspace.OpenConfiguration()
-// Perch is LSUIElement: no Dock icon, and no window at launch. There is
+// Roost is LSUIElement: no Dock icon, and no window at launch. There is
 // nothing for activation to bring forward, so asking for it would be asking
 // the window server to change focus to nothing.
 configuration.activates = false

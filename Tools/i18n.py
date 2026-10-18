@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keeps Perch's translations in step with English, and English with the code.
+"""Keeps Roost's translations in step with English, and English with the code.
 
     python3 Tools/i18n.py          check: every language has exactly en.lproj's
                                    keys, and keeps each %0, %1 ... placeholder
@@ -23,14 +23,14 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STRINGS_DIR = os.path.join(ROOT, "Perch", "Supporting Files")
-SOURCE_DIRS = [os.path.join(ROOT, "Perch"), os.path.join(ROOT, "LaunchAtLogin")]
+STRINGS_DIR = os.path.join(ROOT, "Roost", "Supporting Files")
+SOURCE_DIRS = [os.path.join(ROOT, "Roost"), os.path.join(ROOT, "LaunchAtLogin")]
 FILE_NAME = "Localizable.strings"
 
 # One entry per line: "key" = "value";  -- the only shape these files use.
 # Escaped quotes inside either side are allowed, and so is a trailing comment.
 ENTRY = re.compile(r'^\s*"((?:[^"\\]|\\.)*)"\s*=\s*"((?:[^"\\]|\\.)*)"\s*;\s*(?://.*)?$')
-# The helper in Perch/UI/Localized.swift, and Foundation's, which is still
+# The helper in Roost/UI/Localized.swift, and Foundation's, which is still
 # legal to call. A literal first argument is a key the code asks for.
 CALL = re.compile(r'\b(?:localized|NSLocalizedString)\(\s*"((?:[^"\\]|\\.)*)"')
 LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')

@@ -3,7 +3,7 @@
 //
 //  Exercises the rule that decides when something has really changed.
 //
-//  Run:  cat Perch/Monitor/Changes.swift Tools/changes-test.swift | swift -
+//  Run:  cat Roost/Monitor/Changes.swift Tools/changes-test.swift | swift -
 //
 //  A connectivity probe through a link that is already struggling fails
 //  occasionally without the link being down, and a public address read

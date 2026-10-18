@@ -4,8 +4,8 @@
 //  Exercises the module popup shortcuts: what may be recorded, how it is
 //  stored, and how it reads back.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/UI/Events.swift \
-//            Perch/UI/ShortcutRecorder.swift Tools/shortcut-test.swift | swift -
+//  Run:  cat Roost/UI/Localized.swift Roost/UI/Events.swift \
+//            Roost/UI/ShortcutRecorder.swift Tools/shortcut-test.swift | swift -
 //
 //  The stored form is load-bearing: a pressed key is matched by building
 //  its codes the same way and comparing arrays, so a shortcut recorded in a
@@ -51,7 +51,7 @@ check("letters come from the keyboard layout, not a table", !c.keyName(for: 8).h
 
 print("\nOne shortcut, one module")
 do {
-    let suite = "perch-shortcut-test-\(getpid())"
+    let suite = "roost-shortcut-test-\(getpid())"
     let defaults = UserDefaults(suiteName: suite)!
     defer { defaults.removePersistentDomain(forName: suite) }
     defaults.set([59, 58, 8], forKey: "RAM_popupShortcut")

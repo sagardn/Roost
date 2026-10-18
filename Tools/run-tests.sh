@@ -61,7 +61,7 @@ incomplete=()
 missing=()
 total=0
 
-log=$(mktemp -t perch-suite)
+log=$(mktemp -t roost-suite)
 trap 'rm -f "$log"' EXIT
 
 # On a CI runner, say what went wrong somewhere that can be read back.

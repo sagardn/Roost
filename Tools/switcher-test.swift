@@ -7,7 +7,7 @@
 //  by reading the code -- the symptoms are an order that changes between
 //  cycles and a press that does nothing -- so each one is a case here.
 //
-//  Run:  cat Perch/Launcher/Recents.swift Tools/switcher-test.swift | swift -
+//  Run:  cat Roost/Launcher/Recents.swift Tools/switcher-test.swift | swift -
 //
 //  The logic is compiled in from the app's own source rather than copied, so
 //  this cannot drift from what ships.
@@ -49,7 +49,7 @@ do {
     check("frontmost is demoted to last", order.map(\.cycleID) == ["b", "c", "a"])
 }
 
-// The bug behind "it jumps around": apps Perch has never seen all scored 0,
+// The bug behind "it jumps around": apps Roost has never seen all scored 0,
 // and Swift's sort is not stable, so their order was arbitrary.
 do {
     let ids = ["zebra", "apple", "mango", "kiwi", "pear", "fig", "date", "lime"]

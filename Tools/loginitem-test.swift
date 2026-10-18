@@ -29,26 +29,26 @@ func url(_ path: String) -> URL { URL(fileURLWithPath: path) }
 print("LoginHelper.hostApp")
 
 do {
-    let helper = url("/Applications/Perch.app/Contents/Library/LoginItems/LaunchAtLogin.app")
+    let helper = url("/Applications/Roost.app/Contents/Library/LoginItems/LaunchAtLogin.app")
     check("the app four directories up is the answer",
-          LoginHelper.hostApp(forHelperAt: helper)?.path == "/Applications/Perch.app")
+          LoginHelper.hostApp(forHelperAt: helper)?.path == "/Applications/Roost.app")
 }
 
 do {
     // Not every Mac installs to /Applications, and the depth is relative to
     // the helper, not absolute.
-    let helper = url("/Users/someone/Desktop/builds/Perch.app/Contents/Library/LoginItems/LaunchAtLogin.app")
+    let helper = url("/Users/someone/Desktop/builds/Roost.app/Contents/Library/LoginItems/LaunchAtLogin.app")
     check("it does not care where the app itself lives",
           LoginHelper.hostApp(forHelperAt: helper)?.path
-            == "/Users/someone/Desktop/builds/Perch.app")
+            == "/Users/someone/Desktop/builds/Roost.app")
 }
 
 do {
     // A trailing slash is what you get from a URL built by appending
     // components, and it must not count as a directory of its own.
-    let helper = url("/Applications/Perch.app/Contents/Library/LoginItems/LaunchAtLogin.app/")
+    let helper = url("/Applications/Roost.app/Contents/Library/LoginItems/LaunchAtLogin.app/")
     check("a trailing slash is not a level",
-          LoginHelper.hostApp(forHelperAt: helper)?.path == "/Applications/Perch.app")
+          LoginHelper.hostApp(forHelperAt: helper)?.path == "/Applications/Roost.app")
 }
 
 do {
@@ -88,11 +88,11 @@ do {
 print("\nLoginHelper.hostBundleID")
 
 check("the suffix comes off the end",
-      LoginHelper.hostBundleID(forHelperID: "com.sagar.perch.LaunchAtLogin")
-        == "com.sagar.perch")
+      LoginHelper.hostBundleID(forHelperID: "com.sagar.roost.LaunchAtLogin")
+        == "com.sagar.roost")
 
 check("an identifier without the suffix is not this helper's",
-      LoginHelper.hostBundleID(forHelperID: "com.sagar.perch") == nil)
+      LoginHelper.hostBundleID(forHelperID: "com.sagar.roost") == nil)
 
 // The reason this is a suffix check and not a replacement: an identifier with
 // the suffix in the middle would have its middle cut out, and the result
@@ -107,20 +107,20 @@ check("nor is an empty string",
       LoginHelper.hostBundleID(forHelperID: "") == nil)
 
 check("the suffix is matched exactly, case and all",
-      LoginHelper.hostBundleID(forHelperID: "com.sagar.perch.launchatlogin") == nil)
+      LoginHelper.hostBundleID(forHelperID: "com.sagar.roost.launchatlogin") == nil)
 
 // MARK: - The two together, on the layout that ships
 
 print("\nThe shipping layout")
 
 do {
-    let helper = url("/Applications/Perch.app/Contents/Library/LoginItems/LaunchAtLogin.app")
+    let helper = url("/Applications/Roost.app/Contents/Library/LoginItems/LaunchAtLogin.app")
     let host = LoginHelper.hostApp(forHelperAt: helper)
-    let id = LoginHelper.hostBundleID(forHelperID: "com.sagar.perch.LaunchAtLogin")
+    let id = LoginHelper.hostBundleID(forHelperID: "com.sagar.roost.LaunchAtLogin")
     check("the path and the identifier describe the same app",
-          host?.lastPathComponent == "Perch.app" && id == "com.sagar.perch")
-    // PRODUCT_BUNDLE_IDENTIFIER is com.sagar.perch for the app and
-    // com.sagar.perch.LaunchAtLogin for this target. If either moves, this is
+          host?.lastPathComponent == "Roost.app" && id == "com.sagar.roost")
+    // PRODUCT_BUNDLE_IDENTIFIER is com.sagar.roost for the app and
+    // com.sagar.roost.LaunchAtLogin for this target. If either moves, this is
     // the check that notices.
     check("and the suffix is the one the project actually sets",
           LoginHelper.identifierSuffix == ".LaunchAtLogin")

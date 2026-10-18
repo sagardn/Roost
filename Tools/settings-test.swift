@@ -4,10 +4,10 @@
 //  Exercises Preferences: key compatibility with what Kit's Store wrote,
 //  defaults, round-tripping, export/import and reset.
 //
-//  Run:  cat Perch/Settings/Preferences.swift Tools/settings-test.swift | swift -
+//  Run:  cat Roost/Settings/Preferences.swift Tools/settings-test.swift | swift -
 //
 //  Every case runs against a scratch UserDefaults suite, so running the tests
-//  cannot touch the settings of the Perch installed on this machine.
+//  cannot touch the settings of the Roost installed on this machine.
 //
 import Foundation
 
@@ -17,7 +17,7 @@ func check(_ name: String, _ ok: Bool) {
     if !ok { failures += 1 }
 }
 
-let suiteName = "perch.settings.test.\(UUID().uuidString)"
+let suiteName = "roost.settings.test.\(UUID().uuidString)"
 let suite = UserDefaults(suiteName: suiteName)!
 let prefs = Preferences(defaults: suite, domain: suiteName)
 
@@ -40,7 +40,7 @@ check("a true default can be set false", prefs.combinedPopup == false)
 
 print("Key compatibility with Kit's Store")
 // Kit wrote plain keys into the standard domain. A pane reading a different
-// key would silently show defaults to a user who had configured Perch.
+// key would silently show defaults to a user who had configured Roost.
 suite.set("celsius", forKey: "temperature_units")
 check("reads temperature_units", prefs.temperatureUnits == "celsius")
 suite.set(true, forKey: "keep_menubar_positions")
@@ -53,7 +53,7 @@ check("writes the key Kit read", suite.object(forKey: "dockIcon") as? Bool == fa
 print("Explicit false is not a missing key")
 // `defaults.bool(forKey:)` returns false for both, so a setting the user
 // turned off and one never set look identical unless existence is checked.
-let freshName = "perch.settings.test.\(UUID().uuidString)"
+let freshName = "roost.settings.test.\(UUID().uuidString)"
 let fresh = UserDefaults(suiteName: freshName)!
 let p2 = Preferences(defaults: fresh, domain: freshName)
 check("unset true-default reads true", p2.combinedPopup == true)
@@ -76,7 +76,7 @@ do {
     let data = try prefs.exportAll()
     check("export produces a plist", data.count > 0)
 
-    let targetName = "perch.settings.test.\(UUID().uuidString)"
+    let targetName = "roost.settings.test.\(UUID().uuidString)"
     let target = UserDefaults(suiteName: targetName)!
     let p3 = Preferences(defaults: target, domain: targetName)
     let count = try p3.importAll(data)

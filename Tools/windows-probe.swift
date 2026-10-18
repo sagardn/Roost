@@ -12,9 +12,9 @@
 //  Reported as "if any app 3 windo open i can witch in2 windo in my app".
 //  Electron apps publish nothing through kAXWindowsAttribute, so the Windows
 //  section never appeared for them; this shows the Accessibility count beside
-//  the count Perch ends up with, which is the thing that was wrong.
+//  the count Roost ends up with, which is the thing that was wrong.
 //
-//  Run:  cat Perch/Launcher/WindowControl.swift Perch/Launcher/AppEntry.swift \
+//  Run:  cat Roost/Launcher/WindowControl.swift Roost/Launcher/AppEntry.swift \
 //            Tools/windows-probe.swift | swift -
 //
 import AppKit

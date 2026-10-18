@@ -3,10 +3,10 @@
 //
 //  Exercises the independent monitor's readers.
 //
-//  Run:  cat Perch/Monitor/ProcessNetwork.swift \
-//            Perch/Monitor/ProcessCPU.swift Perch/Monitor/ProcessMemory.swift \
-//            Perch/Monitor/CPUReadings.swift \
-//            Perch/Monitor/MemoryReadings.swift \
+//  Run:  cat Roost/Monitor/ProcessNetwork.swift \
+//            Roost/Monitor/ProcessCPU.swift Roost/Monitor/ProcessMemory.swift \
+//            Roost/Monitor/CPUReadings.swift \
+//            Roost/Monitor/MemoryReadings.swift \
 //            Tools/monitor-test.swift | swift -
 //
 //  The readers are compiled in from the app's own source rather than copied,
@@ -217,7 +217,7 @@ print("\nProcessCPU.percent")
 
 // This replaced parsing `ps`, which cost 98 ms a refresh against 0.8 ms for
 // a native sweep -- about 10% of a core for as long as the CPU popup was
-// open, which is why Perch was the top entry in its own list.
+// open, which is why Roost was the top entry in its own list.
 check("a second of CPU over a second is one core",
       ProcessCPU.percent(before: 0, after: 1_000_000_000, elapsed: 1) == 100)
 check("two cores' worth reads over 100%",

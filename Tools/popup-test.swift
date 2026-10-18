@@ -3,13 +3,13 @@
 //
 //  Exercises the words the popups lead with.
 //
-//  Run:  cat Perch/UI/Palette.swift Perch/UI/Localized.swift Perch/UI/Events.swift \
-//            Perch/Settings/Preferences.swift Perch/Monitor/MenuBarStyle.swift \
-//            Perch/Monitor/MenuBarWidget.swift Perch/Monitor/Readings.swift \
-//            Perch/Monitor/ProcessNetwork.swift Perch/UI/Alert.swift \
-//            Perch/Launcher/Notify.swift Perch/Monitor/ProcessControl.swift \
-//            Perch/Monitor/PopupSection.swift \
-//            Perch/Monitor/PopupParts.swift Tools/popup-test.swift | swift -
+//  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift Roost/UI/Events.swift \
+//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
+//            Roost/Monitor/ProcessNetwork.swift Roost/UI/Alert.swift \
+//            Roost/Launcher/Notify.swift Roost/Monitor/ProcessControl.swift \
+//            Roost/Monitor/PopupSection.swift \
+//            Roost/Monitor/PopupParts.swift Tools/popup-test.swift | swift -
 //
 //  The status line's word and its dot are worked out separately -- the word
 //  here, the colour from `Severity` -- so the one thing worth asserting is
@@ -117,36 +117,36 @@ do {
           S.ofDisk(0.91) == .warning && S.ofTemperature(96) == .critical && S.of(load: 0.6) == .warning)
 }
 
-print("\nPerchColors hex")
+print("\nRoostColors hex")
 
 do {
-    check("full code", PerchColors.normalised("#0e9ba8") == "#0E9BA8")
-    check("no hash", PerchColors.normalised("0E9BA8") == "#0E9BA8")
-    check("short code expands", PerchColors.normalised("#f80") == "#FF8800")
-    check("whitespace is trimmed", PerchColors.normalised("  #C9302C\n") == "#C9302C")
-    check("not hex is refused", PerchColors.normalised("#GGGGGG") == nil)
-    check("wrong length is refused", PerchColors.normalised("#12345") == nil)
-    check("empty is refused", PerchColors.normalised("") == nil)
-    check("a name is refused", PerchColors.normalised("red") == nil)
+    check("full code", RoostColors.normalised("#0e9ba8") == "#0E9BA8")
+    check("no hash", RoostColors.normalised("0E9BA8") == "#0E9BA8")
+    check("short code expands", RoostColors.normalised("#f80") == "#FF8800")
+    check("whitespace is trimmed", RoostColors.normalised("  #C9302C\n") == "#C9302C")
+    check("not hex is refused", RoostColors.normalised("#GGGGGG") == nil)
+    check("wrong length is refused", RoostColors.normalised("#12345") == nil)
+    check("empty is refused", RoostColors.normalised("") == nil)
+    check("a name is refused", RoostColors.normalised("red") == nil)
 
     // Every default survives the trip through NSColor and back, so the
     // field shows exactly what is stored and "reset" is detectable.
-    for which in PerchColors.allCases {
-        let color = PerchColors.color(fromHex: which.defaultHex)!
-        check("\(which) round-trips", PerchColors.hex(of: color) == which.defaultHex)
+    for which in RoostColors.allCases {
+        let color = RoostColors.color(fromHex: which.defaultHex)!
+        check("\(which) round-trips", RoostColors.hex(of: color) == which.defaultHex)
     }
 }
 
 do {
     // Stored under the user's key and read back as the colour.
-    let which = PerchColors.calm
+    let which = RoostColors.calm
     let before = UserDefaults.standard.string(forKey: which.key)
     defer { UserDefaults.standard.set(before, forKey: which.key) }
 
     which.set(hex: "#123456")
     check("a choice is stored and used", which.hex == "#123456"
-          && PerchColors.hex(of: NSColor.perchCalm) == "#123456")
-    check("the same choice is the same colour object", NSColor.perchCalm === NSColor.perchCalm)
+          && RoostColors.hex(of: NSColor.roostCalm) == "#123456")
+    check("the same choice is the same colour object", NSColor.roostCalm === NSColor.roostCalm)
     which.set(hex: "nonsense")
     check("a bad code restores the default", which.hex == which.defaultHex && !which.isCustom)
     which.set(hex: which.defaultHex)
@@ -161,11 +161,11 @@ do {
     defer { UserDefaults.standard.set(before, forKey: key) }
 
     UserDefaults.standard.removeObject(forKey: key)
-    check("the menu bar is coloured by default", PerchColors.menuBarColoured)
-    PerchColors.menuBarColoured = false
-    check("switching it off is remembered", !PerchColors.menuBarColoured)
-    PerchColors.menuBarColoured = true
-    check("and on again", PerchColors.menuBarColoured)
+    check("the menu bar is coloured by default", RoostColors.menuBarColoured)
+    RoostColors.menuBarColoured = false
+    check("switching it off is remembered", !RoostColors.menuBarColoured)
+    RoostColors.menuBarColoured = true
+    check("and on again", RoostColors.menuBarColoured)
 }
 
 // MARK: - The force-quit menu on a process row

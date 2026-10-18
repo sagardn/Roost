@@ -3,9 +3,9 @@
 //
 //  Exercises the Network module's maths and formatting.
 //
-//  Run:  cat Perch/Monitor/Readings.swift \
-//            Perch/Monitor/NetworkInfo.swift \
-//            Perch/Monitor/NetworkMonitor.swift \
+//  Run:  cat Roost/Monitor/Readings.swift \
+//            Roost/Monitor/NetworkInfo.swift \
+//            Roost/Monitor/NetworkMonitor.swift \
 //            Tools/network-test.swift | swift -
 //
 //  Rates are the part of this module that can be wrong quietly. A counter

@@ -1,6 +1,6 @@
 # Architecture
 
-Perch is two applications sharing one process and one menu bar:
+Roost is two applications sharing one process and one menu bar:
 
 - **the launcher** — a search panel, global hotkeys, window control
 - **the monitor** — readings drawn into the menu bar, each with a popup
@@ -12,24 +12,55 @@ The monitor half is mid-migration. This document says exactly where it is.
 
 ---
 
+## The name
+
+The app was called Perch until 1.0.19 and was renamed Roost on 2026-10-18,
+because another app already had the name. Everything was renamed -- the
+bundle identifier (`com.sagar.roost`), the folders, the types, the 41
+translations and the GitHub repository -- and the icon was redrawn without
+the bird the old name stood for: a roof over three rising bars
+(`Tools/makeicon.swift` says why).
+
+"Perch" survives on purpose in exactly the places that face installed
+copies, and nowhere else:
+
+- `Roost/Startup/FormerName.swift` and `FormerNameMigration.swift` carry a Mac
+  across once: the old preference domain is copied into the new one with
+  `com.sagar.perch` rewritten in its keys, `Application Support/Perch` is
+  moved, and a bundle that arrives as `Perch.app` moves itself to
+  `Roost.app` and relaunches. The marker goes in the *old* domain, so
+  "Reset settings" cannot bring Perch's settings back.
+  `Tools/formername-test.swift` holds the decisions to that.
+- `release.yaml` publishes `Perch.dmg` beside `Roost.dmg`. The updater in
+  1.0.19 and older is compiled into those copies: it asks for that asset
+  and copies `Perch.app` out of it. Removing the bridge strands every one of
+  them on its last version, silently.
+- The install, local-install and uninstall scripts remove `Perch.app` and its
+  data, so a Mac does not end up running two copies holding the same hotkeys.
+- The "Perch is now Roost" notice, shown once in place of "updated".
+
+The old repository URL, `github.com/sagardn/Perch`, keeps working only while
+GitHub's rename redirect does. That breaks if a new repository is ever made
+under the old name, so none should be.
+
 ## The tree
 
 | Path | Origin | Role |
 |---|---|---|
-| `Perch/Launcher/` | written here | the launcher, start to finish |
-| `Perch/Monitor/` | written here | **the independent monitor — all new work goes here** |
-| `Perch/Cleanup/` | written here | finding and removing things: large files, apps, command-line tools |
-| `Perch/Views/` | written here | the settings window and the first-run window |
-| `Perch/AppDelegate.swift` | written here | application lifecycle and the four windows |
-| `Perch/Startup/` | written here | launch arguments, diagnostics, schedules, the support prompt, the popup shortcut |
-| `Perch/UI/`, `Perch/Settings/`, `Perch/System/`, `Perch/Update/` | written here | controls, preferences, the Dashboard, the updater |
+| `Roost/Launcher/` | written here | the launcher, start to finish |
+| `Roost/Monitor/` | written here | **the independent monitor — all new work goes here** |
+| `Roost/Cleanup/` | written here | finding and removing things: large files, apps, command-line tools |
+| `Roost/Views/` | written here | the settings window and the first-run window |
+| `Roost/AppDelegate.swift` | written here | application lifecycle and the four windows |
+| `Roost/Startup/` | written here | launch arguments, diagnostics, schedules, the support prompt, the popup shortcut |
+| `Roost/UI/`, `Roost/Settings/`, `Roost/System/`, `Roost/Update/` | written here | controls, preferences, the Dashboard, the updater |
 | `LaunchAtLogin/` | written here | the login item helper |
 | `Tools/` | written here | icon generator, test suites, installer, uninstaller, the i18n check |
 
 `Kit/`, `Modules/`, `SMC/` and `Widgets/` are gone. Nothing links a framework
 and the built bundle has no `Contents/Frameworks` at all.
 
-Nothing in the tree is derived any more, and Perch is MIT under its own
+Nothing in the tree is derived any more, and Roost is MIT under its own
 copyright alone (`LICENSE`). The last derived content went in one change:
 
 | What | How it went |
@@ -62,7 +93,7 @@ Complete. What follows is the record of what each module became.
 
 ### What is independent today
 
-`Perch/Monitor/`, built against public macOS APIs only:
+`Roost/Monitor/`, built against public macOS APIs only:
 
 | File | Reads | Via |
 |---|---|---|
@@ -94,18 +125,18 @@ The UI they feed:
 
 ### How to see it
 
-Nothing needs the flag any more. Every module Perch draws is a registered
+Nothing needs the flag any more. Every module Roost draws is a registered
 module in its own right — CPU, RAM and Network — rather than a preview beside
 the one it duplicates. The flag stays for the next module, which will spend a
 few commits behind it:
 
 ```bash
-defaults write com.sagar.perch nativeMonitor -bool true
+defaults write com.sagar.roost nativeMonitor -bool true
 ```
 
 ### What is left
 
-Nothing. Every module is Perch's, the shell reads its settings through
+Nothing. Every module is Roost's, the shell reads its settings through
 `Preferences`, the framework they were built on has been deleted along with
 its Xcode target, and the translations, scripts and assets that came with the
 import have been replaced or deleted.
@@ -128,7 +159,7 @@ Its `text` shape is left out, as RAM's and Network's are.
 The volume the menu bar figure is about is kept, but stored differently.
 The old module stored the drive's **name** under `Disk_disk`; two drives
 called "Backup" are entirely possible and a name cannot tell them apart, so
-Perch stores the mount point. A chosen volume that is not mounted falls back
+Roost stores the mount point. A chosen volume that is not mounted falls back
 to the startup volume without forgetting the choice.
 
 **Three keys have held this setting**, because the module was built twice --
@@ -161,7 +192,7 @@ this hardware** and said so in the code.
 
 **The 587-line key table.** The module this replaces mapped SMC keys to human
 names from a transcription of undocumented firmware keys, most of which
-cannot be checked on any one machine. It is not reproduced. Perch names HID
+cannot be checked on any one machine. It is not reproduced. Roost names HID
 sensors whatever the system calls them -- they are self-describing -- groups
 SMC keys by the one convention that has held for twenty years (T temperature,
 V volts, I amps, P watts, F fans), and gives a real name only to the handful
@@ -179,7 +210,7 @@ decimals, which is the closest thing to a second instrument available.
 
 Neither module was rebuilt, and that was a decision rather than a gap. macOS already
 shows battery charge and Bluetooth device batteries in its own menu bar, so a
-second copy inside Perch was duplication to maintain rather than something the
+second copy inside Roost was duplication to maintain rather than something the
 app was for. Both modules, both framework targets and both embedded
 frameworks are removed; `NSBluetoothAlwaysUsageDescription` went with them,
 because nothing links CoreBluetooth any more and advertising a permission the
@@ -262,7 +293,7 @@ than a number that means something else.
 
 ### What Network does not reproduce
 
-The module it replaced offered five menu bar shapes. Perch draws three of
+The module it replaced offered five menu bar shapes. Roost draws three of
 them — the name, the pair of rates, and the two-sided traffic chart. The two
 left out are `text` and `state`, the same pair RAM's left out, for the same
 reason: both are drawing routines rather than readings, and the stored name of
@@ -279,7 +310,7 @@ report a change to the last of them.
 
 ### What RAM does not reproduce
 
-The module it replaced offered nine menu bar shapes. Perch draws seven of
+The module it replaced offered nine menu bar shapes. Roost draws seven of
 them -- the six every module shares, plus the pair of figures that shape
 called `memory`. The two left out are `text`, a template language for
 composing a string out of the module's values, and `state`, a coloured dot.
@@ -316,7 +347,7 @@ reasons are not going to change:
 
 ## Localisation
 
-Perch ships 41 `.lproj` files and is, in the part a user actually reads,
+Roost ships 41 `.lproj` files and is, in the part a user actually reads,
 English only. Both halves of that are true at once and the second one is the
 one worth knowing.
 
@@ -377,11 +408,11 @@ today and fourteen literals remain, every one of them deliberate:
 
 | Still a literal | Why |
 |---|---|
-| `"Perch"` in `GeneralPane` and `UpdateWindow` | the product name; it is not translated anywhere |
+| `"Roost"` in `GeneralPane` and `UpdateWindow` | the product name; it is not translated anywhere |
 | `"CPU"`, `"GPU"`, `"RAM"`, `"NET"` | menu bar labels, where the space is a few points wide and the abbreviation is read the same in every language the app ships |
 | `"↓ "`, `"↑ "` | direction arrows |
 | `"⌃-"` | a keyboard glyph standing in for an unset shortcut |
-| `com.sagar.perch.*` ×4 | dispatch queue labels, which no one ever sees |
+| `com.sagar.roost.*` ×4 | dispatch queue labels, which no one ever sees |
 
 They are listed because the obvious next contribution is to "finish the job"
 by wrapping them, and each one would be a small regression: a translated
@@ -396,7 +427,7 @@ does not mean the app is *translated* — see below.
 Twice, and the first time did not take.
 
 The pass at the relicensing rewrote the headers, deleted 376 dead keys and
-fixed individual entries, and the files read as Perch's afterwards. They were
+fixed individual entries, and the files read as Roost's afterwards. They were
 not: compared pair by pair -- same key, same value -- against the import they
 started from, 2,141 translated lines across the 38 non-English languages were
 still verbatim. Whole-file similarity (12-34%) hid it; only the per-pair
@@ -458,7 +489,7 @@ language you read is worth more than adding a new one.
 
 ## New hardware
 
-Perch reads hardware, and the hardware changes under it. A new Apple silicon
+Roost reads hardware, and the hardware changes under it. A new Apple silicon
 generation arrives about once a year, and the way this app breaks on one is
 not a crash — it is a reading that quietly goes missing, or worse, one that
 reads zero because a key it expected was not there.
@@ -484,12 +515,12 @@ speed of 0 rpm would be.
 **Be checkable on a Mac we do not have.** Nobody can test five generations:
 
 ```bash
-cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-    Perch/Monitor/Readings.swift Perch/Monitor/CPUReadings.swift \
-    Perch/Monitor/MemoryReadings.swift Perch/Monitor/GPUStats.swift \
-    Perch/Monitor/DiskReadings.swift Perch/Monitor/NetworkInfo.swift \
-    Perch/Monitor/Temperature.swift Perch/Monitor/SMCKit.swift \
-    Perch/Monitor/SensorReadings.swift Perch/System/DeviceInfo.swift \
+cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+    Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
+    Roost/Monitor/MemoryReadings.swift Roost/Monitor/GPUStats.swift \
+    Roost/Monitor/DiskReadings.swift Roost/Monitor/NetworkInfo.swift \
+    Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
+    Roost/Monitor/SensorReadings.swift Roost/System/DeviceInfo.swift \
     Tools/hardware-report.swift | swift -
 ```
 
@@ -536,9 +567,9 @@ case nobody has been able to run. `hardware-report` shouts if it sees one.
 
 ## Cleanup
 
-`Perch/Cleanup/` is not monitoring. It reads a disk to find what is on it and
+`Roost/Cleanup/` is not monitoring. It reads a disk to find what is on it and
 moves things to the Bin, which is a different job from sampling a counter
-every second, and it began as six files inside `Perch/Monitor/` only because
+every second, and it began as six files inside `Roost/Monitor/` only because
 that is where the Disk module was. The Free up space page in the settings
 sidebar is its front door; it used to be a section at the bottom of the Disk
 module's settings, where nobody looking to uninstall an app would think to
@@ -567,7 +598,7 @@ that went wrong:
 - **No Full Disk Access.** `~/.Trash`, `Saved Application State` and
   `Cookies` need it, so they are not searched -- they would always come back
   empty and read as nothing being there. Asking for the permission would make
-  Perch able to read every file on the Mac, to save a few hundred megabytes.
+  Roost able to read every file on the Mac, to save a few hundred megabytes.
 - **A package manager removes what it installed.** Deleting `Cellar/ripgrep`
   by hand leaves Homebrew's receipts claiming the formula is still there, so
   a managed tool is removed by its own command, shown in full before it runs.
@@ -580,7 +611,7 @@ for no gain; measured here, 3.3 GB of it.
 
 ## The Dashboard
 
-The Overview page (`Perch/System/Dashboard*.swift`) has no sampler. It reads
+The Overview page (`Roost/System/Dashboard*.swift`) has no sampler. It reads
 what each module's `menuBarContent()` stored on the last menu bar tick, through
 `DashboardReporting` (each module's conformance is in its popup file, beside
 the private state it reads), and redraws when `MonitorBar` posts
@@ -623,7 +654,7 @@ size the desktop looks like (1470×956) and the buffer it is drawn into
 
 ## Clipboard history
 
-`Perch/Clipboard/` is not monitoring either, but it is a module in every way
+`Roost/Clipboard/` is not monitoring either, but it is a module in every way
 the shell cares about: a switch in the sidebar, an item `MonitorBar` draws
 (individually or in the combined row, at the position the user dragged it
 to), a `ReadingPopup`, a tile in the combined popup, and a settings page. It
@@ -640,7 +671,7 @@ and left out of every other module's shape list (`MenuBarStyle.special`).
 | `ClipboardService.swift` | the one monitor, and the history every view observes |
 | `ClipboardSettings.swift` | preferences under `Clipboard_` |
 | `ClipboardActions.swift` | using an entry, optional paste, the privacy note |
-| `ClipboardModule.swift` | the `PerchModule` and `PopupContent` |
+| `ClipboardModule.swift` | the `RoostModule` and `PopupContent` |
 | `ClipboardPopupView.swift`, `ClipboardHistoryWindow.swift`, `ClipboardViews.swift`, `ClipboardSettingsPage.swift` | the interface |
 
 Decisions, each made against something that would otherwise go wrong:
@@ -653,20 +684,20 @@ Decisions, each made against something that would otherwise go wrong:
 - **A change count, not a read.** `NSPasteboard` posts no notification, so the
   service polls `changeCount` every 0.75 s while monitoring is on, and has
   no timer while it is off. Content is read only when the count moved, and
-  not for a change Perch's own restore made. That change is skipped twice
+  not for a change Roost's own restore made. That change is skipped twice
   over: by its recorded change count, and by a marker type on everything
-  Perch writes.
+  Roost writes.
 - **macOS 15.4+ gates programmatic clipboard reads** (`NSPasteboard.accessBehavior`).
-  Perch asks for no new permission; the settings page shows the state, and a
+  Roost asks for no new permission; the settings page shows the state, and a
   denied read shows as *Blocked by macOS* instead of an empty history.
 - **What is never kept:** the nspasteboard.org concealed, transient and
   auto-generated markers, whatever the settings say; and copies made while
   an excluded app is in front. The source is "the app in front", because the
   pasteboard does not record its writer, and the interface says so.
 - **Not encrypted.** The store is the user's own, 0700/0600, under
-  `~/Library/Application Support/Perch/Clipboard/`; nothing claims more.
+  `~/Library/Application Support/Roost/Clipboard/`; nothing claims more.
 - **Paste is opt-in** and is the only part that needs a permission
-  (Accessibility, already used for window control). It never targets Perch
+  (Accessibility, already used for window control). It never targets Roost
   and reports "sent", not "pasted".
 
 `Tools/clipboard-test.swift` drives all of it against a fake pasteboard
@@ -675,7 +706,7 @@ clipboard.
 
 ## Adding a module
 
-1. Write the reader in `Perch/Monitor/`, against public APIs.
+1. Write the reader in `Roost/Monitor/`, against public APIs.
 2. Add invariant tests to `Tools/monitor-test.swift`, and check them with
    `Tools/run-tests.sh monitor`.
 3. Conform a type to `PopupContent` and build its view from the pieces in

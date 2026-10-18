@@ -9,7 +9,7 @@
 //  one double tap, letting a run survive past its window. Each of those is a
 //  case below.
 //
-//  Run:  cat Perch/Launcher/Gesture.swift Tools/gesture-test.swift | swift -
+//  Run:  cat Roost/Launcher/Gesture.swift Tools/gesture-test.swift | swift -
 //
 //  The recogniser is compiled in from the app's own source rather than copied,
 //  so this cannot drift from what ships.

@@ -18,7 +18,7 @@ enum LoginHelper {
 
     /// How deep inside the app bundle a login item lives.
     ///
-    /// `Perch.app/Contents/Library/LoginItems/LaunchAtLogin.app` — four
+    /// `Roost.app/Contents/Library/LoginItems/LaunchAtLogin.app` — four
     /// directories down, fixed by the layout `SMAppService` expects rather
     /// than by anything this chooses.
     private static let depth = 4

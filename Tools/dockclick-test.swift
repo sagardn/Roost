@@ -3,9 +3,9 @@
 //
 //  Exercises what a click on the Dock means.
 //
-//  Run:  cat Perch/Launcher/DockClick.swift Tools/dockclick-test.swift | swift -
+//  Run:  cat Roost/Launcher/DockClick.swift Tools/dockclick-test.swift | swift -
 //
-//  Almost every case here is one where Perch must do NOTHING. macOS already
+//  Almost every case here is one where Roost must do NOTHING. macOS already
 //  launches, raises and restores from a Dock click; the only case it leaves
 //  empty is clicking the app you are already in, and that is the only one
 //  this may answer. Acting on any of the others would fight the Dock and
@@ -62,9 +62,9 @@ check("released off the Dock is not a click",
 check("pressed off the Dock is not a click",
       !DockClick.isSameClick(press: nil, release: chrome))
 
-// MARK: - When Perch may act
+// MARK: - When Roost may act
 
-print("\nWhat Perch does, which is almost always nothing")
+print("\nWhat Roost does, which is almost always nothing")
 
 func decide(_ hit: DockClick.Item?, press: String?, now: String?) -> String? {
     DockClick.appToPutAway(hit: hit, frontmostAtPress: press, frontmostNow: now)
@@ -156,7 +156,7 @@ check("just past the settling time: put away",
                              pressedAt: press,
                              activatedAt: press.addingTimeInterval(-0.31))
         == "com.google.Chrome")
-// Nothing recorded means it has been in front since before Perch started
+// Nothing recorded means it has been in front since before Roost started
 // watching, which is as settled as an app gets.
 check("no activation on record: put away",
       DockClick.appToPutAway(hit: chrome, frontmostAtPress: "com.google.Chrome",

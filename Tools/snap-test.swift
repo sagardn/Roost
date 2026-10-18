@@ -3,7 +3,7 @@
 //
 //  Exercises where window snapping puts a window.
 //
-//  Run:  cat Perch/Launcher/Snap.swift Tools/snap-test.swift | swift -
+//  Run:  cat Roost/Launcher/Snap.swift Tools/snap-test.swift | swift -
 //
 //  The screen below is a 1470x956 MacBook Air with a 37pt menu bar on top
 //  and a 70pt Dock at the bottom, so its usable area starts at y 70 -- the

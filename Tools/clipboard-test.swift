@@ -6,13 +6,13 @@
 //  filters, how the store survives a restart, a corrupt index and stray
 //  files, and how a restore puts an entry back.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-//            Perch/Clipboard/ClipboardEntry.swift \
-//            Perch/Clipboard/ClipboardHistory.swift \
-//            Perch/Clipboard/ClipboardPasteboard.swift \
-//            Perch/Clipboard/ClipboardStore.swift \
-//            Perch/Clipboard/ClipboardSettings.swift \
-//            Perch/Clipboard/ClipboardService.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//            Roost/Clipboard/ClipboardEntry.swift \
+//            Roost/Clipboard/ClipboardHistory.swift \
+//            Roost/Clipboard/ClipboardPasteboard.swift \
+//            Roost/Clipboard/ClipboardStore.swift \
+//            Roost/Clipboard/ClipboardSettings.swift \
+//            Roost/Clipboard/ClipboardService.swift \
 //            Tools/clipboard-test.swift | swift -
 //
 //  Every pasteboard here is `FakePasteboard`. A suite that used the general
@@ -170,7 +170,7 @@ let (outcome, count) = ClipboardRestore.restore(restored, to: board) { _ in nil 
 check("a text entry restores completely", outcome == .complete)
 check("the change count it reports is the pasteboard's", count == board.changeCount)
 check("the text is on the pasteboard", board.string(forType: ClipboardTypes.string) == "put me back")
-check("marked as Perch's own", board.items[ClipboardTypes.restoredMarker] != nil)
+check("marked as Roost's own", board.items[ClipboardTypes.restoredMarker] != nil)
 check("so reading it back captures nothing", skip(board) == .ownRestore)
 
 var richEntry = entry("bold", at: Date(), kind: .richText)
@@ -238,7 +238,7 @@ check("pins expire only when that was chosen", agingAll.entries.isEmpty)
 
 var searchable = ClipboardHistory()
 searchable.add(entry("Café menu for Friday", at: now))
-searchable.add(entry("https://perch.app", at: now.addingTimeInterval(1), kind: .url))
+searchable.add(entry("https://roost.app", at: now.addingTimeInterval(1), kind: .url))
 var photo = entry("", at: now.addingTimeInterval(2), kind: .image)
 photo.text = nil
 photo.pixelWidth = 1920
@@ -271,7 +271,7 @@ check("extra lines are counted", ClipboardPreview.extraLines("a\nb\nc") == 2)
 print("\nStore")
 
 let root = URL(fileURLWithPath: NSTemporaryDirectory())
-    .appendingPathComponent("perch-clipboard-test-\(UUID().uuidString)")
+    .appendingPathComponent("roost-clipboard-test-\(UUID().uuidString)")
 defer { try? FileManager.default.removeItem(at: root) }
 
 let store = ClipboardStore(directory: root, persistent: true)
@@ -353,7 +353,7 @@ off.monitoring = false
 
 let serviceRoot = root.appendingPathComponent("service")
 let pad = FakePasteboard()
-pad.copy(text("copied before Perch was watching"))
+pad.copy(text("copied before Roost was watching"))
 
 let watcher = service(on, board: pad, directory: serviceRoot)
 watcher.start()
@@ -379,7 +379,7 @@ check("it moves to the top as the most recently used",
 
 pad.copy([ClipboardTypes.string: Data("x".utf8), ClipboardTypes.restoredMarker: Data()])
 watcher.check()
-check("anything carrying Perch's marker is skipped even with a new count",
+check("anything carrying Roost's marker is skipped even with a new count",
       watcher.history.entries.count == 2)
 
 pad.copy(text("first copy"))

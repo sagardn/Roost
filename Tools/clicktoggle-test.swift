@@ -4,7 +4,7 @@
 //  Exercises what one click on an app in the launcher does, in every state
 //  an app can be in.
 //
-//  Run:  cat Perch/Launcher/ClickToggle.swift Tools/clicktoggle-test.swift | swift -
+//  Run:  cat Roost/Launcher/ClickToggle.swift Tools/clicktoggle-test.swift | swift -
 //
 //  The live half -- that the Accessibility calls really minimise, restore
 //  and reopen a real app's windows -- needs a granted process and a desktop,
@@ -23,7 +23,7 @@ typealias W = ClickToggle.Window
 let plain: W = W(isMain: true)
 let other: W = W()
 let down: W = W(isMinimized: true)
-let ours: W = W(isMinimized: true, minimizedByPerch: true)
+let ours: W = W(isMinimized: true, minimizedByRoost: true)
 let full: W = W(isFullScreen: true, isMain: true)
 let stuck: W = W(canMinimize: false, isMain: true)
 
@@ -59,11 +59,11 @@ check("unhidden", app(hidden: true, [plain]) == .unhide)
 check("unhidden even if it was the active app", app(hidden: true, active: true, [plain]) == .unhide)
 
 print("\nWhat a restore brings back")
-check("the windows Perch put down, all of them",
+check("the windows Roost put down, all of them",
       app(active: true, [ours, down, ours]) == .restore([0, 2]))
-check("one window when Perch put none down, not a Dock full",
+check("one window when Roost put none down, not a Dock full",
       app([down, down, down]) == .restore([0]))
-check("Perch's windows win even when not listed first",
+check("Roost's windows win even when not listed first",
       app([down, ours]) == .restore([1]))
 
 print("\nFull screen")

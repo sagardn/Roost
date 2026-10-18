@@ -4,9 +4,9 @@
 //  Exercises the menu bar renderer: the six shapes, their widths, and the
 //  stored style list.
 //
-//  Run:  cat Perch/UI/Palette.swift Perch/UI/Localized.swift \
-//            Perch/Settings/Preferences.swift Perch/Monitor/MenuBarStyle.swift \
-//            Perch/Monitor/MenuBarWidget.swift Perch/Monitor/Readings.swift \
+//  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
+//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Tools/widget-test.swift | swift -
 //
 //  Writes /tmp/menu-bar-<style>.png and /tmp/menu-bar-row.png, because a
@@ -53,7 +53,7 @@ let reading = MenuBarReading(
     value: "52%",
     history: history,
     bars: cores,
-    segments: [.init(0.18, .perchMagenta), .init(0.34, .perchBlue)],
+    segments: [.init(0.18, .roostMagenta), .init(0.34, .roostBlue)],
     pair: .init("13.0 GB", "3.0 GB")
 )
 
@@ -190,7 +190,7 @@ do {
     // Every shape at once, from a reading that can fill all of them.
     let everything = MenuBarReading(
         label: "CPU", load: 0.52, value: "52%", history: history, bars: cores,
-        segments: [.init(0.18, .perchMagenta), .init(0.34, .perchBlue)],
+        segments: [.init(0.18, .roostMagenta), .init(0.34, .roostBlue)],
         pair: .init("13.0 GB", "3.0 GB"),
         rates: .init("240 KB/s", "1.2 MB/s"),
         mirrored: .init(up: (0..<20).map { Double($0) }, down: (0..<20).map { Double(20 - $0) }),
@@ -242,7 +242,7 @@ do {
     let wild = MenuBarReading(label: "CPU", load: 4.2, value: "420%",
                               history: [-1, 2, .nan, 0.5],
                               bars: [-0.5, 1.9, 0.3],
-                              segments: [.init(9, .perchBlue), .init(-3, .perchMagenta)],
+                              segments: [.init(9, .roostBlue), .init(-3, .roostMagenta)],
                               pair: .init("?", "?"),
                               rates: .init("?", "?"),
                               mirrored: .init(up: [.nan, -5, .infinity],
@@ -256,8 +256,8 @@ do {
 
 print("\nMenuBarStyles")
 
-let defaults = UserDefaults(suiteName: "com.sagar.perch.widget-test")!
-defaults.removePersistentDomain(forName: "com.sagar.perch.widget-test")
+let defaults = UserDefaults(suiteName: "com.sagar.roost.widget-test")!
+defaults.removePersistentDomain(forName: "com.sagar.roost.widget-test")
 
 check("the key is the one the old module system wrote",
       MenuBarStyles.key("CPU") == "CPU_widget")

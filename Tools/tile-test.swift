@@ -4,14 +4,14 @@
 //  Renders the module tiles the combined details popup stacks, and looks at
 //  them.
 //
-//  Run:  cat Perch/UI/Palette.swift Perch/UI/Localized.swift \
-//            Perch/Monitor/Readings.swift Perch/Monitor/CPUReadings.swift \
-//            Perch/Monitor/ProcessNetwork.swift Perch/UI/Alert.swift \
-//            Perch/Launcher/Notify.swift Perch/Monitor/ProcessControl.swift \
-//            Perch/Monitor/PopupSection.swift \
-//            Perch/Monitor/MemoryReadings.swift Perch/Monitor/CPUTile.swift \
-//            Perch/Monitor/RAMTile.swift Perch/Monitor/DiskReadings.swift \
-//            Perch/Monitor/DiskTile.swift Tools/tile-test.swift | swift -
+//  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
+//            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
+//            Roost/Monitor/ProcessNetwork.swift Roost/UI/Alert.swift \
+//            Roost/Launcher/Notify.swift Roost/Monitor/ProcessControl.swift \
+//            Roost/Monitor/PopupSection.swift \
+//            Roost/Monitor/MemoryReadings.swift Roost/Monitor/CPUTile.swift \
+//            Roost/Monitor/RAMTile.swift Roost/Monitor/DiskReadings.swift \
+//            Roost/Monitor/DiskTile.swift Tools/tile-test.swift | swift -
 //
 //  NetworkTile is not here: it takes a live NetworkMonitor, which is a
 //  singleton holding a timer and interface counters, and standing one up in a

@@ -3,15 +3,15 @@
 //
 //  Draws the README's menu bar strip from the app's own widget code.
 //
-//  Run:  cat Perch/UI/Palette.swift Perch/UI/Localized.swift \
-//            Perch/Settings/Preferences.swift Perch/Monitor/MenuBarStyle.swift \
-//            Perch/Monitor/MenuBarWidget.swift Perch/Monitor/Readings.swift \
+//  Run:  cat Roost/UI/Palette.swift Roost/UI/Localized.swift \
+//            Roost/Settings/Preferences.swift Roost/Monitor/MenuBarStyle.swift \
+//            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Tools/menubar-shot.swift | swift - docs/screenshots/menubar.png
 //
 //  Rendered rather than captured. A capture needs the real menu bar on
 //  screen, which a full-screen app hides -- the first attempt at this came
 //  back as a black strip -- and it carries whatever else sits in the bar,
-//  which a README of Perch should not advertise. Drawing MenuBarWidget itself
+//  which a README of Roost should not advertise. Drawing MenuBarWidget itself
 //  gives the exact pixels the app draws, at 2x, every time.
 //
 //  Not a test: it asserts nothing, so it is named *-shot rather than *-test

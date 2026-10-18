@@ -4,7 +4,7 @@
 //  Exercises what the search panel answers besides apps: sums, unit
 //  conversions and actions -- and, mostly, what it must leave alone.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Launcher/QuickSearch.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Launcher/QuickSearch.swift \
 //            Tools/quicksearch-test.swift | swift -
 //
 //  The panel exists to switch apps. Every case under "leaves apps alone"

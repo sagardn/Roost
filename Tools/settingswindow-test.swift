@@ -3,7 +3,7 @@
 //
 //  Exercises the settings window's name resolution: which page a name opens.
 //
-//  Run:  cat Perch/Views/SettingsSelection.swift \
+//  Run:  cat Roost/Views/SettingsSelection.swift \
 //            Tools/settingswindow-test.swift | swift -
 //
 //  Names reach this from four directions -- the menu bar's gear, a hotkey, an

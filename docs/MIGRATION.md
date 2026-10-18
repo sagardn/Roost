@@ -25,7 +25,7 @@ replaced.
 | WidgetKit extension | 1 | 0 | decodes module types directly |
 | SMC / fan control | 869 lines | 0 | legacy, unmaintained upstream |
 
-Lines: **41,104 derived** against **3,093 independent** in `Perch/Monitor/`.
+Lines: **41,104 derived** against **3,093 independent** in `Roost/Monitor/`.
 
 ---
 
@@ -96,7 +96,7 @@ unblocks nothing.
 The attribution did not come out with `Kit/`: four shell files, the login
 item helper, the translations, two scripts and some assets were still
 derived, and the notice stayed until the last of them was rewritten or
-deleted. It has been, and Perch is now MIT under its own copyright alone --
+deleted. It has been, and Roost is now MIT under its own copyright alone --
 see `docs/ARCHITECTURE.md`.
 
 ---

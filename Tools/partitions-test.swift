@@ -5,7 +5,7 @@
 //  is named, how much of a drive no partition claims, and -- against the
 //  drive this runs on -- that what the reader reports adds up.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Monitor/DiskPartitions.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Monitor/DiskPartitions.swift \
 //            Tools/partitions-test.swift | swift -
 //
 //  The GUIDs below are the ones `diskutil list` resolved on an M2 Air that

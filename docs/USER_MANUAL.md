@@ -1,6 +1,13 @@
-# Perch — User Manual
+# Roost — User Manual
 
-Perch is two apps sharing one process:
+> Roost was called **Perch** until version 1.0.19. Updating from Perch moves
+> the app to `/Applications/Roost.app` and brings your settings, launcher list
+> and clipboard history with it. Two things do not come across, because macOS
+> keeps them by app identity: the Accessibility permission (allow Roost in
+> System Settings ▸ Privacy & Security ▸ Accessibility) and Start at login
+> (turn it on again in Settings).
+
+Roost is two apps sharing one process:
 
 - **a launcher and switcher** — a ⌃Space search panel, per-app hotkeys, your
   own ⌃Tab cycle, a minimise/restore key and a trackpad gesture.
@@ -8,7 +15,7 @@ Perch is two apps sharing one process:
   drawn in the menu bar, each with a popup of detail behind it.
 
 The two halves know nothing about each other, so you can use either one and
-ignore the other: switch every module off and Perch is a launcher; ignore the
+ignore the other: switch every module off and Roost is a launcher; ignore the
 hotkeys and it is a system monitor.
 
 ---
@@ -23,7 +30,7 @@ hotkeys and it is a system monitor.
 - [The system monitor](#the-system-monitor)
 - [Clipboard history](#clipboard-history)
 - [Settings](#settings)
-- [Where Perch keeps things](#where-perch-keeps-things)
+- [Where Roost keeps things](#where-roost-keeps-things)
 - [Privacy](#privacy)
 - [Troubleshooting](#troubleshooting)
 - [Uninstalling](#uninstalling)
@@ -32,7 +39,7 @@ hotkeys and it is a system monitor.
 
 ## First run
 
-Perch has no Dock icon by default — it lives in the menu bar. If no module has
+Roost has no Dock icon by default — it lives in the menu bar. If no module has
 anything to show in the menu bar, the Settings window opens by itself at launch
 so there is something to click.
 
@@ -42,9 +49,9 @@ so there is something to click.
 |---|---|---|
 | **Accessibility** | Minimising, restoring and raising a specific window, and **New Window**. *Bringing an app forward* needs no permission, so the launcher partly works without it. | System Settings → Privacy & Security → Accessibility, or **Settings → Search & switcher → Window control → Allow…** |
 | **Input Monitoring** | Module popup shortcuts only, and only once you set one. | System Settings → Privacy & Security → Input Monitoring |
-| **Menu Bar** (macOS 26 and newer) | Showing any menu bar item at all. | System Settings → Menu Bar → turn Perch **on** |
+| **Menu Bar** (macOS 26 and newer) | Showing any menu bar item at all. | System Settings → Menu Bar → turn Roost **on** |
 
-Perch does not ask for anything at launch. It checks quietly, and asks for
+Roost does not ask for anything at launch. It checks quietly, and asks for
 Accessibility only when you do something that needs it. The global hotkeys are
 registered through Carbon rather than an event tap, so **they work before
 Accessibility is granted** — you get a notice instead of silence.
@@ -53,9 +60,9 @@ The trackpad gesture needs no permission at all; see
 [The trackpad gesture](#the-trackpad-gesture).
 
 > **Updating can make Accessibility look granted when it is not.** macOS ties
-> the grant to the app's code signature, and Perch's ad-hoc signature changes
+> the grant to the app's code signature, and Roost's ad-hoc signature changes
 > with every build. If window control stops working after an update, select
-> Perch in the Accessibility list, click **−**, then grant it again.
+> Roost in the Accessibility list, click **−**, then grant it again.
 
 ---
 
@@ -73,14 +80,14 @@ These work from any app.
 | **⌃1** … **⌃9**, **⌃0** | Jump straight to the app holding that shortcut — no panel, no menu |
 
 A per-app shortcut is a single character pressed with Control. The characters
-Perch accepts are `0`–`9`, `` ` ``, `;` and `space`; anything else is ignored.
+Roost accepts are `0`–`9`, `` ` ``, `;` and `space`; anything else is ignored.
 
 > **Careful with `` ` ``, `;` and `space`.** ⌃Space and ⌃` are already the panel
 > and the minimise key. macOS gives a hotkey to whoever registers it first, so
 > assigning one of those to an app means one of the two silently loses.
 
-**⌃Tab is a global hotkey**, so while Perch holds it, browsers and terminals
-lose it for tab switching. If another app registered ⌃Tab first, Perch notices,
+**⌃Tab is a global hotkey**, so while Roost holds it, browsers and terminals
+lose it for tab switching. If another app registered ⌃Tab first, Roost notices,
 moves its cycle to **⌥Tab** and says so at launch. To give ⌃Tab back entirely,
 switch the cycle off in [Settings → Search & switcher](#search--switcher).
 
@@ -95,18 +102,18 @@ Moves the frontmost window. Needs Accessibility, like minimising does.
 | **⌃⌥U** **⌃⌥I** **⌃⌥J** **⌃⌥K** | In the top-left, top-right, bottom-left, bottom-right quarter |
 | **⌃⌥↩** | Over the whole usable screen (not full screen: the menu bar and Dock stay) |
 | **⌃⌥C** | In the centre, at its current size |
-| **⌃⌥⌫** | Back where it was before Perch first moved it |
+| **⌃⌥⌫** | Back where it was before Roost first moved it |
 | **⌃⌥⌘←** / **⌃⌥⌘→** | On the previous / next display, at the same place and proportion |
 
 These are Rectangle's keys. If Rectangle (or another window manager) is
-running, it owns them, and Perch says which it could not claim. To give them
+running, it owns them, and Roost says which it could not claim. To give them
 all back:
 
 ```bash
-defaults write com.sagar.perch windowSnapping -bool false
+defaults write com.sagar.roost windowSnapping -bool false
 ```
 
-then restart Perch.
+then restart Roost.
 
 ### What a shortcut or a ↩ actually does
 
@@ -117,7 +124,7 @@ away:
 |---|---|
 | not running | it launches (a notice says so if it is not installed) |
 | hidden | it unhides and comes forward |
-| minimised | it restores and comes forward -- the windows Perch put away, or one window if you minimised them yourself |
+| minimised | it restores and comes forward -- the windows Roost put away, or one window if you minimised them yourself |
 | running but not frontmost | it comes forward |
 | running with no window open | it opens one, as clicking it in the Dock would |
 | already frontmost | every window it has on screen minimises |
@@ -132,10 +139,10 @@ itself, so picking the app you were just using puts it away.
 
 macOS already launches, raises and restores an app from a Dock click. The one
 thing it does not do is answer a click on the app you are **already in** — that
-click does nothing at all. Perch fills exactly that gap, so clicking a Dock icon
+click does nothing at all. Roost fills exactly that gap, so clicking a Dock icon
 a second time puts the app away.
 
-Nothing is intercepted. Perch listens and acts afterwards, only in the case
+Nothing is intercepted. Roost listens and acts afterwards, only in the case
 macOS leaves empty, so every other Dock click behaves as it always has. Three
 conditions all have to hold, and each one exists because of a bug it prevents:
 
@@ -172,7 +179,7 @@ menu without Quit at the top.
 
 ### Module popup shortcuts
 
-Each monitor module can have a global shortcut that opens its popup. Perch
+Each monitor module can have a global shortcut that opens its popup. Roost
 ships none. Set one on the module's page in Settings: **Keyboard shortcut →
 Record Shortcut**, then press the combination.
 
@@ -184,7 +191,7 @@ Record Shortcut**, then press the combination.
 
 Setting the first shortcut is what makes macOS ask for **Input Monitoring**:
 watching for a key pressed in another app needs it. With no popup shortcut
-set, Perch does not watch the keyboard at all.
+set, Roost does not watch the keyboard at all.
 
 Under the hood each is stored as `<Module>_popupShortcut`, a list of key
 codes with the modifiers first in the order ⌃ 59, ⇧ 60, ⌘ 55, ⌥ 58 -- the
@@ -196,10 +203,10 @@ never fires.
 | Shortcut | Action |
 |---|---|
 | **⌘W** | Close the Settings window |
-| **⌘Q** | Also closes the Settings window — it does **not** quit Perch |
+| **⌘Q** | Also closes the Settings window — it does **not** quit Roost |
 | **⌘M** | Minimise the Settings window |
 
-To quit Perch, use the **power button** in the Settings window footer.
+To quit Roost, use the **power button** in the Settings window footer.
 
 ---
 
@@ -243,7 +250,7 @@ A plain number is not a sum, and actions need three letters, so `sa` still
 finds Safari and `sl` still finds Slack. **Empty Bin** asks first, with
 Cancel as the default, because it cannot be undone. **Toggle Dark Mode** and
 **Empty Bin** go through System Events and Finder, so macOS asks once
-whether Perch may control them; **Lock Screen** uses the Accessibility grant.
+whether Roost may control them; **Lock Screen** uses the Accessibility grant.
 
 ### The options menu
 
@@ -261,7 +268,7 @@ Right-click a row, or press → , or click the ▸ arrow:
 | **Reveal in Finder** | |
 | **Copy Bundle ID** | |
 | **Add an App…** | File picker; several at once is fine |
-| **Edit Apps…** | Opens the Perch Apps window |
+| **Edit Apps…** | Opens the Roost Apps window |
 
 The panel has no status-bar menu of its own, so this menu is where the app list
 gets managed from.
@@ -270,7 +277,7 @@ gets managed from.
 
 ## Managing your app list
 
-**Edit Apps…** (from any row's options menu) opens the **Perch Apps** window:
+**Edit Apps…** (from any row's options menu) opens the **Roost Apps** window:
 
 - **drag** rows to reorder them
 - **＋** adds a running app, or browses for one on disk
@@ -287,10 +294,10 @@ The list is a JSON file rather than something baked into the binary, so adding
 an app can be an edit and a reload rather than a rebuild:
 
 ```
-~/Library/Application Support/Perch/apps.json
+~/Library/Application Support/Roost/apps.json
 ```
 
-It is written with the defaults the first time Perch runs. Each entry:
+It is written with the defaults the first time Roost runs. Each entry:
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -300,7 +307,7 @@ It is written with the defaults the first time Perch runs. Each entry:
 | `launchOnly` | bool | Only ever launch or come forward, never minimise. Launchpad is one of these. |
 | `pinned` | bool | Held at the top of the panel regardless of recency or search score |
 
-If the file cannot be read, Perch logs the reason and falls back to the
+If the file cannot be read, Roost logs the reason and falls back to the
 defaults rather than starting empty.
 
 ---
@@ -317,7 +324,7 @@ observe touches — it cannot swallow them — so every search also fired a
 right-click and a zoom.
 
 There is no public API for a global trackpad gesture — the public NSEvent
-gesture events only reach the frontmost app's own views — so Perch reads the
+gesture events only reach the frontmost app's own views — so Roost reads the
 private `MultitouchSupport` framework, the same route BetterTouchTool takes.
 Deliberately accepted consequences:
 
@@ -327,7 +334,7 @@ Deliberately accepted consequences:
   Input Monitoring explicitly denied: 459 contact frames in six seconds, and no
   dialog)
 
-To keep the risk small, Perch reads *only* the finger count it is handed, and
+To keep the risk small, Roost reads *only* the finger count it is handed, and
 never parses the touch struct whose layout changes between macOS releases.
 
 **What counts as a tap:** all fingers down and up again in under 0.25 s, with
@@ -360,7 +367,7 @@ Six modules, each switched on or off in the Settings sidebar:
 | **Sensors** | the watched sensor | every temperature, voltage, current, power and fan reading your Mac publishes, grouped by kind |
 
 Sensors is the expensive one: reading every sensor walks the whole controller
-table. If you want to cut Perch's energy use, switch it off first.
+table. If you want to cut Roost's energy use, switch it off first.
 
 ### Menu bar shapes
 
@@ -386,7 +393,7 @@ not 50%; memory follows macOS's own memory pressure rather than the percentage;
 a temperature is flagged at 85 °C. The three colours, and whether the menu bar
 is coloured at all, are in [Settings → Colours](#colours).
 
-Separate items are ordered by macOS, not Perch. To rearrange them, hold **⌘**
+Separate items are ordered by macOS, not Roost. To rearrange them, hold **⌘**
 and drag an item along the menu bar.
 
 ### Popups
@@ -452,7 +459,7 @@ likely to go unnoticed.
 
 ## Clipboard history
 
-Perch can keep what you copy, text and images, so you can use it again. It is
+Roost can keep what you copy, text and images, so you can use it again. It is
 **off until you turn it on**: Settings ▸ Clipboard ▸ **Enable clipboard
 history**, which explains first what is kept and where.
 
@@ -479,11 +486,11 @@ confirmation.
 
 **Restoring** puts back every form that was kept: plain text, its RTF and HTML
 formatting, a link, an image as PNG and TIFF, or files as files. If a stored
-form has gone missing, Perch says that only the text went back.
+form has gone missing, Roost says that only the text went back.
 
 **Paste for me** (off by default) also sends ⌘V to the app you were in. It
 needs the same window-control permission the switcher uses; without it, the
-entry is copied and you paste it yourself. Perch says it *sent* ⌘V, because it
+entry is copied and you paste it yourself. Roost says it *sent* ⌘V, because it
 cannot see whether the app took it.
 
 | Setting | Default | |
@@ -493,8 +500,8 @@ cannot see whether the app took it.
 | Images | On | Up to 25 MB each; larger ones are left out, not shrunk |
 | Keep at most | 200 | Not counting pinned entries |
 | Remove entries after | 30 days | Pinned entries stay unless **Pinned entries expire too** |
-| Keep history after quitting | On | Off deletes it when Perch quits |
-| Clear unpinned entries when Perch quits | Off | |
+| Keep history after quitting | On | Off deletes it when Roost quits |
+| Clear unpinned entries when Roost quits | Off | |
 | Entries in the popup | 8 | |
 | Keyboard shortcut | none | Opens the popup, or the history window while the item is hidden |
 
@@ -502,10 +509,10 @@ cannot see whether the app took it.
 transient or auto-generated (the [nspasteboard.org](http://nspasteboard.org)
 markers that password managers use), and copies made while an app on the
 **Ignore copies made in** list is in front. That list starts with the common
-password managers. Perch can tell which app was *in front* when something was
+password managers. Roost can tell which app was *in front* when something was
 copied, not which app wrote it.
 
-**macOS may ask** whether Perch can read what you copy (System Settings ▸
+**macOS may ask** whether Roost can read what you copy (System Settings ▸
 Privacy & Security ▸ Paste from Other Apps). Choose **Allow**; if it is set to
 deny, history shows as **Blocked by macOS**.
 
@@ -536,7 +543,7 @@ Overview samples nothing of its own.
   verdict in words, recent history and two or three supporting figures. Click
   a card to open that module's page. A module that is off says so and offers
   **Turn On**; one whose every menu bar shape is off says it is not being
-  measured, because Perch samples what the menu bar shows.
+  measured, because Roost samples what the menu bar shows.
 - **Battery health** (on a Mac with a battery) shows the maximum capacity,
   cycle count and condition exactly as System Settings ▸ Battery reports them,
   read every half hour while the Dashboard is open, with the current charge and
@@ -553,7 +560,7 @@ Overview samples nothing of its own.
   it looks like, the resolution it is drawn at when that differs, and its
   refresh rate.
 
-A macOS release Perch does not know the name of is shown by its number alone
+A macOS release Roost does not know the name of is shown by its number alone
 (“macOS 27.0”) rather than given the last name it knew.
 
 ### Module pages
@@ -569,7 +576,7 @@ in the popup and **Read the HID sensors** for Sensors.
 | Setting | Default | Notes |
 |---|---|---|
 | **Start at login** | Off | |
-| **Show in Dock** | Off | Perch is a menu bar app; this gives it a Dock icon too |
+| **Show in Dock** | Off | Roost is a menu bar app; this gives it a Dock icon too |
 | **Check for updates** | Once per day | Also: Never, Once per hour, Once per week, and **Silent** |
 | **Temperature unit** | System | Celsius, Fahrenheit, or whatever macOS uses |
 
@@ -600,7 +607,7 @@ colour restores the default. Changes apply immediately.
 ### Search & switcher
 
 Its own page in the sidebar. **Keyboard** lists each global key and whether
-Perch holds it: a key another app registered first stays that app's, and the
+Roost holds it: a key another app registered first stays that app's, and the
 row says “taken by another app” instead. If ⌃Tab is taken, the cycle uses ⌥Tab
 and the row says so. **Edit apps…** opens the app list.
 
@@ -615,7 +622,7 @@ and the row says so. **Edit apps…** opens the app list.
 | **Window control** | — | Shows whether Accessibility is granted, with **Allow…** when it is not |
 
 These are also plain preferences, if you would rather use Terminal — change
-one, then restart Perch:
+one, then restart Roost:
 
 | Key | Type | Default |
 |---|---|---|
@@ -628,10 +635,10 @@ one, then restart Perch:
 
 ```bash
 # four-finger double tap only, leaving three to macOS's Look Up
-defaults write com.sagar.perch gestureFingerCounts -array 4
+defaults write com.sagar.roost gestureFingerCounts -array 4
 
 # give Ctrl+Tab back to your browser
-defaults write com.sagar.perch cycleHotkeyEnabled -bool false
+defaults write com.sagar.roost cycleHotkeyEnabled -bool false
 ```
 
 ### Permissions
@@ -648,41 +655,41 @@ clicked. **User manual** opens this document.
 
 ### Backup
 
-**Export…** writes every Perch setting to a file. **Import…** reads one back and
-offers to restart Perch so every setting takes effect. **Reset…** returns
-everything to the defaults after a confirmation, and restarts Perch.
+**Export…** writes every Roost setting to a file. **Import…** reads one back and
+offers to restart Roost so every setting takes effect. **Reset…** returns
+everything to the defaults after a confirmation, and restarts Roost.
 
 ### The footer
 
 | Button | Action |
 |---|---|
-| ♥ **Support** | Opens Perch's Ko-fi page |
+| ♥ **Support** | Opens Roost's Ko-fi page |
 | 🐜 **Report a bug** | Opens a new GitHub issue |
-| ⏸ **Pause** | Switches every module off and leaves a single Perch icon in the menu bar; click it to reopen Settings. Press again to resume — the modules that were on come back on. |
-| ⏻ | Quits Perch |
+| ⏸ **Pause** | Switches every module off and leaves a single Roost icon in the menu bar; click it to reopen Settings. Press again to resume — the modules that were on come back on. |
+| ⏻ | Quits Roost |
 
 ---
 
-## Where Perch keeps things
+## Where Roost keeps things
 
 | Path | What |
 |---|---|
-| `~/Library/Application Support/Perch/apps.json` | The launcher's app list |
-| `~/Library/Application Support/Perch/Clipboard/` | Clipboard history: `index.json`, and `payloads/` for images and formatting. Readable by your account only; not encrypted beyond your account and FileVault. Deleted entries take their files with them |
-| `com.sagar.perch` (UserDefaults) | Every setting — both halves |
+| `~/Library/Application Support/Roost/apps.json` | The launcher's app list |
+| `~/Library/Application Support/Roost/Clipboard/` | Clipboard history: `index.json`, and `payloads/` for images and formatting. Readable by your account only; not encrypted beyond your account and FileVault. Deleted entries take their files with them |
+| `com.sagar.roost` (UserDefaults) | Every setting — both halves |
 
-Perch installs no helper, daemon or extension.
+Roost installs no helper, daemon or extension.
 
 ---
 
 ## Privacy
 
-Perch collects no telemetry or analytics and has no account. Clipboard
+Roost collects no telemetry or analytics and has no account. Clipboard
 history never leaves the Mac, and its content is never written to a log. It
 talks to the network in three cases:
 
 - **Update check** — a plain read of
-  `https://api.github.com/repos/sagardn/Perch/releases/latest`, on the schedule
+  `https://api.github.com/repos/sagardn/Roost/releases/latest`, on the schedule
   set in **Check for updates**. Nothing about your Mac is sent. **Never** stops it.
 - **Connectivity check** — while the Network popup is open, a TCP handshake
   with `1.1.1.1` on port 53, every few seconds, to measure latency and whether
@@ -698,14 +705,14 @@ talks to the network in three cases:
 
   `ifconfig.co` runs [echoip](https://github.com/mpolden/echoip), which is
   open source and self-hostable if you would rather not depend on someone
-  else's server; repoint the endpoint in `Perch/Monitor/NetworkInfo.swift`.
+  else's server; repoint the endpoint in `Roost/Monitor/NetworkInfo.swift`.
 
 ---
 
 ## Troubleshooting
 
-**No Perch items in the menu bar at all.** On macOS 26 and newer: System
-Settings → Menu Bar → turn Perch on. If you see `«` among your menu bar icons,
+**No Roost items in the menu bar at all.** On macOS 26 and newer: System
+Settings → Menu Bar → turn Roost on. If you see `«` among your menu bar icons,
 macOS is hiding items that do not fit, newest first — quit another menu bar app
 or ⌘-drag items to make room. Finally, check the module is switched on in the
 Settings sidebar.
@@ -716,27 +723,27 @@ app needs no permission, minimising one does.
 
 **The gesture does nothing.** Check which finger counts are switched on in
 Settings → Search & switcher: the default is three, not two or four. No
-permission is involved. If Perch could not read the trackpad at all, it turns
+permission is involved. If Roost could not read the trackpad at all, it turns
 the setting off and says so.
 
-**⌃Tab stopped working in my browser.** That is Perch holding it globally.
+**⌃Tab stopped working in my browser.** That is Roost holding it globally.
 Switch off **⌃Tab cycles your marked apps** in Settings → Search & switcher.
 
 **A hotkey does nothing.** Another app registered it first — macOS gives a
-global hotkey to whoever asked first and tells the loser nothing. Perch names
+global hotkey to whoever asked first and tells the loser nothing. Roost names
 the shortcuts it could not claim in a notice at launch. Quit the app that owns
-the key, pick a different character in Perch Apps, or look for a clash in
+the key, pick a different character in Roost Apps, or look for a clash in
 System Settings → Keyboard → Keyboard Shortcuts….
 
 **A popup shortcut does nothing.** Check the key codes are in the order ⌃ ⇧ ⌘ ⌥
-then the key, that Perch was restarted, and that Input Monitoring is granted —
+then the key, that Roost was restarted, and that Input Monitoring is granted —
 see [Module popup shortcuts](#module-popup-shortcuts).
 
 **"macOS can't minimise a full-screen window."** It cannot, and hiding the app
 instead was tried and rejected: ⌘H tears down the full-screen space, after
 which the app reports no windows and nothing can bring it back.
 
-**Perch uses too much CPU or battery.** Switch off the modules you do not need,
+**Roost uses too much CPU or battery.** Switch off the modules you do not need,
 starting with Sensors.
 
 **Sensors show the wrong core count.** CPU and GPU sensors are thermal zones,
@@ -753,13 +760,13 @@ high value, the reading is real.
 ## Uninstalling
 
 Run the script bundled with the app, as yourself rather than with `sudo` —
-Perch installs no helper, so nothing it removes needs administrator rights:
+Roost installs no helper, so nothing it removes needs administrator rights:
 
 ```bash
-sh /Applications/Perch.app/Contents/Resources/Scripts/uninstall.sh
+sh /Applications/Roost.app/Contents/Resources/Scripts/uninstall.sh
 ```
 
-It quits Perch and removes `Perch.app`, the application data and preferences
+It quits Roost and removes `Roost.app`, the application data and preferences
 listed above, and the Accessibility and notification permissions macOS keeps
 for it. If the app has already gone to the Trash, the same script can be run
 from the repository:

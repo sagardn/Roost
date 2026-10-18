@@ -3,9 +3,9 @@
 //
 //  Exercises how the Dashboard's process table is ordered.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-//            Perch/Monitor/ProcessCPU.swift \
-//            Perch/System/DashboardProcesses.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//            Roost/Monitor/ProcessCPU.swift \
+//            Roost/System/DashboardProcesses.swift \
 //            Tools/processtable-test.swift | swift -
 //
 //  Sorting a live table has two traps that only show up while watching it.
@@ -31,10 +31,10 @@ func row(_ pid: Int32, _ name: String, _ cpu: Double, _ memory: UInt64?) -> Row 
 }
 
 let chrome = row(10, "Google Chrome", 42.0, 900_000_000)
-let perch  = row(20, "Perch", 2.5, 120_000_000)
+let roost  = row(20, "Roost", 2.5, 120_000_000)
 let window = row(30, "WindowServer", 12.0, nil)
 let agent  = row(40, "agent", 12.0, 50_000_000)
-let sample = [perch, chrome, window, agent]
+let sample = [roost, chrome, window, agent]
 
 func order(_ sort: DashboardProcesses.Sort) -> [Int32] {
     DashboardProcesses.ordered(sample, by: sort).map(\.pid)

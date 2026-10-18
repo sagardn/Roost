@@ -4,8 +4,8 @@
 //  Exercises the three startup decisions: whether the app just updated,
 //  whether to ask about supporting it, and how often to check for a release.
 //
-//  Run:  cat Perch/Settings/UpdateInterval.swift Perch/Update/Version.swift \
-//            Perch/Startup/StartupDecisions.swift \
+//  Run:  cat Roost/Settings/UpdateInterval.swift Roost/Update/Version.swift \
+//            Roost/Startup/StartupDecisions.swift \
 //            Tools/startup-test.swift | swift -
 //
 //  None of these could be checked where they used to live. The first needs a
@@ -27,7 +27,7 @@ func check(_ name: String, _ ok: Bool) {
     if !ok { failures += 1 }
 }
 
-// MARK: - "Perch was updated"
+// MARK: - "Roost was updated"
 
 print("StartupDecisions.announcesUpdate")
 

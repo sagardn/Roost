@@ -3,15 +3,15 @@
 //
 //  What this Mac actually answers, reader by reader.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/Settings/Preferences.swift \
-//            Perch/Monitor/Readings.swift Perch/Monitor/CPUReadings.swift \
-//            Perch/Monitor/MemoryReadings.swift Perch/Monitor/GPUStats.swift \
-//            Perch/Monitor/DiskReadings.swift Perch/Monitor/NetworkInfo.swift \
-//            Perch/Monitor/Temperature.swift Perch/Monitor/SMCKit.swift \
-//            Perch/Monitor/SensorReadings.swift Perch/System/DeviceInfo.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
+//            Roost/Monitor/MemoryReadings.swift Roost/Monitor/GPUStats.swift \
+//            Roost/Monitor/DiskReadings.swift Roost/Monitor/NetworkInfo.swift \
+//            Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
+//            Roost/Monitor/SensorReadings.swift Roost/System/DeviceInfo.swift \
 //            Tools/hardware-report.swift | swift -
 //
-//  Perch is a hardware monitor, and the hardware changes under it. A new
+//  Roost is a hardware monitor, and the hardware changes under it. A new
 //  Apple silicon generation arrives roughly once a year, and the way this app
 //  breaks on one is not a crash -- it is a reading that quietly goes missing,
 //  or worse, one that reads zero because a key it expected was not there.

@@ -1,4 +1,4 @@
-# Perch's lint configuration.
+# Roost's lint configuration.
 #
 # What this replaced was upstream's, and the part of it that was actually
 # wrong was the `identifier_name` exception list: all eighteen entries named

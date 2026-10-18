@@ -17,7 +17,7 @@ jobs:
     # macos-26, not macos-15: the app calls NSGlassEffectView, which only
     # exists in the macOS 26 SDK. An older image fails at compile time, not at
     # runtime, so this cannot fall back to an older runner without dropping the
-    # glass -- see Perch/Monitor/Popup.swift.
+    # glass -- see Roost/Monitor/Popup.swift.
     runs-on: macos-26
 
     steps:
@@ -29,7 +29,7 @@ jobs:
       # it, so a tee here once reported a failed build as a passing one.
       - run: |
           set -o pipefail
-          xcodebuild -scheme Perch -destination 'platform=macOS' -configuration Release archive CODE_SIGNING_ALLOWED=NO 2>&1 \
+          xcodebuild -scheme Roost -destination 'platform=macOS' -configuration Release archive CODE_SIGNING_ALLOWED=NO 2>&1 \
             | tee build.log
       - if: failure()
         run: |

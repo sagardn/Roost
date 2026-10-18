@@ -5,9 +5,9 @@
 //  that turn module readings into issues, the macOS release names, the
 //  serial mask and the uptime wording.
 //
-//  Run:  cat Perch/UI/Localized.swift Perch/UI/Palette.swift \
-//            Perch/System/DashboardLogic.swift Perch/System/DeviceInfo.swift \
-//            Perch/System/BatteryHealth.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/UI/Palette.swift \
+//            Roost/System/DashboardLogic.swift Roost/System/DeviceInfo.swift \
+//            Roost/System/BatteryHealth.swift \
 //            Tools/dashboard-test.swift | swift -
 //
 //  Each of these is a place where the page could say something untrue
