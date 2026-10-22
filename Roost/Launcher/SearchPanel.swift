@@ -718,8 +718,7 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         menu.addItem(.separator())
         // The custom switcher: Ctrl+Tab walks only the marked apps.
         let marked = isMarked(row.bundleID)
-        let markItem = ActionItem(marked ? "Remove from ⌃Tab Switcher" : "Add to ⌃Tab Switcher") {
-            [weak self] in
+        let markItem = ActionItem(marked ? "Remove from ⌃Tab Switcher" : "Add to ⌃Tab Switcher") { [weak self] in
             self?.onSetMarked(entry, !marked)
             self?.refresh()
         }
@@ -728,8 +727,7 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
 
         menu.addItem(.separator())
         let listed = source().contains { $0.bundleID == row.bundleID }
-        menu.addItem(ActionItem(listed ? "Remove from My Apps" : "Add to My Apps") {
-            [weak self] in
+        menu.addItem(ActionItem(listed ? "Remove from My Apps" : "Add to My Apps") { [weak self] in
             self?.onSetListed([entry], !listed)
             self?.refresh()
         })

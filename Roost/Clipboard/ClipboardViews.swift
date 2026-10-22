@@ -1,8 +1,8 @@
 import SwiftUI
 import AppKit
 
-/// The pieces the popup, the combined tile and the history window share, so
-/// an entry looks the same wherever it is listed.
+// The pieces the popup, the combined tile and the history window share, so
+// an entry looks the same wherever it is listed.
 
 // MARK: - Thumbnails
 

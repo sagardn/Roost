@@ -160,9 +160,10 @@ final class CleanerModel: ObservableObject {
             // empty list for answering it.
             let items = LargeFiles.scan(roots: roots, limit: 40,
                                         deadline: Date().addingTimeInterval(45),
-                                        shouldStop: { stop.isSet }) { report in
+                                        shouldStop: { stop.isSet },
+                                        progress: { report in
                 DispatchQueue.main.async { self?.progress = report }
-            }
+            })
             let wait = max(0, Self.shortestScan - Date().timeIntervalSince(started))
             DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
                 self?.finish(items, started: started)

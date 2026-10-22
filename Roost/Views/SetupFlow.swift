@@ -1,14 +1,14 @@
 import Foundation
 
-/// Where the first-run window is, and what choosing a preset writes.
-///
-/// Separated from the window because the window is shown exactly once per
-/// installation. Everything here used to live inside an `NSStackView`
-/// subclass that cannot be instantiated without a screen, which meant the
-/// only part of first-run anybody could check was whether it crashed — and
-/// the part worth checking is not the drawing, it is the fourteen preference
-/// writes that decide what somebody's menu bar looks like for the rest of the
-/// time they use the app.
+// Where the first-run window is, and what choosing a preset writes.
+//
+// Separated from the window because the window is shown exactly once per
+// installation. Everything here used to live inside an `NSStackView`
+// subclass that cannot be instantiated without a screen, which meant the
+// only part of first-run anybody could check was whether it crashed — and
+// the part worth checking is not the drawing, it is the fourteen preference
+// writes that decide what somebody's menu bar looks like for the rest of the
+// time they use the app.
 
 // MARK: - The pages
 

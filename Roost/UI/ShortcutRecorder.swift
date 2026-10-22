@@ -149,7 +149,7 @@ extension PopupShortcut {
         let isModifierKey = [control, shift, command, option, 56, 61, 62, 54].contains(keyCode)
         guard !isModifierKey else { return false }
         if functionKeys.contains(keyCode) { return true }
-        return !modifiers.intersection([.control, .option, .command]).isEmpty
+        return !modifiers.isDisjoint(with: [.control, .option, .command])
     }
 
     static let functionKeys: Set<UInt16> = [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111,

@@ -8,9 +8,9 @@
 # nobody can evaluate, so the rule is off instead.
 #
 # Every disabled rule below says what in this tree trips it, measured rather
-# than assumed. SwiftLint is not run locally here -- it is a CI-only tool in
-# this project -- so a rule switched on without a measurement behind it would
-# be a guess that turns the build red.
+# than assumed. CI runs it on every push; locally it is `swiftlint --quiet`
+# from the repository root, and a rule switched on without a measurement
+# behind it is a guess that turns the build red.
 
 disabled_rules:
   # One site, and it is correct. `WindowControl.element(_:)` compares
@@ -35,6 +35,11 @@ disabled_rules:
   - type_name
   - cyclomatic_complexity
   - opening_brace
+  # Fourteen sites, all one shape: `isOn ? start() : stop()`, a switch
+  # handed to the pair of calls it chooses between. That is this codebase's
+  # idiom for an on/off setting -- every module shell's `isEnabled` setter
+  # uses it -- and an if/else over the same two calls says nothing more.
+  - void_function_in_ternary
 
 opt_in_rules:
   - empty_count
@@ -44,14 +49,19 @@ opt_in_rules:
   - trailing_newline
   - closure_spacing
 
-# 134 is the longest line in the tree, in a comment. 160 leaves room without
-# letting a line grow past what fits beside a diff.
+# 160 leaves room without letting a line grow past what fits beside a diff.
+# Ten lines pass it and are left warning, all for one reason: each is an
+# English sentence used as a localisation key, the longest 197 columns.
+# Splitting one into `"…" + "…"` would hide it from `i18n.py scan`, which
+# reads whole literals, so the key would stop being checked.
 line_length:
   warning: 160
   error: 200
 
-# SearchPanel.swift is the largest at 806 lines. A warning once a file passes
-# the biggest thing here, an error at half as long again.
+# A warning once a file passes 900 lines, an error at 1300. LargeFilesWindow
+# is the one past the warning, at 1264 -- 36 lines short of failing the build.
+# The warning is left showing rather than raised: the next change to that
+# file should move a view out of it, and the warning is what says so.
 file_length:
   warning: 900
   error: 1300
@@ -66,6 +76,20 @@ type_body_length:
 function_body_length:
   warning: 120
   error: 200
+
+# Types nested two deep, in three places: WindowRef.Handle in WindowControl,
+# DiskReadings.Meter.Sample, and Release.Payload.Asset. Each inner type means
+# nothing outside its parent, and nesting is what says so. Two levels allow
+# all three and still flag a third.
+nesting:
+  type_level: 2
+
+# One function takes six: PopupSection's private `series`, which draws one
+# side of the traffic chart from values, tint, direction, area, midline and
+# peak -- all of them read, none of them a flag. Bundling them into a struct
+# for a single private call site would be ceremony.
+function_parameter_count:
+  warning: 6
 
 excluded:
   - Tools

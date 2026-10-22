@@ -1,12 +1,12 @@
 import Foundation
 
-/// The parts of the Dashboard that are decisions rather than drawing: which
-/// cards exist and in what order, what counts as a problem worth a line, what
-/// to call this release of macOS, and how much of a serial number to show.
-///
-/// Kept apart from the views so each of them can be checked against values
-/// written down -- see Tools/dashboard-test.swift. Nothing here samples
-/// anything: the readings arrive from the modules that already took them.
+// The parts of the Dashboard that are decisions rather than drawing: which
+// cards exist and in what order, what counts as a problem worth a line, what
+// to call this release of macOS, and how much of a serial number to show.
+//
+// Kept apart from the views so each of them can be checked against values
+// written down -- see Tools/dashboard-test.swift. Nothing here samples
+// anything: the readings arrive from the modules that already took them.
 
 // MARK: - Cards
 
