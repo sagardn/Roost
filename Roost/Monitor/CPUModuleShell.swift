@@ -121,7 +121,8 @@ final class CPUSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "CPU")),
+            [ModuleSwitch.row("CPU"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "CPU")),
              Controls.shapes(self.styles, shown: self.shown, label: CPUModule().menuBarLabel,
                              value: "42%", ) { chosen in
                 self.shown = chosen

@@ -381,7 +381,8 @@ RAMTile.swift             localized(pressure.label)
 RAMPopup.swift            localized(pressure.label)
 PopupParts.swift          localized(title)          DisclosureButton
 DashboardView.swift       localized(issue.module)
-SettingsShell.swift       localized(id), localized($0.moduleName)
+SettingsShell.swift       localized(id), localized($0.moduleName),
+                          localized(tool.rawValue), localized(group.rawValue)
 Setup.swift               localized(preset.name)
 ```
 
@@ -514,9 +515,10 @@ speed of 0 rpm would be.
 **Be checkable on a Mac we do not have.** Nobody can test five generations:
 
 ```bash
-cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
-    Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
+cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift \
+    Roost/Settings/Preferences.swift Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
     Roost/Monitor/MemoryReadings.swift Roost/Monitor/GPUStats.swift \
+    Roost/Monitor/ProcessGPU.swift \
     Roost/Monitor/DiskReadings.swift Roost/Monitor/NetworkInfo.swift \
     Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
     Roost/Monitor/SensorReadings.swift Roost/System/DeviceInfo.swift \
@@ -569,10 +571,20 @@ case nobody has been able to run. `hardware-report` shouts if it sees one.
 `Roost/Cleanup/` is not monitoring. It reads a disk to find what is on it and
 moves things to the Bin, which is a different job from sampling a counter
 every second, and it began as six files inside `Roost/Monitor/` only because
-that is where the Disk module was. The Free up space page in the settings
-sidebar is its front door; it used to be a section at the bottom of the Disk
-module's settings, where nobody looking to uninstall an app would think to
-look.
+that is where the Disk module was. Its tools are pages of the settings
+window, grouped in the sidebar the way Mac maintenance apps lay themselves
+out -- the Check-up at the top beside the Overview, then **Cleanup** (Storage,
+Large files, Duplicates, Space map), **Applications** (Uninstaller,
+Background items), **Protection** (macOS protections) and **Tools** (AI tools,
+with the launcher's Search & switcher page appended by the sidebar).
+`SettingsSelection.Tool` is that list, with each page's group;
+`Roost/Views/ToolPages.swift` builds the pages and moves between them. They
+were two hub pages of buttons, each opening a window of its own, and before
+that a section at the bottom of the Disk module's settings. The Large files,
+AI and uninstaller windows remain for the places outside settings that open
+them, and draw the same views with the same models. The old page names,
+"Free up space" and "Uninstall apps", still resolve: the first to the
+Check-up, which is where a full disk's Disk popup should land.
 
 | File | What it does |
 |---|---|
@@ -583,6 +595,18 @@ look.
 | `CommandLineTools.swift` | what Homebrew, npm and pipx installed, and the command that removes it |
 | `UninstallWindow.swift` | both of those, in two tabs |
 | `CleanupPane.swift` | the settings page |
+| `OrphanedData.swift` | `~/Library` data named for apps nothing claims any more |
+| `StaleDownloads.swift` | installers and unfinished downloads at the top of Downloads |
+| `Duplicates.swift`, `DuplicatesPage.swift` | byte-identical files, and choosing which copy stays |
+| `SpaceMap.swift`, `SpaceMapPage.swift` | a folder's sizes all the way down, drawn as a squarified treemap; ticked entries go to the Bin within `SpaceMap.isRemovable` |
+| `CheckUp.swift`, `CheckUpPage.swift` | every finder at once, merged into one list, with advice |
+
+Three more, in `Roost/System/` because they are about the Mac rather than its
+disk: `BackgroundItems.swift` (+ `Page`) reads the launchd folders and who
+signed each program, `Protection.swift` reads SIP, Gatekeeper, FileVault, the
+firewall and XProtect, and `Recommendations.swift` turns everything the
+Check-up found into advice. `Roost/UI/SettingsLink.swift` names the System
+Settings pages they hand off to.
 
 Four decisions hold the whole area up, and each was made against something
 that went wrong:
@@ -603,6 +627,48 @@ that went wrong:
   a managed tool is removed by its own command, shown in full before it runs.
   The command is an executable plus an argument array, never a string for a
   shell: `; rm -rf ~` is a legal npm package name.
+
+The Check-up added four more, for the seams between the finders:
+
+- **A missing app is proved, not assumed.** An identifier is an orphan only
+  if no installed app, running process or launchd job claims it, nor anything
+  it is a child or parent of. Measured on one Mac, 1,142 of 1,264 entries in
+  `~/Library/Preferences` looked like bundle identifiers and LaunchServices
+  knew 14; the rest included a command-line tool's sign-in
+  (`com.vercel.cli`), team-ID group data and `systemgroup.com.apple.…`. So the
+  *place* decides the tick: caches and logs, which Apple's contract says are
+  re-created, arrive ticked; settings and app data never do.
+- **Checked again at the Bin, by the finder that found it.** Every row is
+  re-validated against the disk immediately before `trashItem`; a
+  reinstalled app, a resumed download or an edited copy is refused and left
+  in place, and the result says so.
+- **Moved is not freed.** Moving to the Bin frees nothing until the Bin is
+  emptied, so the result reports bytes moved, measured as they moved.
+- **Clones and hard links are not duplicates of space.** A hard link shares
+  `fileResourceIdentifier` and is one file; an APFS clone shares
+  `fileContentIdentifier` and is shown, but counted as giving nothing back.
+  Both were measured on APFS before the rule was written.
+
+`~/Library/Containers` is not searched by the Check-up or opened by the space
+map: since macOS 14, reading inside another app's container prompts once per
+app. The uninstaller still looks there, for the one app somebody named.
+
+What was deliberately not built, so it is not "finished" later:
+
+- **A cache cleaner.** See `DiskCleanup` -- caches are rebuilt, slowly. Only
+  caches of apps that are gone are offered.
+- **A malware scanner.** A scanner is an engine and a daily signature feed;
+  Roost has no third-party code and no network calls of its own, and
+  XProtect is already on every Mac. `Protection` reports whether it, and
+  the protections around it, are on.
+- **Browser and privacy cleaning.** Safari's data needs Full Disk Access,
+  and the others' caches are caches.
+- **Switching background items off.** `launchctl disable` on another app's
+  job changes its software behind its back. System Settings has the switch.
+- **Update checks for other apps.** Each would be a network call to a
+  vendor's feed, which Roost does not make.
+- **Similar-photo detection.** "Similar" is a judgement, and the cost of a
+  wrong one is a photo.
 
 There is no RAM cleaner and there will not be one. The "inactive" memory a
 cleaner frees is the file cache, and dropping it makes the next read slower

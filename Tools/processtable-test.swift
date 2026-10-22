@@ -1,10 +1,11 @@
 //
 //  processtable-test.swift
 //
-//  Exercises how the Dashboard's process table is ordered.
+//  Exercises how the Dashboard's process table is ordered, and what each
+//  process in it is called.
 //
 //  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift Roost/Settings/Preferences.swift \
-//            Roost/Monitor/ProcessCPU.swift \
+//            Roost/Monitor/ProcessCPU.swift Roost/Monitor/ProcessIdentity.swift \
 //            Roost/System/DashboardProcesses.swift \
 //            Tools/processtable-test.swift | swift -
 //
@@ -73,6 +74,26 @@ check("an empty table stays empty",
 print("\nHow deep the sampler looks")
 check("more rows are read than drawn",
       DashboardProcesses.depth > DashboardProcesses.limit)
+
+print("\nWhat a process is called")
+typealias PI = ProcessIdentity
+check("a helper inside an app belongs to the outer app",
+      PI.owningApp(of: "/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)")
+        == "/Applications/Google Chrome.app")
+check("a daemon belongs to no app", PI.owningApp(of: "/usr/libexec/trustd") == nil)
+check("a helper already named for its app keeps its own name",
+      PI.title(executable: "Google Chrome Helper (Renderer)", app: "Google Chrome") == "Google Chrome Helper (Renderer)")
+check("a helper not named for its app is said as the app's",
+      PI.title(executable: "com.apple.WebKit.WebContent", app: "Safari") == "Safari · Web page content")
+check("an app's own executable is the app", PI.title(executable: "Slack", app: "Slack") == "Slack")
+check("the kernel has words", PI.friendly("kernel_task") == "macOS kernel")
+check("an unknown daemon is left as it is", PI.friendly("trustd") == nil)
+// Live: this script's own pid has a path but no app, so it must come back
+// by its full executable name rather than the fallback it was handed.
+let me = PI.identify(pid: getpid(), fallback: "truncated")
+check("a live process is named from its path, not the sampled name", me.name != "truncated" && !me.name.isEmpty)
+let launchd = PI.identify(pid: 1, fallback: "launchd")
+check("launchd is named launchd", launchd.name == "launchd")
 
 print("")
 if failures == 0 { print("all passed") } else { print("\(failures) failed") }

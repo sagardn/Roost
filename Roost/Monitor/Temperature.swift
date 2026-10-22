@@ -55,6 +55,12 @@ enum Temperature {
     /// Every sensor, as name -> degrees Celsius.
     static func readAll() -> [(name: String, celsius: Double)] {
         guard let s = symbols, let client = s.create(kCFAllocatorDefault) else { return [] }
+        // Both the client and each event come from a Create or a Copy, so
+        // they are ours to release, and the raw pointers these symbols are
+        // loaded as hand nothing to ARC. Unreleased, every read leaked about
+        // 27 KB and two mach ports -- measured over 500 reads -- and Sensors
+        // reads all day, with the popup shut, from the moment Roost starts.
+        defer { Unmanaged<AnyObject>.fromOpaque(client).release() }
         _ = s.match(client, ["PrimaryUsagePage": appleVendorPage,
                              "PrimaryUsage": temperatureUsage] as CFDictionary)
         guard let list = s.services(client)?.takeRetainedValue() as? [AnyObject] else { return [] }
@@ -67,6 +73,7 @@ enum Temperature {
                   let event = s.event(service, Int64(eventTypeTemperature), 0, 0)
             else { continue }
             readings.append((name, s.value(event, eventTypeTemperature << 16)))
+            Unmanaged<AnyObject>.fromOpaque(event).release()
         }
         return readings
     }

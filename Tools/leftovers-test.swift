@@ -180,5 +180,26 @@ do {
           AppLeftovers.find(bundleID: "com.nobody.absent", appName: "Absent", home: home).isEmpty)
 }
 
+print("\nThe app before its leftovers")
+do {
+    // An app that cannot be moved: here, one that is not there, so the move
+    // fails without touching the real Bin. Its leftover must stay put --
+    // moved first, it reset an app that was still installed.
+    let scratch = FileManager.default.temporaryDirectory
+        .appendingPathComponent("leftover-order-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+    let app = scratch.appendingPathComponent("Gone.app")
+    let prefs = scratch.appendingPathComponent("com.example.gone.plist")
+    FileManager.default.createFile(atPath: prefs.path, contents: Data("x".utf8))
+    let removal = AppLeftovers.moveToBin(
+        [AppLeftovers.Item(url: app, bytes: 10, confidence: .certain),
+         AppLeftovers.Item(url: prefs, bytes: 1, confidence: .certain)],
+        bundle: app)
+    check("an app that would not move is reported", removal.failed == [app])
+    check("and nothing else was moved", removal.moved.isEmpty)
+    check("its preferences are still there", FileManager.default.fileExists(atPath: prefs.path))
+    try? FileManager.default.removeItem(at: scratch)
+}
+
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

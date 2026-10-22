@@ -70,9 +70,8 @@ final class DashboardProcesses: ObservableObject {
 
     private var timer: Timer?
 
-    /// How many rows deep to look in each list. Wider than `limit` so a
-    /// process that is heavy on memory but idle on processor still reaches
-    /// the merge.
+    /// How many of the busiest to read when sorting by processor. Wider
+    /// than `limit` only for steadiness; the other sorts read everything.
     static let depth = 20
 
     var isActive = false {
@@ -100,11 +99,15 @@ final class DashboardProcesses: ObservableObject {
     }
 
     private func refresh() {
-        // Asked for more rows than are drawn, because sorting by memory or
-        // by name has to choose from a wider field than "the eight busiest"
-        // -- otherwise sorting by memory only reorders the busiest eight,
-        // which is not what the column says it does.
-        ProcessCPU.top(Self.depth) { [weak self] busy in
+        // Every process when sorting by memory or by name. The field was the
+        // twenty busiest on processor, so an idle app holding 4 GB never
+        // reached a list headed Memory -- the merge the comment on `depth`
+        // promised was never written. `ProcessCPU` measures every process
+        // anyway and only cuts the list at the end; reading each one's memory
+        // costs a few milliseconds every three seconds, and only while this
+        // sort is chosen and the Overview is open.
+        let field = sort == .cpu ? Self.depth : Int.max
+        ProcessCPU.top(field) { [weak self] busy in
             guard let self else { return }
             let all = busy.map {
                 Row(pid: $0.pid, name: $0.name, cpu: $0.usage, memory: Self.resident(of: $0.pid))

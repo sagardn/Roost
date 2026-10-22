@@ -8,7 +8,7 @@
 //            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
 //            Roost/Monitor/ProcessNetwork.swift Roost/UI/Alert.swift \
 //            Roost/Launcher/Notify.swift Roost/Monitor/ProcessControl.swift \
-//            Roost/Monitor/PopupSection.swift \
+//            Roost/Monitor/PopupSection.swift Roost/Monitor/ProcessIdentity.swift \
 //            Roost/Monitor/MemoryReadings.swift Roost/Monitor/CPUTile.swift \
 //            Roost/Monitor/RAMTile.swift Roost/Monitor/DiskReadings.swift \
 //            Roost/Monitor/DiskTile.swift Tools/tile-test.swift | swift -

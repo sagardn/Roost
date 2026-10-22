@@ -318,13 +318,23 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
 
     /// Subsequence match, ranked so prefixes and word starts win.  Cheap, and
     /// enough for a list of apps -- "vsc" finds Visual Studio Code.
+    ///
+    /// Folded before matching. A space typed before or after the name made
+    /// the space part of the subsequence, so "safari " found nothing -- easy
+    /// to type after a word, and answered with "No app named". And "cafe"
+    /// now finds Café the way the clipboard search already did.
     private func score(_ name: String, _ query: String) -> Int? {
+        let fold: (String) -> String = {
+            $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+        }
+        let query = fold(query.trimmingCharacters(in: .whitespaces))
+        let name = fold(name)
         if query.isEmpty { return 0 }
-        let haystack = Array(name.lowercased())
-        let needle = Array(query.lowercased())
+        let haystack = Array(name)
+        let needle = Array(query)
 
-        if name.lowercased().hasPrefix(query.lowercased()) { return 1000 }
-        if name.lowercased().contains(query.lowercased()) { return 700 }
+        if name.hasPrefix(query) { return 1000 }
+        if name.contains(query) { return 700 }
 
         var i = 0, points = 0, lastWasBoundary = true
         for character in haystack {
@@ -492,7 +502,11 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
             let plus = NSImage(systemSymbolName: "plus.circle",
                                accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 20, weight: .regular))
-            let view = SearchRowView(name: "Add an App…",
+            // With nothing matched, the row says so first: a lone "Add an
+            // App…" read as a strange result rather than as "no results".
+            let title = rows.isEmpty ? localized("No app named “%0” — add one…", field.stringValue)
+                                     : localized("Add an App…")
+            let view = SearchRowView(name: title,
                                      icon: plus,
                                      mark: "",
                                      font: labelFont,
@@ -651,7 +665,7 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         let running = WindowControl.runningApp(row.bundleID)
 
         func quitItem(_ app: NSRunningApplication) -> ActionItem {
-            ActionItem("Quit \(row.name)") { [weak self] in
+            ActionItem(localized("Quit %0", row.name)) { [weak self] in
                 WindowControl.quit(app)
                 Notify.show("Quit \(row.name)", symbol: "xmark.circle.fill")
                 self?.refresh(after: 0.6)
@@ -663,14 +677,14 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
             menu.addItem(.separator())
         }
 
-        menu.addItem(ActionItem(running == nil ? "Open" : "Bring to Front") { [weak self] in
+        menu.addItem(ActionItem(running == nil ? localized("Open") : localized("Bring to Front")) { [weak self] in
             self?.dismissThen { WindowControl.bringToFront(entry) }
         })
 
         if let running {
             // Ahead of the window list: opening a new one is the more common
             // want, and the list below is for going back to an existing one.
-            menu.addItem(ActionItem("New Window") { [weak self] in
+            menu.addItem(ActionItem(localized("New Window")) { [weak self] in
                 self?.dismissThen {
                     if !WindowControl.newWindow(running) {
                         Notify.show("\(row.name) has no New Window command")
@@ -695,15 +709,15 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
             menu.addItem(.separator())
             switch row.state {
             case .minimized:
-                menu.addItem(ActionItem("Restore") { [weak self] in
+                menu.addItem(ActionItem(localized("Restore")) { [weak self] in
                     self?.dismissThen { _ = WindowControl.restore(row.bundleID) }
                 })
             case .visible, .fullScreen:
-                menu.addItem(ActionItem("Minimize") { [weak self] in
+                menu.addItem(ActionItem(localized("Minimise")) { [weak self] in
                     WindowControl.minimize(row.bundleID)
                     self?.refresh()
                 })
-                menu.addItem(ActionItem("Hide") { [weak self] in
+                menu.addItem(ActionItem(localized("Hide")) { [weak self] in
                     WindowControl.hide(running)
                     self?.refresh()
                 })
@@ -718,7 +732,7 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         menu.addItem(.separator())
         // The custom switcher: Ctrl+Tab walks only the marked apps.
         let marked = isMarked(row.bundleID)
-        let markItem = ActionItem(marked ? "Remove from ⌃Tab Switcher" : "Add to ⌃Tab Switcher") { [weak self] in
+        let markItem = ActionItem(marked ? localized("Remove from ⌃Tab Switcher") : localized("Add to ⌃Tab Switcher")) { [weak self] in
             self?.onSetMarked(entry, !marked)
             self?.refresh()
         }
@@ -727,25 +741,34 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
 
         menu.addItem(.separator())
         let listed = source().contains { $0.bundleID == row.bundleID }
-        menu.addItem(ActionItem(listed ? "Remove from My Apps" : "Add to My Apps") { [weak self] in
+        menu.addItem(ActionItem(listed ? localized("Remove from My Apps") : localized("Add to My Apps")) { [weak self] in
             self?.onSetListed([entry], !listed)
             self?.refresh()
         })
-        menu.addItem(ActionItem("Reveal in Finder") { [weak self] in
+        let reveal = ActionItem(localized("Reveal in Finder")) { [weak self] in
             self?.dismissThen { WindowControl.revealInFinder(row.bundleID) }
-        })
-        menu.addItem(ActionItem("Copy Bundle ID") {
+        }
+        // An alternate pairs with the item before it only when their key
+        // equivalents match but for the modifiers -- here, none and ⌥.
+        reveal.keyEquivalentModifierMask = []
+        menu.addItem(reveal)
+        // A developer's item, so it is the ⌥ alternate of the one above
+        // rather than a line of its own beside Quit and Reveal in Finder.
+        let copyID = ActionItem(localized("Copy Bundle ID")) {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(row.bundleID, forType: .string)
-        })
+        }
+        copyID.isAlternate = true
+        copyID.keyEquivalentModifierMask = .option
+        menu.addItem(copyID)
 
         menu.addItem(.separator())
-        menu.addItem(ActionItem("Add an App…") { [weak self] in
+        menu.addItem(ActionItem(localized("Add an App…")) { [weak self] in
             self?.browseForApps()
         })
         // With no status-bar menu of its own, the panel is where the list gets
         // managed from.
-        menu.addItem(ActionItem("Edit Apps…") { [weak self] in
+        menu.addItem(ActionItem(localized("Edit Apps…")) { [weak self] in
             guard let self else { return }
             self.hide()
             DispatchQueue.main.async { self.onEditApps() }

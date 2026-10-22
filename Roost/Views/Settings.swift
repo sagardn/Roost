@@ -10,7 +10,14 @@ import SwiftUI
 /// built.
 final class SettingsWindow: NSWindow, NSWindowDelegate {
 
-    private static let initialSize = CGSize(width: 720, height: 480)
+    /// Large enough for the tool pages -- the space map draws beside a list,
+    /// the uninstaller is two panes -- which at the old 720 were left about
+    /// 500 points once the sidebar took its share.
+    private static let initialSize = CGSize(width: 980, height: 660)
+    /// The old first size, kept as the floor: smaller than this and a module
+    /// page's rows start to clip, and a floor at the new size would not fit
+    /// a laptop screen in a year's time.
+    private static let smallestSize = CGSize(width: 720, height: 480)
     private static let frameAutosaveKey = "com.sagar.roost.Settings.WindowFrame"
 
     var onClose: (() -> Void)?
@@ -22,10 +29,14 @@ final class SettingsWindow: NSWindow, NSWindowDelegate {
     private lazy var dashboard = DashboardPane(
         open: { [weak self] name in self?.model.select(name) },
         enable: { [weak self] name in self?.model.setEnabled(name, true) })
-    private lazy var cleanup = CleanupPane(width: SettingsMetrics.width)
+    private lazy var storage = CleanupPane(width: SettingsMetrics.width)
     /// In a scroll view, as the module pages are: its rows ran off the
     /// bottom of a short window with nothing to say there were more.
-    private lazy var cleanupPage = ScrollingPage(cleanup)
+    private lazy var storagePage = ScrollingPage(storage)
+    /// Each tool's page, made on its first visit and kept: its model holds
+    /// a scan, and somebody who looks at Duplicates and comes back from
+    /// another page expects the sets still to be there.
+    private var toolPages: [SettingsSelection.Tool: NSView] = [:]
     private lazy var launcher = LauncherPane()
     private lazy var launcherPage = ScrollingPage(launcher)
     private lazy var appSettings = GeneralPane(width: SettingsMetrics.width) {
@@ -67,8 +78,8 @@ final class SettingsWindow: NSWindow, NSWindowDelegate {
         // scroll, and a window that cannot be made smaller than its first
         // size is a window that does not fit a laptop screen in a year's
         // time.
-        minSize = NSSize(width: Self.initialSize.width,
-                         height: Self.initialSize.height - SettingsMetrics.popupHeaderHeight)
+        minSize = NSSize(width: Self.smallestSize.width,
+                         height: Self.smallestSize.height - SettingsMetrics.popupHeaderHeight)
 
         setFrameAutosaveName(Self.frameAutosaveKey)
         if !setFrameUsingName(Self.frameAutosaveKey) {
@@ -137,9 +148,18 @@ final class SettingsWindow: NSWindow, NSWindowDelegate {
             appSettings.viewWillAppear()
             view = appSettings
 
-        case .cleanup:
-            cleanup.viewWillAppear()
-            view = cleanupPage
+        case .tool(.storage):
+            storage.viewWillAppear()
+            view = storagePage
+
+        case .tool(let tool):
+            if let made = toolPages[tool] {
+                view = made
+            } else {
+                let made = ToolPages.make(tool)
+                toolPages[tool] = made
+                view = made
+            }
 
         case .launcher:
             launcher.viewWillAppear()

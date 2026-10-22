@@ -2,24 +2,22 @@ import AppKit
 
 extension AppDelegate {
 
-    /// Switch every module off, or back to what it was.
+    /// Take every module out of the menu bar, or put back the ones that were
+    /// there.
     ///
-    /// Back to *what it was*, not all on: a module the user had turned off
-    /// stays off through a pause and a resume. The stored
-    /// `<module>_state` key is the record of their choice, and
-    /// `isOnByDefault` is only the fallback for a module that has never been
-    /// touched.
+    /// By stopping and starting them, never by switching them. A module's
+    /// `isEnabled` setter saves `<module>_state` -- it is the user's choice --
+    /// and pausing used to set it false on every module. Resume then read
+    /// those saved values back to decide what to restore, found false
+    /// everywhere and restored nothing: one click of Pause left an empty menu
+    /// bar that a relaunch kept, since the states were saved. `start()` shows
+    /// a module only if it is enabled, and `stop()` hides it without saving
+    /// anything, so the choices come through a pause untouched.
     @objc internal func listenForAppPause() {
-        for module in ModuleRegistry.shared.all {
-            if pauseState {
-                if module.isEnabled { module.isEnabled = false }
-                continue
-            }
-            guard !module.isEnabled else { continue }
-            if Preferences.shared.bool("\(module.moduleName)_state",
-                                       default: module.isOnByDefault) {
-                module.isEnabled = true
-            }
+        if pauseState {
+            ModuleRegistry.shared.stopAll()
+        } else {
+            ModuleRegistry.shared.startAll()
         }
         refreshPausedMenuBarItem()
     }

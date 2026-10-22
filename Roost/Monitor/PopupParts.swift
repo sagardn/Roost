@@ -343,77 +343,50 @@ final class PeakLegend: NSView {
     }
 }
 
-// MARK: - Details fold
+// MARK: - Details
 
-/// "▸ More details", folding away the rows that are looked up once and then
-/// never again: a MAC address, a mount point, a model name.
+/// The heading over the rows that are looked up once and then rarely again:
+/// a MAC address, a mount point, a model name.
 ///
-/// Remembers whether it was left open, per popup, so somebody who wants the
-/// details does not have to ask for them on every open.
+/// It was a fold, "▸ More details", closed until clicked and remembered per
+/// popup. Asked why the details had to be opened at all, there was no good
+/// answer: a popup is opened to be read, the rows are a few lines, and a
+/// click to see them is a click on every Mac the popup is opened on for the
+/// first time. So it is a heading now, and the rows are always out.
+///
+/// The name and shape stay -- `install(in:rows:)`, `isOpen`, `onToggle` --
+/// so the five popups that build one keep compiling and keep their own
+/// conditions on a row (the Wi-Fi channel, the CPU clock), which read
+/// `isOpen` and now always find it true. `key` is no longer read; the stored
+/// `<Module>_popupDetails` values are left where they are, harmless.
 final class DisclosureButton: NSView {
 
-    /// Called with the new state on every click, after `rows` have been
-    /// shown or hidden. For rows with conditions of their own -- a Wi-Fi
-    /// channel off Wi-Fi -- the popup re-applies those here.
+    /// Never called: there is nothing to toggle. Kept so the popups that
+    /// set it compile unchanged.
     var onToggle: ((Bool) -> Void)?
 
-    private(set) var isOpen: Bool
-    private var rows: [NSView] = []
-    private let key: String
-    private let button = NSButton()
+    let isOpen = true
 
-    init(title: String = "More details", key: String) {
-        self.key = key
-        isOpen = UserDefaults.standard.bool(forKey: key)
+    init(title: String = "Details", key: String) {
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
 
-        button.title = localized(title)
-        button.isBordered = false
-        button.imagePosition = .imageLeading
-        button.font = .systemFont(ofSize: 11)
-        button.contentTintColor = .secondaryLabelColor
-        button.target = self
-        button.action = #selector(clicked)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(button)
-
+        let header = SectionHeader(localized(title))
+        addSubview(header)
         NSLayoutConstraint.activate([
-            widthAnchor.constraint(equalToConstant: PopupMetrics.contentWidth),
-            heightAnchor.constraint(equalToConstant: 22),
-            button.leadingAnchor.constraint(equalTo: leadingAnchor, constant: -2),
-            button.bottomAnchor.constraint(equalTo: bottomAnchor)
+            header.leadingAnchor.constraint(equalTo: leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: trailingAnchor),
+            header.topAnchor.constraint(equalTo: topAnchor),
+            header.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
-        updateChevron()
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
 
-    /// Adds the button and then the rows it folds to `stack`, in that order.
+    /// Adds the heading and then its rows to `stack`, in that order.
     func install(in stack: NSStackView, rows: [NSView]) {
-        self.rows = rows
         stack.addArrangedSubview(self)
-        for row in rows {
-            row.isHidden = !isOpen
-            stack.addArrangedSubview(row)
-        }
-    }
-
-    private func updateChevron() {
-        button.image = NSImage(systemSymbolName: isOpen ? "chevron.down" : "chevron.right",
-                               accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 9, weight: .semibold))
-        // The chevron is the only thing saying whether the rows are out, and
-        // it is a picture; VoiceOver hears it as the button's expanded state.
-        button.setAccessibilityExpanded(isOpen)
-    }
-
-    @objc private func clicked() {
-        isOpen.toggle()
-        UserDefaults.standard.set(isOpen, forKey: key)
-        updateChevron()
-        rows.forEach { $0.isHidden = !isOpen }
-        onToggle?(isOpen)
+        rows.forEach(stack.addArrangedSubview)
     }
 }
 

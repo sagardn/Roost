@@ -59,8 +59,13 @@ extension AppDelegate {
         let current = Bundle.main.object(
             forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
 
-        guard let interval = UpdateInterval(rawValue: Preferences.shared.string(
-            "update-interval", default: UpdateInterval.defaultStored)) else { return }
+        // Only consulted for whether updates install silently. An interval it
+        // cannot read -- a menu separator a very old version stored -- used
+        // to return here, before the version was recorded, so that store
+        // never had it written and announced a long-past update the day a
+        // real interval was chosen.
+        let interval = UpdateInterval.interval(from: Preferences.shared.string(
+            "update-interval", default: UpdateInterval.defaultStored))
 
         // No version recorded at all means either a first run or a store
         // written by something that is not this app. Starting clean is the
@@ -165,7 +170,7 @@ extension AppDelegate {
     }
 
     private func scheduleUpdateChecks() {
-        guard let interval = UpdateInterval(rawValue: Preferences.shared.string(
+        guard let interval = UpdateInterval.interval(from: Preferences.shared.string(
             "update-interval", default: UpdateInterval.defaultStored)) else { return }
 
         updateActivity.invalidate()

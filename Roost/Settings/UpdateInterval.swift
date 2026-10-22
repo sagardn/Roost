@@ -17,13 +17,31 @@ enum UpdateInterval: String, CaseIterable {
     case oncePerMonth = "Once per month"
     case never = "Never"
 
-    /// What the settings window offers, in order.
-    static var offered: [UpdateInterval] { allCases }
+    /// What the settings window offers, in order: most often first, and
+    /// the one that installs by itself last, apart from the rest.
+    static var offered: [UpdateInterval] { [.atStart, .oncePerDay, .oncePerWeek, .oncePerMonth, .never, .silent] }
+
+    /// The menu's words. The raw values are storage and stay as they are;
+    /// "Silent" in particular hid that it installs without asking.
+    var title: String {
+        switch self {
+        case .atStart:      return localized("When Roost opens")
+        case .oncePerDay:   return localized("Daily")
+        case .oncePerWeek:  return localized("Weekly")
+        case .oncePerMonth: return localized("Monthly")
+        case .never:        return localized("Never")
+        case .silent:       return localized("When Roost opens, and install automatically")
+        }
+    }
 
     /// Reads a stored value, tolerating the two separator strings the old
     /// settings window could leave behind.
     static func interval(from stored: String) -> UpdateInterval? {
         if stored.hasPrefix("separator") { return nil }
+        // The settings window once offered this, though nothing here ever
+        // scheduled it; whoever chose it wanted checks often, and daily is
+        // the most often there is.
+        if stored == "Once per hour" { return .oncePerDay }
         return UpdateInterval(rawValue: stored)
     }
 

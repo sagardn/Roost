@@ -7,6 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C0FFEE0000A2000000000000 /* ToolPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000A1000000000000 /* ToolPages.swift */; };
+		C0FFEE000002000000000000 /* CheckUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000001000000000000 /* CheckUp.swift */; };
+		C0FFEE000004000000000000 /* CheckUpPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000003000000000000 /* CheckUpPage.swift */; };
+		C0FFEE000006000000000000 /* Duplicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000005000000000000 /* Duplicates.swift */; };
+		C0FFEE000008000000000000 /* DuplicatesPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000007000000000000 /* DuplicatesPage.swift */; };
+		C0FFEE00000A000000000000 /* OrphanedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000009000000000000 /* OrphanedData.swift */; };
+		C0FFEE00000C000000000000 /* SpaceMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE00000B000000000000 /* SpaceMap.swift */; };
+		C0FFEE00000E000000000000 /* SpaceMapPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE00000D000000000000 /* SpaceMapPage.swift */; };
+		C0FFEE000010000000000000 /* StaleDownloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE00000F000000000000 /* StaleDownloads.swift */; };
+		C0FFEE000012000000000000 /* BackgroundItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000011000000000000 /* BackgroundItems.swift */; };
+		C0FFEE000014000000000000 /* BackgroundItemsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000013000000000000 /* BackgroundItemsPage.swift */; };
+		C0FFEE000016000000000000 /* Protection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000015000000000000 /* Protection.swift */; };
+		C0FFEE000018000000000000 /* Recommendations.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000017000000000000 /* Recommendations.swift */; };
+		C0FFEE0000B4000000000000 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000B3000000000000 /* MainMenu.swift */; };
+		C0FFEE0000B2000000000000 /* Glyph.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000B1000000000000 /* Glyph.swift */; };
+		C0FFEE00001A000000000000 /* SettingsLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE000019000000000000 /* SettingsLink.swift */; };
 		FEEDFACE0381000000000000 /* CPUModuleShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0380000000000000 /* CPUModuleShell.swift */; };
 		FEEDFACE0531000000000000 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0530000000000000 /* Log.swift */; };
 		FEEDFACE0541000000000000 /* UpdateInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0540000000000000 /* UpdateInterval.swift */; };
@@ -133,6 +149,7 @@
 		FEEDFACEB205000000000000 /* NetworkPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF205000000000000 /* NetworkPopup.swift */; };
 		FEEDFACEB2E0000000000000 /* PopupParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E0000000000000 /* PopupParts.swift */; };
 		FEEDFACEB2E5000000000000 /* RunawayApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E5000000000000 /* RunawayApps.swift */; };
+		FEEDFACEB3A1000000000000 /* ProcessIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */; };
 		FEEDFACEB2E6000000000000 /* Throttling.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E6000000000000 /* Throttling.swift */; };
 		FEEDFACEB206000000000000 /* Popup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF206000000000000 /* Popup.swift */; };
 		FEEDFACEB207000000000000 /* PopupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF207000000000000 /* PopupSection.swift */; };
@@ -147,6 +164,7 @@
 		FEEDFACEB20F000000000000 /* RAMPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF20F000000000000 /* RAMPopup.swift */; };
 		FEEDFACEB210000000000000 /* MenuBarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF210000000000000 /* MenuBarWidget.swift */; };
 		FEEDFACEB211000000000000 /* ProcessCPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF211000000000000 /* ProcessCPU.swift */; };
+		FEEDFACEB2C1000000000000 /* ProcessGPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2C1000000000000 /* ProcessGPU.swift */; };
 		FEEDFACE0B10000000000000 /* ProcessControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0B11000000000000 /* ProcessControl.swift */; };
 		FEEDFACE0A40000000000000 /* LaunchArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0A50000000000000 /* LaunchArguments.swift */; };
 		FEEDFACE0A41000000000000 /* PauseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0A51000000000000 /* PauseState.swift */; };
@@ -239,6 +257,22 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C0FFEE0000A1000000000000 /* ToolPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPages.swift; sourceTree = "<group>"; };
+		C0FFEE000001000000000000 /* CheckUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckUp.swift; sourceTree = "<group>"; };
+		C0FFEE000003000000000000 /* CheckUpPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckUpPage.swift; sourceTree = "<group>"; };
+		C0FFEE000005000000000000 /* Duplicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Duplicates.swift; sourceTree = "<group>"; };
+		C0FFEE000007000000000000 /* DuplicatesPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesPage.swift; sourceTree = "<group>"; };
+		C0FFEE000009000000000000 /* OrphanedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanedData.swift; sourceTree = "<group>"; };
+		C0FFEE00000B000000000000 /* SpaceMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceMap.swift; sourceTree = "<group>"; };
+		C0FFEE00000D000000000000 /* SpaceMapPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceMapPage.swift; sourceTree = "<group>"; };
+		C0FFEE00000F000000000000 /* StaleDownloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaleDownloads.swift; sourceTree = "<group>"; };
+		C0FFEE000011000000000000 /* BackgroundItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundItems.swift; sourceTree = "<group>"; };
+		C0FFEE000013000000000000 /* BackgroundItemsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundItemsPage.swift; sourceTree = "<group>"; };
+		C0FFEE000015000000000000 /* Protection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protection.swift; sourceTree = "<group>"; };
+		C0FFEE000017000000000000 /* Recommendations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recommendations.swift; sourceTree = "<group>"; };
+		C0FFEE0000B3000000000000 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
+		C0FFEE0000B1000000000000 /* Glyph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Glyph.swift; sourceTree = "<group>"; };
+		C0FFEE000019000000000000 /* SettingsLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLink.swift; sourceTree = "<group>"; };
 		FEEDFACE0380000000000000 /* CPUModuleShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUModuleShell.swift; sourceTree = "<group>"; };
 		FEEDFACE0530000000000000 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Log.swift; path = Roost/UI/Log.swift; sourceTree = SOURCE_ROOT; };
 		FEEDFACE0540000000000000 /* UpdateInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateInterval.swift; path = Roost/Settings/UpdateInterval.swift; sourceTree = SOURCE_ROOT; };
@@ -405,6 +439,7 @@
 		FEEDFACEF205000000000000 /* NetworkPopup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkPopup.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E0000000000000 /* PopupParts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PopupParts.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E5000000000000 /* RunawayApps.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RunawayApps.swift; sourceTree = "<group>"; };
+		FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProcessIdentity.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E6000000000000 /* Throttling.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Throttling.swift; sourceTree = "<group>"; };
 		FEEDFACEF206000000000000 /* Popup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Popup.swift; sourceTree = "<group>"; };
 		FEEDFACEF207000000000000 /* PopupSection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PopupSection.swift; sourceTree = "<group>"; };
@@ -419,6 +454,7 @@
 		FEEDFACEF20F000000000000 /* RAMPopup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RAMPopup.swift; sourceTree = "<group>"; };
 		FEEDFACEF210000000000000 /* MenuBarWidget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MenuBarWidget.swift; sourceTree = "<group>"; };
 		FEEDFACEF211000000000000 /* ProcessCPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProcessCPU.swift; sourceTree = "<group>"; };
+		FEEDFACEF2C1000000000000 /* ProcessGPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProcessGPU.swift; sourceTree = "<group>"; };
 		FEEDFACE0B11000000000000 /* ProcessControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessControl.swift; sourceTree = "<group>"; };
 		9ABD6F7528561472009B8BC1 /* el */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = el; path = el.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9AC2FE652699E69F00EBE30A /* hr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hr; path = hr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -464,6 +500,10 @@
 		FEEDFACE0336000000000000 /* System */ = {
 			isa = PBXGroup;
 			children = (
+				C0FFEE000011000000000000 /* BackgroundItems.swift */,
+				C0FFEE000013000000000000 /* BackgroundItemsPage.swift */,
+				C0FFEE000015000000000000 /* Protection.swift */,
+				C0FFEE000017000000000000 /* Recommendations.swift */,
 				FEEDFACE0330000000000000 /* DeviceInfo.swift */,
 				FEEDFACE0B21000000000000 /* SystemReport.swift */,
 				FEEDFACE0B31000000000000 /* SystemReportLive.swift */,
@@ -494,6 +534,9 @@
 		FEEDFACE0311000000000000 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				C0FFEE000019000000000000 /* SettingsLink.swift */,
+				C0FFEE0000B1000000000000 /* Glyph.swift */,
+				C0FFEE0000B3000000000000 /* MainMenu.swift */,
 				FEEDFACE0360000000000000 /* Palette.swift */,
 				FEEDFACE0340000000000000 /* AppLinks.swift */,
 				FEEDFACE0342000000000000 /* SupportWindow.swift */,
@@ -635,6 +678,14 @@
 		FEEDFACE0003000000000000 /* Cleanup */ = {
 			isa = PBXGroup;
 			children = (
+				C0FFEE000001000000000000 /* CheckUp.swift */,
+				C0FFEE000003000000000000 /* CheckUpPage.swift */,
+				C0FFEE000005000000000000 /* Duplicates.swift */,
+				C0FFEE000007000000000000 /* DuplicatesPage.swift */,
+				C0FFEE000009000000000000 /* OrphanedData.swift */,
+				C0FFEE00000B000000000000 /* SpaceMap.swift */,
+				C0FFEE00000D000000000000 /* SpaceMapPage.swift */,
+				C0FFEE00000F000000000000 /* StaleDownloads.swift */,
 				FEEDFACE0B71000000000000 /* AppLeftovers.swift */,
 				FEEDFACE0B91000000000000 /* CommandLineTools.swift */,
 				FEEDFACE0B41000000000000 /* DiskCleanup.swift */,
@@ -693,6 +744,7 @@
 				FEEDFACEF205000000000000 /* NetworkPopup.swift */,
 				FEEDFACEF2E0000000000000 /* PopupParts.swift */,
 				FEEDFACEF2E5000000000000 /* RunawayApps.swift */,
+				FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */,
 				FEEDFACEF2E6000000000000 /* Throttling.swift */,
 				FEEDFACEF206000000000000 /* Popup.swift */,
 				FEEDFACEF207000000000000 /* PopupSection.swift */,
@@ -707,6 +759,7 @@
 				FEEDFACEF20F000000000000 /* RAMPopup.swift */,
 				FEEDFACEF210000000000000 /* MenuBarWidget.swift */,
 				FEEDFACEF211000000000000 /* ProcessCPU.swift */,
+				FEEDFACEF2C1000000000000 /* ProcessGPU.swift */,
 				FEEDFACE0B11000000000000 /* ProcessControl.swift */,
 			);
 			path = Monitor;
@@ -737,6 +790,7 @@
 		9A81C74A24499C4B00825D92 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C0FFEE0000A1000000000000 /* ToolPages.swift */,
 				FEEDFACE0F01000000000000 /* SettingsShell.swift */,
 				9A81C74C24499C7000825D92 /* Settings.swift */,
 				FEEDFACE0A21000000000000 /* SettingsSelection.swift */,
@@ -971,6 +1025,22 @@
 				FEEDFACE0BC0000000000000 /* AICleanupWindow.swift in Sources */,
 				FEEDFACE0BB0000000000000 /* AIAssistants.swift in Sources */,
 				FEEDFACE0B60000000000000 /* LargeFilesWindow.swift in Sources */,
+				C0FFEE0000A2000000000000 /* ToolPages.swift in Sources */,
+				C0FFEE000002000000000000 /* CheckUp.swift in Sources */,
+				C0FFEE000004000000000000 /* CheckUpPage.swift in Sources */,
+				C0FFEE000006000000000000 /* Duplicates.swift in Sources */,
+				C0FFEE000008000000000000 /* DuplicatesPage.swift in Sources */,
+				C0FFEE00000A000000000000 /* OrphanedData.swift in Sources */,
+				C0FFEE00000C000000000000 /* SpaceMap.swift in Sources */,
+				C0FFEE00000E000000000000 /* SpaceMapPage.swift in Sources */,
+				C0FFEE000010000000000000 /* StaleDownloads.swift in Sources */,
+				C0FFEE000012000000000000 /* BackgroundItems.swift in Sources */,
+				C0FFEE000014000000000000 /* BackgroundItemsPage.swift in Sources */,
+				C0FFEE000016000000000000 /* Protection.swift in Sources */,
+				C0FFEE000018000000000000 /* Recommendations.swift in Sources */,
+				C0FFEE00001A000000000000 /* SettingsLink.swift in Sources */,
+				C0FFEE0000B2000000000000 /* Glyph.swift in Sources */,
+				C0FFEE0000B4000000000000 /* MainMenu.swift in Sources */,
 				FEEDFACE0EB0000000000000 /* CleanerParts.swift in Sources */,
 				FEEDFACE0481000000000000 /* DiskPopup.swift in Sources */,
 				FEEDFACE0491000000000000 /* DiskModuleShell.swift in Sources */,
@@ -1052,6 +1122,7 @@
 				FEEDFACEB205000000000000 /* NetworkPopup.swift in Sources */,
 				FEEDFACEB2E0000000000000 /* PopupParts.swift in Sources */,
 				FEEDFACEB2E5000000000000 /* RunawayApps.swift in Sources */,
+				FEEDFACEB3A1000000000000 /* ProcessIdentity.swift in Sources */,
 				FEEDFACEB2E6000000000000 /* Throttling.swift in Sources */,
 				FEEDFACEB206000000000000 /* Popup.swift in Sources */,
 				FEEDFACEB207000000000000 /* PopupSection.swift in Sources */,
@@ -1066,6 +1137,7 @@
 				FEEDFACEB20F000000000000 /* RAMPopup.swift in Sources */,
 				FEEDFACEB210000000000000 /* MenuBarWidget.swift in Sources */,
 				FEEDFACEB211000000000000 /* ProcessCPU.swift in Sources */,
+				FEEDFACEB2C1000000000000 /* ProcessGPU.swift in Sources */,
 				FEEDFACE0B10000000000000 /* ProcessControl.swift in Sources */,
 				9A81C74E24499C7000825D92 /* Settings.swift in Sources */,
 				FEEDFACE0A20000000000000 /* SettingsSelection.swift in Sources */,
@@ -1305,7 +1377,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Roost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagar.roost;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1337,7 +1409,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Roost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagar.roost;
 				PRODUCT_NAME = "$(TARGET_NAME)";

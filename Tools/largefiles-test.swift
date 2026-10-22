@@ -365,6 +365,22 @@ check("a partial run reports both numbers",
       LargeFiles.message(for: .init(moved: [URL(fileURLWithPath: "/a")],
                                     failed: [URL(fileURLWithPath: "/b")],
                                     bytesFreed: 1)).contains("1"))
+check("a failure says why",
+      LargeFiles.message(for: .init(moved: [], failed: [URL(fileURLWithPath: "/a")],
+                                    reason: "it was already gone", bytesFreed: 0))
+        .hasSuffix("it was already gone"))
+
+print("\nLargeFiles.reason")
+let gone = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("roost-\(UUID().uuidString)")
+do {
+    try FileManager.default.trashItem(at: gone, resultingItemURL: nil)
+    check("a missing file cannot be binned", false)
+} catch {
+    check("a file that has gone is said to be gone", LargeFiles.reason(for: error) == "it was already gone")
+}
+check("a permission error says macOS refused",
+      LargeFiles.reason(for: NSError(domain: NSCocoaErrorDomain, code: NSFileWriteNoPermissionError))
+        .hasPrefix("macOS did not allow it"))
 
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

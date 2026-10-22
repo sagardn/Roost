@@ -17,17 +17,13 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>846</string>
+	<string>847</string>
 	<key>Description</key>
 	<string>Simple macOS system monitor in your menu bar</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-	<key>NSLocationUsageDescription</key>
-	<string>Roost shows the name of the Wi-Fi network you are on in its Network popup. macOS gives an app that name only with Location access. Roost does not use or keep your location.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Roost shows the name of the Wi-Fi network you are on in its Network popup. macOS gives an app that name only with Location access. Roost does not use or keep your location.</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -39,6 +35,10 @@
 	<string>This permission allows opening a selected day in the Calendar app</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>MIT. © 2026 Sagar. See LICENSE in this bundle.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Roost shows the name of the Wi-Fi network you are on in its Network popup. macOS gives an app that name only with Location access. Roost does not use or keep your location.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Roost shows the name of the Wi-Fi network you are on in its Network popup. macOS gives an app that name only with Location access. Roost does not use or keep your location.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSUserNotificationAlertStyle</key>

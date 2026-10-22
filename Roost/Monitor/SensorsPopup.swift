@@ -38,7 +38,7 @@ final class SensorsModule: PopupContent {
     /// added before the rows, so every visible header sat at the top in a
     /// block and the sensors under them belonged to none of them.
     private let groups: [NSStackView] = SensorReadings.Family.allCases.map { family in
-        let group = NSStackView(views: [SectionHeader(family.rawValue)])
+        let group = NSStackView(views: [SectionHeader(family.title)])
         group.orientation = .vertical
         group.alignment = .leading
         group.spacing = 6

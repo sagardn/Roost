@@ -70,7 +70,7 @@ final class UninstallWindow: NSWindow, NSWindowDelegate, ClosableWindow {
         makeKeyAndOrderFront(nil)
         center()
         NSApp.activate(ignoringOtherApps: true)
-        if model.apps.isEmpty { model.loadApps() }
+        if model.apps.isEmpty && !model.loadingList { model.loadApps() }
     }
 
     /// Switches to the tools list from outside.
@@ -250,7 +250,7 @@ final class UninstallModel: ObservableObject {
                 ? localized("%0 is removed by the command below", name)
                 : localized("%0 left nothing behind that Roost can see", name)
         }
-        let total = Readings.bytes(UInt64(totalBytes))
+        let total = Readings.size(UInt64(totalBytes))
         if let only = leftovers.first, leftovers.count == 1 {
             return localized("%0 — %1, %2", name, only.name, total)
         }
@@ -269,16 +269,17 @@ final class UninstallModel: ObservableObject {
         let detail: String
         if let only = items.first, items.count == 1 {
             detail = localized("%0, %1, goes to the Bin. Nothing is erased — it can be put back from Finder.",
-                               only.name, Readings.bytes(bytes))
+                               only.name, Readings.size(bytes))
         } else {
             detail = localized("%0 items, %1, go to the Bin. Nothing is erased — everything can be put back from Finder.",
-                               String(items.count), Readings.bytes(bytes))
+                               String(items.count), Readings.size(bytes))
         }
+        let bundle = chosenApp?.url
         Alert.show(localized("Remove %0?", name), detail,
                    style: .warning,
                    icon: chosenApp.map { NSWorkspace.shared.icon(forFile: $0.url.path) },
                    actionTitle: localized("Move to Bin")) { [weak self] in
-            let removal = AppLeftovers.moveToBin(items)
+            let removal = AppLeftovers.moveToBin(items, bundle: bundle)
             Notify.show(LargeFiles.message(for: removal), symbol: "trash")
             guard let self else { return }
             let moved = Set(removal.moved)
@@ -293,11 +294,14 @@ final class UninstallModel: ObservableObject {
     func runCommand() {
         guard let tool = chosenTool, let command = tool.command else { return }
 
-        Alert.show(localized("Run %0?", command.text),
-                   localized("Roost runs %0's own uninstaller. What that removes does not go to the Bin — installing it again is how it comes back.",
-                             tool.kind.label),
+        // Titled by what happens, not by the command: "Run brew uninstall
+        // --formula ripgrep?" asked a person to read shell to say yes. The
+        // command is still shown, last, for whoever wants to check it.
+        Alert.show(localized("Remove %0?", tool.name),
+                   localized("%0 installed it, so %0 removes it. This does not go to the Bin — installing it again is how it comes back.",
+                             tool.kind.label) + "\n\n" + command.text,
                    style: .warning,
-                   actionTitle: localized("Run")) { [weak self] in
+                   actionTitle: localized("Remove")) { [weak self] in
             guard let self else { return }
             self.running = true
 
@@ -344,8 +348,10 @@ private extension CommandLineTools.Tool {
 
 // MARK: - Views
 
-private struct UninstallView: View {
+struct UninstallView: View {
     @ObservedObject var model: UninstallModel
+    /// A page in the settings window; see `AICleanupView.embedded`.
+    var embedded = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -355,9 +361,12 @@ private struct UninstallView: View {
             DetailPane(model: model)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(.top, 28)
-        .frame(minWidth: 680, minHeight: 460)
-        .background(CleanerBackdrop().ignoresSafeArea())
+        .padding(.top, embedded ? ToolPages.top : 28)
+        .frame(minWidth: embedded ? nil : 680, minHeight: embedded ? nil : 460)
+        .background {
+            if !embedded { CleanerBackdrop().ignoresSafeArea() }
+        }
+        .onAppear { if model.apps.isEmpty && !model.loadingList { model.loadApps() } }
     }
 }
 
@@ -389,6 +398,19 @@ private struct ChooserPane: View {
                 Spacer()
                 Text(localized("No command-line tools found"))
                     .font(.system(size: 12)).foregroundStyle(.secondary)
+                // Where it looked, so "none" can be told apart from "not there".
+                Text(localized("Roost looks for tools installed with Homebrew, npm and pipx, and in ~/.local/bin."))
+                    .font(.system(size: 11)).foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                Spacer()
+            } else if !model.query.isEmpty,
+                      model.mode == .apps ? model.shownApps.isEmpty : model.shownTools.isEmpty {
+                // A search that matched nothing used to leave a blank list,
+                // which looked like the list had failed to load.
+                Spacer()
+                Text(localized("Nothing called “%0”", model.query))
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                 Spacer()
             } else {
                 list
@@ -449,9 +471,9 @@ private struct ChooserPane: View {
     /// across the two Homebrew prefixes, so the row has to say more than the
     /// name for the right one to be picked.
     private static func note(for tool: CommandLineTools.Tool) -> String {
-        var note = tool.kind.label
-        if let detail = tool.detail, tool.isManaged { note += " \(detail)" }
-        if tool.bytes > 0 { note += " · \(Readings.bytes(UInt64(tool.bytes)))" }
+        var note = tool.kind.source
+        if let detail = tool.detail, tool.isManaged { note += " · \(detail)" }
+        if tool.bytes > 0 { note += " · \(Readings.size(UInt64(tool.bytes)))" }
         return note
     }
 }
@@ -556,8 +578,8 @@ private struct DetailPane: View {
                 DetailHeader(model: model)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
-                if let command = model.chosenTool?.command {
-                    CommandCard(command: command, running: model.running) { model.runCommand() }
+                if let tool = model.chosenTool, let command = tool.command {
+                    CommandCard(command: command, manager: tool.kind.label, running: model.running) { model.runCommand() }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 12)
                 }
@@ -606,7 +628,7 @@ private struct DetailPane: View {
         HStack(spacing: 12) {
             if !model.chosen.isEmpty {
                 Text(localized("%0 selected · %1",
-                               String(model.chosen.count), Readings.bytes(UInt64(model.chosenBytes))))
+                               String(model.chosen.count), Readings.size(UInt64(model.chosenBytes))))
                     .font(.system(size: 12, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -686,6 +708,8 @@ private struct DetailHeader: View {
 /// The package manager's own command, in full, before anything runs.
 private struct CommandCard: View {
     let command: CommandLineTools.Command
+    /// The manager's name, for the button: "Remove with Homebrew".
+    let manager: String
     let running: Bool
     let run: () -> Void
 
@@ -712,7 +736,7 @@ private struct CommandCard: View {
             if running {
                 ProgressView().controlSize(.small)
             } else {
-                Button(localized("Run"), action: run)
+                Button(localized("Remove with %0", manager), action: run)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
             }
@@ -740,7 +764,7 @@ private struct LeftoverRow: View {
     /// at all. A row somebody is asked to judge has to say what the
     /// judgement is about.
     private var note: Text {
-        let place = Text(Self.folder(item.url, home: home))
+        let place = Text(Self.kind(of: item.url, home: home))
         switch item.confidence {
         case .certain:
             return place
@@ -807,6 +831,30 @@ private struct LeftoverRow: View {
         .animation(.easeOut(duration: 0.12), value: hovering)
     }
 
+    /// What a leftover is, from the folder it is in. "Library/Containers"
+    /// and "Library/LaunchAgents" were accurate and meant nothing to most
+    /// people; the path is still on hover.
+    private static func kind(of url: URL, home: URL) -> String {
+        let folder = self.folder(url, home: home)
+        let kinds: [(String, String)] = [
+            ("Library/Preferences", localized("Settings")),
+            ("Library/Caches", localized("Cache")),
+            ("Library/Logs", localized("Logs")),
+            ("Library/Application Support", localized("App data")),
+            ("Library/Containers", localized("App's private data")),
+            ("Library/Group Containers", localized("Shared app data")),
+            ("Library/LaunchAgents", localized("Starts at login")),
+            ("Library/HTTPStorages", localized("Web storage")),
+            ("Library/WebKit", localized("Web storage")),
+            ("Library/Saved Application State", localized("Open windows, for reopening")),
+            ("Library/Application Scripts", localized("App scripts"))
+        ]
+        for (prefix, kind) in kinds where folder == prefix || folder.hasPrefix(prefix + "/") {
+            return kind
+        }
+        return folder
+    }
+
     private static func folder(_ url: URL, home: URL) -> String {
         let parent = url.deletingLastPathComponent().path
         guard parent.hasPrefix(home.path) else { return parent }
@@ -827,7 +875,7 @@ struct SizeText: View {
     let isMeasured: Bool
 
     var body: some View {
-        Text(isMeasured ? Readings.bytes(UInt64(max(0, bytes))) : "—")
+        Text(isMeasured ? Readings.size(UInt64(max(0, bytes))) : "—")
             .font(.system(size: 12, weight: .medium, design: .rounded))
             .monospacedDigit()
             .foregroundStyle(isMeasured ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))

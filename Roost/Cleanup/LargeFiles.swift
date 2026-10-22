@@ -256,7 +256,8 @@ extension LargeFiles {
                 if isDirectory && isBundle {
                     // One item, not its contents.
                     walk.skipDescendants()
-                    if let size = directorySize(of: url, fm: fm, deadline: deadline), size > 0 {
+                    if let size = directorySize(of: url, fm: fm, deadline: deadline,
+                                                shouldStop: shouldStop), size > 0 {
                         found.append(Item(url: url, bytes: size))
                         report.bytes += size
                     }
@@ -292,15 +293,26 @@ extension LargeFiles {
     }
 
     /// What a bundle adds up to, with the same deadline over it.
-    private static func directorySize(of url: URL, fm: FileManager,
-                                      deadline: Date) -> Int64? {
+    /// nil when the measuring was cut short, by Stop or the deadline.
+    ///
+    /// It used to check only the deadline, so Stop waited on a Photos
+    /// library being measured for up to the whole 45 seconds -- and a bundle
+    /// the deadline cut off was listed at the size reached so far, as though
+    /// that were all of it. A size on this list is one somebody may act on;
+    /// half of one is left off instead.
+    private static func directorySize(of url: URL, fm: FileManager, deadline: Date,
+                                      shouldStop: () -> Bool) -> Int64? {
         guard let walk = fm.enumerator(
             at: url, includingPropertiesForKeys: [.totalFileAllocatedSizeKey],
             options: [], errorHandler: { _, _ in true }) else { return nil }
 
         var total: Int64 = 0
+        var seen = 0
         for case let child as URL in walk {
-            if Date() >= deadline { break }
+            seen += 1
+            // Every 256 entries: a bundle can hold hundreds of thousands,
+            // and the clock and the flag need not be read for each.
+            if seen % 256 == 0, Date() >= deadline || shouldStop() { return nil }
             total += Int64((try? child.resourceValues(
                 forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize) ?? 0)
         }
@@ -316,6 +328,8 @@ extension LargeFiles {
     struct Removal: Equatable {
         var moved: [URL] = []
         var failed: [URL] = []
+        /// Why the first failure failed, in words, for the message.
+        var reason: String?
 
         var bytesFreed: Int64 = 0
         var isCompleteSuccess: Bool { failed.isEmpty && !moved.isEmpty }
@@ -342,21 +356,52 @@ extension LargeFiles {
                 result.bytesFreed += item.bytes
             } catch {
                 result.failed.append(item.url)
+                if result.reason == nil { result.reason = reason(for: error) }
             }
         }
         return result
     }
 
+    /// Why a move failed, as something a person can act on.
+    ///
+    /// "3 moved, 2 could not be" left them to guess whether to retry, quit
+    /// something or give up. The three causes worth naming are the ones
+    /// with different answers; anything else is said in macOS's words.
+    static func reason(for error: Error) -> String {
+        let ns = error as NSError
+        let posix = (ns.userInfo[NSUnderlyingErrorKey] as? NSError).flatMap {
+            $0.domain == NSPOSIXErrorDomain ? $0.code : nil
+        }
+        if ns.domain == NSCocoaErrorDomain,
+           ns.code == NSFileNoSuchFileError || ns.code == NSFileReadNoSuchFileError || posix == Int(ENOENT) {
+            return localized("it was already gone")
+        }
+        if ns.domain == NSCocoaErrorDomain,
+           ns.code == NSFileWriteNoPermissionError || ns.code == NSFileReadNoPermissionError
+            || posix == Int(EPERM) || posix == Int(EACCES) {
+            return localized("macOS did not allow it — it may be in use or protected")
+        }
+        if ns.domain == NSCocoaErrorDomain, ns.code == NSFeatureUnsupportedError {
+            return localized("its disk has no Bin")
+        }
+        return ns.localizedDescription
+    }
+
     /// What to say afterwards.
     static func message(for removal: Removal) -> String {
         if removal.moved.isEmpty {
-            return localized("Nothing could be moved to the Bin")
+            guard let reason = removal.reason else { return localized("Nothing could be moved to the Bin") }
+            return localized("Nothing could be moved to the Bin: %0", reason)
         }
         if removal.failed.isEmpty {
             return localized("%0 moved to the Bin", String(removal.moved.count))
         }
-        return localized("%0 moved, %1 could not be",
-                         String(removal.moved.count), String(removal.failed.count))
+        guard let reason = removal.reason else {
+            return localized("%0 moved, %1 could not be",
+                             String(removal.moved.count), String(removal.failed.count))
+        }
+        return localized("%0 moved, %1 could not be: %2",
+                         String(removal.moved.count), String(removal.failed.count), reason)
     }
 }
 

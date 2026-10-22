@@ -61,8 +61,9 @@ final class NetworkMonitor {
     // MARK: - State
 
     private var lastCounters: [String: Counters] = [:]
-    /// Where each interface's counters stood when Roost first saw it.
-    private var baselines: [String: Counters] = [:]
+    /// What each interface has moved since Roost first saw it, added up a
+    /// sample at a time.
+    private var moved: [String: Counters] = [:]
     private var lastSampledAt = Date.distantPast
     private var recentLatencies: [Double] = []
     private var probing = false
@@ -88,23 +89,24 @@ final class NetworkMonitor {
 
         defer { lastCounters = counters; lastSampledAt = now }
 
-        guard let primary, let current = counters[primary] else { return }
-
-        // Session totals come from the absolute counter against a baseline,
-        // not from summing the per-tick deltas. Sampling only runs while the
-        // popup is open, so a sum would have reported the few megabytes moved
-        // while you were looking at it rather than everything since launch.
-        // A counter below its baseline means the interface was reset, so the
-        // baseline moves with it.
-        if let base = baselines[primary],
-           current.received >= base.received, current.sent >= base.sent {
-            sessionDownload = current.received - base.received
-            sessionUpload = current.sent - base.sent
-        } else {
-            baselines[primary] = current
-            sessionDownload = 0
-            sessionUpload = 0
+        // Session totals are the sum of what moved between samples, not the
+        // counter against where it stood at launch. They were the latter, and
+        // the counters `getifaddrs` gives are 32 bits wide: every 4 GiB the
+        // counter wrapped below its starting point, which read as a reset, and
+        // "since launch" went back to zero after every large download. The
+        // sampling runs on the menu bar tick, popup shut or not, so the sum
+        // sees every step -- and a step that wraps is still worked out right.
+        for (name, current) in counters {
+            guard let previous = lastCounters[name],
+                  let received = Self.advance(from: previous.received, to: current.received),
+                  let sent = Self.advance(from: previous.sent, to: current.sent) else { continue }
+            moved[name, default: Counters()].received += received
+            moved[name, default: Counters()].sent += sent
         }
+
+        guard let primary, let current = counters[primary] else { return }
+        sessionDownload = moved[primary]?.received ?? 0
+        sessionUpload = moved[primary]?.sent ?? 0
 
         guard let previous = lastCounters[primary] else { return }
 
@@ -135,13 +137,28 @@ final class NetworkMonitor {
         // averaging them over the sleep would report a trickle that never
         // happened.
         guard elapsed < 60 else { return nil }
-        // Counters below their predecessor mean the interface was reset or
-        // swapped underneath us, so there is nothing to subtract from.
-        guard current.received >= previous.received,
-              current.sent >= previous.sent else { return nil }
+        // Counters that went backwards by more than a wrap explains mean the
+        // interface was reset or swapped underneath us, so there is nothing
+        // to subtract from.
+        guard let received = advance(from: previous.received, to: current.received),
+              let sent = advance(from: previous.sent, to: current.sent) else { return nil }
 
-        return Rates(download: Double(current.received - previous.received) / elapsed,
-                     upload: Double(current.sent - previous.sent) / elapsed)
+        return Rates(download: Double(received) / elapsed, upload: Double(sent) / elapsed)
+    }
+
+    /// Bytes a counter moved between two readings, or nil for a reset.
+    ///
+    /// The counters are 32 bits wide -- `if_data`'s `ifi_ibytes` is a
+    /// `u_int32_t` -- so on a busy link they wrap every 4 GiB. A reading below
+    /// the last is a wrap when both fit in 32 bits and the distance round the
+    /// top is under half the range: no link moves 2 GiB in one sample. Past
+    /// that it is a reset, which has nothing to subtract from.
+    static func advance(from previous: UInt64, to current: UInt64) -> UInt64? {
+        if current >= previous { return current - previous }
+        let range = UInt64(UInt32.max) + 1
+        guard previous < range, current < range else { return nil }
+        let wrapped = range - previous + current
+        return wrapped < range / 2 ? wrapped : nil
     }
 
     /// The reachability and latency probe. Networked, so it is deliberately
@@ -171,7 +188,7 @@ final class NetworkMonitor {
     }
 
     func resetSessionTotals() {
-        baselines.removeAll()
+        moved.removeAll()
         sessionDownload = 0
         sessionUpload = 0
     }

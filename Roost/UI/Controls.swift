@@ -159,6 +159,7 @@ enum Controls {
         view.addSubview(text)
         view.addSubview(control)
         view.control = control
+        nameControls(in: control, by: title)
         NSLayoutConstraint.activate([
             // 28, not 32: the controls are mini switches and small pop-ups,
             // 22pt at most, and 32 left the settings page a screen and a half
@@ -181,6 +182,29 @@ enum Controls {
 
         fitToContent(view)
         return view
+    }
+
+    /// Ties a row's controls to the label beside them.
+    ///
+    /// The label sat next to the switch and nothing said they belonged
+    /// together, so VoiceOver announced every switch on every page as
+    /// "switch" -- read from the window's accessibility tree, where they had
+    /// no description at all. A title element is how AppKit links a label to
+    /// the control it names. Push buttons are skipped: "Record Shortcut"
+    /// already says what it is, and renaming it after the row would hide
+    /// that. A threshold row is a stepper and a switch in one view, so the
+    /// search goes down through it.
+    private static func nameControls(in view: NSView, by label: NSTextField) {
+        if let control = view as? NSControl {
+            let titled = (control as? NSButton).map {
+                !($0 is NSPopUpButton) && !$0.title.isEmpty
+            } ?? false
+            if !titled, control.accessibilityTitleUIElement() == nil,
+               (control.accessibilityLabel() ?? "").isEmpty {
+                control.setAccessibilityTitleUIElement(label)
+            }
+        }
+        view.subviews.forEach { nameControls(in: $0, by: label) }
     }
 
     /// A row that is only a control, spanning the width.
@@ -460,6 +484,75 @@ enum Controls {
         line.heightAnchor.constraint(equalToConstant: 1).isActive = true
         return line
     }
+}
+
+// MARK: - Steps
+
+/// Numbered steps side by side: what happens, in the order it happens.
+///
+/// For a page whose rows are actions rather than settings. A row says what
+/// one button does; it cannot say what happens *after* the button, and that
+/// is the question that stopped people pressing them -- "Uninstall…" read as
+/// though it would delete something on the spot, when it opens a list and
+/// asks first. Three short steps answer it before the click, where a footer
+/// under the last card was read after it, if at all.
+final class StepStrip: NSStackView {
+
+    /// The step titles, for a page whose steps name a key that can change --
+    /// the search's shortcut, when another app holds it.
+    private(set) var titles: [NSTextField] = []
+
+    init(_ steps: [(title: String, detail: String)], tint: NSColor) {
+        super.init(frame: .zero)
+        orientation = .horizontal
+        alignment = .top
+        distribution = .fillEqually
+        spacing = 16
+        translatesAutoresizingMaskIntoConstraints = false
+
+        for (index, step) in steps.enumerated() {
+            let number = NSImageView()
+            // The numbered circles go up to 50; a strip is three or four.
+            number.image = NSImage(systemSymbolName: "\(index + 1).circle.fill",
+                                   accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 15, weight: .semibold))
+            number.contentTintColor = tint
+            number.setContentHuggingPriority(.required, for: .horizontal)
+
+            let title = NSTextField(labelWithString: step.title)
+            title.font = .systemFont(ofSize: 12.5, weight: .semibold)
+            title.lineBreakMode = .byTruncatingTail
+            title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            titles.append(title)
+
+            let head = NSStackView(views: [number, title])
+            head.orientation = .horizontal
+            head.alignment = .centerY
+            head.spacing = 6
+
+            let detail = NSTextField(wrappingLabelWithString: step.detail)
+            detail.font = .systemFont(ofSize: 11)
+            detail.textColor = .secondaryLabelColor
+            detail.translatesAutoresizingMaskIntoConstraints = false
+            detail.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+            let column = NSStackView(views: [head, detail])
+            column.orientation = .vertical
+            column.alignment = .leading
+            column.spacing = 3
+            column.translatesAutoresizingMaskIntoConstraints = false
+            addArrangedSubview(column)
+            // The width a wrapping label needs is the column's, said as a
+            // constraint -- the way a section's footer gets its own. Without
+            // it the caption has no width to wrap in and runs on one line
+            // under its neighbours.
+            detail.widthAnchor.constraint(equalTo: column.widthAnchor).isActive = true
+            head.widthAnchor.constraint(lessThanOrEqualTo: column.widthAnchor).isActive = true
+        }
+        edgeInsets = NSEdgeInsets(top: 6, left: 0, bottom: 6, right: 0)
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
 }
 
 // MARK: - Surfaces

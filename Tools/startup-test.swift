@@ -4,7 +4,7 @@
 //  Exercises the three startup decisions: whether the app just updated,
 //  whether to ask about supporting it, and how often to check for a release.
 //
-//  Run:  cat Roost/Settings/UpdateInterval.swift Roost/Update/Version.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Settings/UpdateInterval.swift Roost/Update/Version.swift \
 //            Roost/Startup/StartupDecisions.swift \
 //            Tools/startup-test.swift | swift -
 //
@@ -145,6 +145,14 @@ for interval in UpdateInterval.allCases {
         check("\(interval.rawValue) is a positive interval", seconds > 0)
     }
 }
+
+// The menu offered "Once per hour", which no case scheduled, and choosing
+// it switched checks off. Everything offered must now be a case that means
+// something, and the stored leftover must read as one.
+check("everything offered is a stored value that reads back",
+      UpdateInterval.offered.allSatisfy { UpdateInterval.interval(from: $0.rawValue) == $0 })
+check("every interval is offered", Set(UpdateInterval.offered.map(\.rawValue)) == Set(UpdateInterval.allCases.map(\.rawValue)))
+check("a saved hourly choice checks daily", UpdateInterval.interval(from: "Once per hour") == .oncePerDay)
 
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

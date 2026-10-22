@@ -62,3 +62,59 @@ struct CleanerLink: View {
         .onHover { hovering = $0 }
     }
 }
+
+/// A tool page before it has looked at anything: what it does, what it will
+/// not do, and the button that starts it.
+///
+/// Every tool page opens on one of these rather than scanning. They are
+/// pages in the settings window now, and a click in the sidebar is somebody
+/// looking around -- reading every folder they own because of it would be a
+/// beach ball they did not ask for, and the first a new Mac's owner hears
+/// of it would be macOS asking whether Roost may read their Documents.
+struct ToolHero: View {
+    let symbol: String
+    let tint: Color
+    let title: String
+    let text: String
+    var note: String?
+    let button: String
+    var secondary: (title: String, action: () -> Void)?
+    let action: () -> Void
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 76, height: 76)
+                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(tint.gradient))
+                .shadow(color: tint.opacity(0.35), radius: 12, y: 4)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .accessibilityAddTraits(.isHeader)
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 440)
+                .fixedSize(horizontal: false, vertical: true)
+            GlowButton(title: button, symbol: "play.fill", tint: tint, action: action)
+                .keyboardShortcut(.defaultAction)
+                .padding(.top, 6)
+            if let secondary {
+                CleanerLink(title: secondary.title, symbol: "folder", action: secondary.action)
+            }
+            if let note {
+                Text(note)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 420)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(30)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}

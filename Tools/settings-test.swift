@@ -18,7 +18,20 @@ func check(_ name: String, _ ok: Bool) {
     if !ok { failures += 1 }
 }
 
-let suiteName = "roost.settings.test.\(UUID().uuidString)"
+/// Every scratch domain made below, so each is removed at the end.
+///
+/// Removing the domain is not enough. `removePersistentDomain` empties it and
+/// leaves `~/Library/Preferences/<name>.plist` on disk, so every run left four
+/// files behind -- 775 of them had piled up on one Mac, which is how this was
+/// found: they were the bulk of what a scan for orphaned preferences turned up.
+var scratchDomains: [String] = []
+func scratchName() -> String {
+    let name = "roost.settings.test.\(UUID().uuidString)"
+    scratchDomains.append(name)
+    return name
+}
+
+let suiteName = scratchName()
 let suite = UserDefaults(suiteName: suiteName)!
 let prefs = Preferences(defaults: suite, domain: suiteName)
 
@@ -44,8 +57,6 @@ print("Key compatibility with Kit's Store")
 // key would silently show defaults to a user who had configured Roost.
 suite.set("celsius", forKey: "temperature_units")
 check("reads temperature_units", prefs.temperatureUnits == "celsius")
-suite.set(true, forKey: "keep_menubar_positions")
-check("reads keep_menubar_positions", prefs.keepMenuBarPositions == true)
 suite.set("large", forKey: "CombinedModules_spacing")
 check("reads CombinedModules_spacing", prefs.combinedSpacing == "large")
 prefs.dockIcon = false
@@ -54,7 +65,7 @@ check("writes the key Kit read", suite.object(forKey: "dockIcon") as? Bool == fa
 print("Explicit false is not a missing key")
 // `defaults.bool(forKey:)` returns false for both, so a setting the user
 // turned off and one never set look identical unless existence is checked.
-let freshName = "roost.settings.test.\(UUID().uuidString)"
+let freshName = scratchName()
 let fresh = UserDefaults(suiteName: freshName)!
 let p2 = Preferences(defaults: fresh, domain: freshName)
 check("unset true-default reads true", p2.combinedPopup == true)
@@ -77,7 +88,7 @@ do {
     let data = try prefs.exportAll()
     check("export produces a plist", data.count > 0)
 
-    let targetName = "roost.settings.test.\(UUID().uuidString)"
+    let targetName = scratchName()
     let target = UserDefaults(suiteName: targetName)!
     let p3 = Preferences(defaults: target, domain: targetName)
     let count = try p3.importAll(data)
@@ -92,14 +103,13 @@ do {
     let oldKey = "NSWindow Frame com.sagar.perch.Settings.WindowFrame"
     let backup: [String: Any] = [oldKey: "0 0 10 10", "CPU_state": true]
     let data = try PropertyListSerialization.data(fromPropertyList: backup, format: .xml, options: 0)
-    let targetName = "roost.settings.test.\(UUID().uuidString)"
+    let targetName = scratchName()
     let target = UserDefaults(suiteName: targetName)!
     try Preferences(defaults: target, domain: targetName).importAll(data)
     check("a Perch backup's window frames land under this app's identifier",
           target.string(forKey: "NSWindow Frame \(targetName).Settings.WindowFrame") == "0 0 10 10")
     check("and not under the old one", target.object(forKey: oldKey) == nil)
     check("the rest of a Perch backup imports unchanged", target.bool(forKey: "CPU_state"))
-    UserDefaults.standard.removePersistentDomain(forName: targetName)
 } catch {
     check("a Perch backup imports", false)
 }
@@ -120,6 +130,12 @@ do {
     check("a non-dictionary plist is rejected", true)
 }
 
-UserDefaults.standard.removePersistentDomain(forName: suiteName)
+let preferencesFolder = FileManager.default.homeDirectoryForCurrentUser
+    .appendingPathComponent("Library/Preferences")
+for name in scratchDomains {
+    UserDefaults.standard.removePersistentDomain(forName: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(at: preferencesFolder.appendingPathComponent(name + ".plist"))
+}
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

@@ -109,6 +109,11 @@ enum ProcessCPU {
         // since boot for a second.
         guard let since else { return [] }
         let elapsed = now.timeIntervalSince(since)
+        // A baseline a minute old is from before the popup was last shut, or
+        // before the Mac slept: the first list on reopening was an average
+        // over all of that. A fresh baseline now, and a real rate next tick,
+        // which is what `ProcessNetwork` already did.
+        guard elapsed < 60 else { return [] }
 
         let rates: [(pid: pid_t, usage: Double)] = current.compactMap { pid, after in
             guard let was = before[pid],

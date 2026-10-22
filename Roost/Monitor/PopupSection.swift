@@ -63,6 +63,14 @@ final class SectionHeader: NSView {
 /// updates the text in place rather than rebuilding the row.
 final class ValueRow: NSView {
 
+    /// A plain-words explanation on hover, for a row whose label is the
+    /// standard term but not a common one. Returns the row, so it can be
+    /// written where the row is declared.
+    func explained(_ text: String) -> ValueRow {
+        toolTip = text
+        return self
+    }
+
     private let valueField = NSTextField(labelWithString: "—")
     private var nameField: NSTextField?
     private var pill: StatusPill?
@@ -447,6 +455,13 @@ final class ProcessRow: NSView {
     private let name = NSTextField(labelWithString: "")
     private let down = NSTextField(labelWithString: "")
     private let up = NSTextField(labelWithString: "")
+    /// The way to the quit menu that does not depend on knowing to
+    /// right-click. Right-click was the only way, and nothing on the row
+    /// said so: asked to "add a kill option", the person asking had used
+    /// these popups daily without finding it. Shown on hover only, so a
+    /// list of twelve rows is not a column of twelve buttons.
+    private let stop = NSButton()
+    private var hovering = false { didSet { syncHover() } }
 
     /// Who this row is currently about. Rows are built once and reused as the
     /// list resorts, so this is set on every update and read only inside the
@@ -475,6 +490,22 @@ final class ProcessRow: NSView {
         addSubview(icon)
         addSubview(name)
 
+        stop.image = NSImage(systemSymbolName: "xmark.circle.fill",
+                             accessibilityDescription: localized("Quit or force quit"))?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .regular))
+        stop.isBordered = false
+        stop.imagePosition = .imageOnly
+        stop.contentTintColor = .secondaryLabelColor
+        stop.target = self
+        stop.action = #selector(showStopMenu)
+        stop.toolTip = localized("Quit or force quit")
+        stop.translatesAutoresizingMaskIntoConstraints = false
+        stop.isHidden = true
+        addSubview(stop)
+
+        wantsLayer = true
+        layer?.cornerRadius = 4
+
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: PopupMetrics.contentWidth),
             heightAnchor.constraint(equalToConstant: 18),
@@ -486,7 +517,15 @@ final class ProcessRow: NSView {
 
             name.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
             name.centerYAnchor.constraint(equalTo: centerYAnchor),
-            name.trailingAnchor.constraint(lessThanOrEqualTo: down.leadingAnchor, constant: -6),
+            name.trailingAnchor.constraint(lessThanOrEqualTo: stop.leadingAnchor, constant: -4),
+
+            // Beside the figures, not over them: the number is what the row
+            // is for, and hiding it under the pointer would hide it from the
+            // very person deciding whether to quit.
+            stop.trailingAnchor.constraint(equalTo: down.leadingAnchor, constant: -2),
+            stop.centerYAnchor.constraint(equalTo: centerYAnchor),
+            stop.widthAnchor.constraint(equalToConstant: 16),
+            stop.heightAnchor.constraint(equalToConstant: 16),
 
             down.trailingAnchor.constraint(equalTo: up.leadingAnchor, constant: -6),
             down.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -504,20 +543,25 @@ final class ProcessRow: NSView {
     /// One value instead of two columns -- the CPU table's shape.
     func set(name: String, pid: Int32, value: String) {
         self.pid = pid
-        self.name.stringValue = name
+        identify(pid: pid, sampled: name)
         down.stringValue = ""
         up.stringValue = value
-        icon.image = NSRunningApplication(processIdentifier: pid)?.icon
-            ?? NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
     }
 
     func set(_ entry: ProcessNetwork.Entry) {
         pid = entry.pid
-        name.stringValue = entry.name
+        identify(pid: entry.pid, sampled: entry.name)
         down.stringValue = Readings.rate(entry.download)
         up.stringValue = Readings.rate(entry.upload)
-        icon.image = NSRunningApplication(processIdentifier: entry.pid)?.icon
-            ?? NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
+    }
+
+    /// A gear, not Terminal, for a process with no app: most of them are
+    /// system services, and none of them is a terminal.
+    private func identify(pid: Int32, sampled: String) {
+        let identity = ProcessIdentity.identify(pid: pid, fallback: sampled)
+        name.stringValue = identity.name
+        toolTip = identity.name == sampled ? nil : sampled
+        icon.image = identity.icon ?? NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
     }
 
     // MARK: - Force quit
@@ -531,7 +575,41 @@ final class ProcessRow: NSView {
     /// row's children are an icon and three labels, none of which wants a
     /// click, so the row can take them all.
     override func hitTest(_ point: NSPoint) -> NSView? {
-        bounds.contains(convert(point, from: superview)) ? self : nil
+        let local = convert(point, from: superview)
+        guard bounds.contains(local) else { return nil }
+        // The one child that does want a click.
+        if !stop.isHidden, stop.frame.contains(local) { return stop }
+        return self
+    }
+
+    // MARK: - Hover
+
+    /// `.activeAlways`: the popup is a panel that is often not key, and a
+    /// tracking area that only works in the key window would never fire.
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero,
+                                       options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self))
+    }
+
+    override func mouseEntered(with event: NSEvent) { hovering = true }
+    override func mouseExited(with event: NSEvent) { hovering = false }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        hovering = false
+    }
+
+    /// A row with no pid -- an empty slot -- shows nothing on hover, as it
+    /// offers no menu.
+    private func syncHover() {
+        let live = hovering && ProcessControl.isSignallable(pid)
+        stop.isHidden = !live
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = live ? NSColor.labelColor.withAlphaComponent(0.07).cgColor : nil
+        }
     }
 
     /// Right-click offers to end the process this row is about.
@@ -541,6 +619,25 @@ final class ProcessRow: NSView {
     /// more processes than are running -- offers no menu at all rather than
     /// a menu that does nothing.
     override func menu(for event: NSEvent) -> NSMenu? {
+        guard let menu = stopMenu() else { return nil }
+        // The popup closes when it stops being the key window, and opening a
+        // menu is exactly that. The flag is the window's own, already used by
+        // the header's gear menu.
+        (window as? MenuHostingWindow)?.isShowingOwnMenu = true
+        return menu
+    }
+
+    /// The same menu, from the hover button, under the button.
+    @objc private func showStopMenu() {
+        guard let menu = stopMenu() else { return }
+        let host = window as? MenuHostingWindow
+        host?.isShowingOwnMenu = true
+        // Synchronous: it returns once the menu has closed, chosen or not.
+        menu.popUp(positioning: nil, at: NSPoint(x: stop.frame.minX, y: stop.frame.minY), in: self)
+        host?.isShowingOwnMenu = false
+    }
+
+    private func stopMenu() -> NSMenu? {
         guard ProcessControl.isSignallable(pid) else { return nil }
 
         let process = name.stringValue
@@ -555,11 +652,6 @@ final class ProcessRow: NSView {
             item.target = self
             menu.addItem(item)
         }
-
-        // The popup closes when it stops being the key window, and opening a
-        // menu is exactly that. The flag is the window's own, already used by
-        // the header's gear menu.
-        (window as? MenuHostingWindow)?.isShowingOwnMenu = true
         return menu
     }
 
@@ -612,8 +704,13 @@ final class ProcessRow: NSView {
     }
 }
 
-/// The header above the process table: the two colour chips that say which
-/// column is which.
+/// The header above the process table: which column is download and which
+/// is upload.
+///
+/// It was two colour chips with no words, which asked a person to match the
+/// chips to the headline readings' colours to know which number was which.
+/// The words sit over the columns they name, in the same widths, and keep
+/// the colours.
 final class ProcessHeader: NSView {
 
     init() {
@@ -626,9 +723,10 @@ final class ProcessHeader: NSView {
         label.translatesAutoresizingMaskIntoConstraints = false
         addSubview(label)
 
-        let downChip = chip(.systemIndigo), upChip = chip(.roostAmber)
-        addSubview(downChip)
-        addSubview(upChip)
+        let down = column("↓ " + localized("Down"), .systemIndigo)
+        let up = column("↑ " + localized("Up"), .roostAmber)
+        addSubview(down)
+        addSubview(up)
 
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: PopupMetrics.contentWidth),
@@ -637,43 +735,51 @@ final class ProcessHeader: NSView {
             label.leadingAnchor.constraint(equalTo: leadingAnchor),
             label.centerYAnchor.constraint(equalTo: centerYAnchor),
 
-            downChip.trailingAnchor.constraint(equalTo: upChip.leadingAnchor, constant: -6),
-            downChip.centerYAnchor.constraint(equalTo: centerYAnchor),
+            down.trailingAnchor.constraint(equalTo: up.leadingAnchor, constant: -6),
+            down.centerYAnchor.constraint(equalTo: centerYAnchor),
+            down.widthAnchor.constraint(equalToConstant: ProcessRow.columnWidth),
 
-            upChip.trailingAnchor.constraint(equalTo: trailingAnchor,
-                                             constant: -ProcessRow.columnWidth / 2 + 5),
-            upChip.centerYAnchor.constraint(equalTo: centerYAnchor)
+            up.trailingAnchor.constraint(equalTo: trailingAnchor),
+            up.centerYAnchor.constraint(equalTo: centerYAnchor),
+            up.widthAnchor.constraint(equalToConstant: ProcessRow.columnWidth)
         ])
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
 
-    private func chip(_ color: NSColor) -> NSView {
-        let view = ChipView(color)
-        NSLayoutConstraint.activate([
-            view.widthAnchor.constraint(equalToConstant: 10),
-            view.heightAnchor.constraint(equalToConstant: 10)
-        ])
-        return view
+    private func column(_ title: String, _ color: NSColor) -> NSTextField {
+        let field = NSTextField(labelWithString: title)
+        field.font = .systemFont(ofSize: 10, weight: .medium)
+        field.textColor = color
+        field.alignment = .right
+        field.translatesAutoresizingMaskIntoConstraints = false
+        return field
     }
 }
 
-/// A flat square of colour whose shade follows the appearance.
-private final class ChipView: NSView {
-    private let color: NSColor
+/// What a process table says when it has no rows: "Measuring…" until the
+/// first sample, then why it is empty. A header over nothing looked broken.
+final class ProcessPlaceholder: NSTextField {
 
-    init(_ color: NSColor) {
-        self.color = color
+    init(_ measuring: String = localized("Measuring…")) {
         super.init(frame: .zero)
-        wantsLayer = true
-        layer?.cornerRadius = 2
+        stringValue = measuring
+        isEditable = false
+        isBordered = false
+        drawsBackground = false
+        font = .systemFont(ofSize: 11)
+        textColor = .tertiaryLabelColor
         translatesAutoresizingMaskIntoConstraints = false
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
 
-    override var wantsUpdateLayer: Bool { true }
-    override func updateLayer() { layer?.backgroundColor = color.cgColor }
+    /// Shown only while `rows` is zero; `empty` is the words for a sample
+    /// that came back with nothing in it.
+    func show(rows: Int, empty: String) {
+        isHidden = rows > 0
+        if rows == 0 { stringValue = empty }
+    }
 }
 
 // MARK: - Core bars

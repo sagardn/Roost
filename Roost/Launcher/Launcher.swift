@@ -307,7 +307,7 @@ final class Launcher {
     func reload() {
         entries = Config.load()
         registerAppHotkeys()
-        Notify.show("Reloaded \(entries.count) apps")
+        Notify.show(localized("Your app list was updated (%0 apps)", String(entries.count)))
     }
 
     // MARK: - Minimize / restore
@@ -316,7 +316,7 @@ final class Launcher {
     /// frontmost, so pressing it again can only mean "bring back what I just
     /// put away".
     private func toggleFrontmost() {
-        guard ensureAccessibility(for: "Minimising a window") else { return }
+        guard ensureAccessibility(for: localized("Minimising a window")) else { return }
         if let last = stashed.popLast() {
             if !WindowControl.restore(last) { Notify.show("Nothing to restore", symbol: "arrow.uturn.backward") }
             return

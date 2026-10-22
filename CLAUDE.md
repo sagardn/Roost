@@ -52,7 +52,7 @@ Tools/run-tests.sh            # all of them, about 25 seconds
 Tools/run-tests.sh disk       # just Tools/disk-test.swift
 ```
 
-Thirty-seven suites, 1,619 assertions. `tests.yaml` runs the same script on every
+Forty-six suites, 2,105 assertions. `tests.yaml` runs the same script on every
 push, so a suite that fails fails the build.
 
 Pure logic gets a test. The pattern is a script compiled against the app's

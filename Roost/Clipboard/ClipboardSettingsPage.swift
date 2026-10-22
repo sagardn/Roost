@@ -239,9 +239,20 @@ final class ClipboardSettingsPage: NSView {
         if ids.isEmpty {
             excludedList.addArrangedSubview(Controls.label(localized("No apps")))
         }
-        for id in ids {
+        // By name, with the app's icon: sorted by identifier, "com.1password"
+        // came before "com.apple" and the list read in no order anyone sees.
+        let apps = ids.map { id -> (id: String, url: URL?, name: String) in
             let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)
-            let name = url.map { FileManager.default.displayName(atPath: $0.path) } ?? id
+            let name = url.map { (FileManager.default.displayName(atPath: $0.path) as NSString).deletingPathExtension } ?? id
+            return (id, url, name)
+        }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        for (id, url, name) in apps {
+            let icon = NSImageView()
+            icon.image = url.map { NSWorkspace.shared.icon(forFile: $0.path) }
+                ?? NSImage(systemSymbolName: "app.dashed", accessibilityDescription: nil)
+            icon.translatesAutoresizingMaskIntoConstraints = false
+            icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
+            icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
             let label = NSTextField(labelWithString: url == nil ? localized("%0 (not installed)", name) : name)
             label.font = .systemFont(ofSize: 12)
             label.textColor = url == nil ? .secondaryLabelColor : .labelColor
@@ -252,7 +263,7 @@ final class ClipboardSettingsPage: NSView {
             remove.onPress = {
                 ClipboardSettings.excludedApps = ClipboardSettings.excludedApps.filter { $0 != id }
             }
-            let row = NSStackView(views: [remove, label])
+            let row = NSStackView(views: [remove, icon, label])
             row.spacing = 6
             excludedList.addArrangedSubview(row)
         }

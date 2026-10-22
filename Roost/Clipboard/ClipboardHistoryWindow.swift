@@ -355,7 +355,7 @@ struct ClipboardInspector: View {
             if let source = entry.sourceName {
                 // Who was in front, which is what can be known -- see
                 // ClipboardEntry.sourceBundleID.
-                row(localized("In front"), source)
+                row(localized("Copied while using"), source)
             }
             if let size = entry.pixelSize { row(localized("Size"), size) }
             row(localized("Stored"), ClipboardFormat.bytes(entry.byteSize))

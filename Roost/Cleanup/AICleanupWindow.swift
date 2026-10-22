@@ -83,8 +83,9 @@ final class AICleanupModel: ObservableObject {
 
     static let dayChoices: [Int?] = [nil, 30, 90, 180]
 
-    /// 0 or absent is the default of 90; -1 is "any age".
-    private static var storedDays: Int? {
+    /// 0 or absent is the default of 90; -1 is "any age". Read by the
+    /// Check-up too, so it never ticks a cache this window would hide.
+    static var storedDays: Int? {
         let stored = Preferences.shared.int("AICleaner_days", default: 0)
         if stored < 0 { return nil }
         return stored == 0 ? 90 : stored
@@ -202,9 +203,12 @@ final class AICleanupModel: ObservableObject {
         if selected.contains(item.url) { selected.remove(item.url) } else { selected.insert(item.url) }
     }
 
+    /// A move in progress, so a second click cannot start another.
+    private var removing = false
+
     func moveChosenToBin() {
         let items = chosen
-        guard !items.isEmpty else { return }
+        guard !items.isEmpty, !removing else { return }
 
         let bytes = UInt64(items.reduce(Int64(0)) { $0 + $1.bytes })
         // Said plainly, because it is the one thing here that does not come
@@ -212,25 +216,38 @@ final class AICleanupModel: ObservableObject {
         // not.
         let detail = choosesConversations
             ? localized("%0 goes to the Bin, including conversation history. The assistants stay installed and signed in, but old sessions will not be there to resume.",
-                        Readings.bytes(bytes))
+                        Readings.size(bytes))
             : localized("%0 goes to the Bin. The assistants stay installed and signed in, and rebuild what they need.",
-                        Readings.bytes(bytes))
+                        Readings.size(bytes))
 
-        Alert.show(localized("Clean up %0?", Readings.bytes(bytes)), detail,
+        Alert.show(localized("Clean up %0?", Readings.size(bytes)), detail,
                    style: .warning,
                    actionTitle: localized("Move to Bin")) { [weak self] in
-            // With the age, so it is checked again against the disk: the list
-            // can be minutes old, and something used since is refused.
-            let removal = AIAssistants.moveToBin(items, olderThan: self?.days)
-            Notify.show(LargeFiles.message(for: removal), symbol: "trash")
             guard let self else { return }
-            let moved = Set(removal.moved)
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                self.found = self.found.compactMap { tool in
-                    let kept = tool.items.filter { !moved.contains($0.url) }
-                    return kept.isEmpty ? nil : AIAssistants.Tool(name: tool.name, items: kept)
+            self.removing = true
+            let days = self.days
+            // Off the main thread, as the Check-up's move is. The check before
+            // each move walks the whole item for its newest date and re-lists
+            // the conversation store, and with a hundred and more
+            // conversation rows ticked that held the window still for as
+            // long as it took.
+            DispatchQueue.global(qos: .userInitiated).async {
+                // With the age, so it is checked again against the disk: the
+                // list can be minutes old, and something used since is refused.
+                let removal = AIAssistants.moveToBin(items, olderThan: days)
+                DispatchQueue.main.async { [weak self] in
+                    Notify.show(LargeFiles.message(for: removal), symbol: "trash")
+                    guard let self else { return }
+                    self.removing = false
+                    let moved = Set(removal.moved)
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                        self.found = self.found.compactMap { tool in
+                            let kept = tool.items.filter { !moved.contains($0.url) }
+                            return kept.isEmpty ? nil : AIAssistants.Tool(name: tool.name, items: kept)
+                        }
+                        self.selected.subtract(moved)
+                    }
                 }
-                self.selected.subtract(moved)
             }
         }
     }
@@ -238,8 +255,11 @@ final class AICleanupModel: ObservableObject {
 
 // MARK: - Views
 
-private struct AICleanupView: View {
+struct AICleanupView: View {
     @ObservedObject var model: AICleanupModel
+    /// A page in the settings window, which draws the glass and has its own
+    /// title bar to clear -- the Large files view's flag, for the same reason.
+    var embedded = false
 
     var body: some View {
         ZStack {
@@ -262,7 +282,7 @@ private struct AICleanupView: View {
                     // setting doing its job, where an empty list reads as a
                     // scan that broke.
                     Text(localized("%0 hidden by the %1-day rule",
-                                   Readings.bytes(UInt64(AIAssistants.hidden(model.found,
+                                   Readings.size(UInt64(AIAssistants.hidden(model.found,
                                                                              olderThan: model.days))),
                                    String(model.days ?? 0)))
                         .font(.system(size: 14, weight: .semibold))
@@ -287,10 +307,14 @@ private struct AICleanupView: View {
                 results.transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .padding(.top, 28)
+        .padding(.top, embedded ? ToolPages.top : 28)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .frame(minWidth: 540, minHeight: 460)
-        .background(CleanerBackdrop().ignoresSafeArea())
+        .frame(minWidth: embedded ? nil : 540, minHeight: embedded ? nil : 460)
+        .background {
+            if !embedded { CleanerBackdrop().ignoresSafeArea() }
+        }
+        // The window loads on `show()`; a page has no such moment.
+        .onAppear { if !model.loaded && !model.loading { model.load() } }
     }
 
     private var results: some View {
@@ -319,7 +343,7 @@ private struct AICleanupView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(localized("%0 across %1 assistants",
-                               Readings.bytes(UInt64(model.totalBytes)), String(model.tools.count)))
+                               Readings.size(UInt64(model.totalBytes)), String(model.tools.count)))
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                 Text(localized("Conversation history, caches, logs and downloaded updates. The tools stay installed and signed in."))
                     .font(.system(size: 11.5))
@@ -405,12 +429,12 @@ private struct AICleanupView: View {
                 // and names no noun, which is why "1 selected" needs no
                 // singular form in any language.
                 Text(localized("%0 selected · %1", String(model.chosen.count),
-                               Readings.bytes(UInt64(model.chosenBytes))))
+                               Readings.size(UInt64(model.chosenBytes))))
                     .font(.system(size: 12, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
-                Text(localized("of %0 shown", Readings.bytes(UInt64(model.totalBytes))))
+                Text(localized("of %0 shown", Readings.size(UInt64(model.totalBytes))))
                     .font(.system(size: 10.5))
                     .foregroundStyle(.tertiary)
                     .contentTransition(.numericText())
@@ -438,7 +462,7 @@ private struct AICleanupView: View {
             // "Move 9 to Bin" says nothing about whether it is worth it.
             GlowButton(title: model.chosen.isEmpty
                        ? localized("Move to Bin")
-                       : localized("Move %0 to Bin", Readings.bytes(UInt64(model.chosenBytes))),
+                       : localized("Move %0 to Bin", Readings.size(UInt64(model.chosenBytes))),
                        symbol: "trash", tint: CleanerTint.critical, compact: true,
                        enabled: !model.chosen.isEmpty) {
                 model.moveChosenToBin()
@@ -456,16 +480,22 @@ private struct AssistantHeader: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color.pink.gradient)
-                .frame(width: 22, height: 22)
-                .overlay(Image(systemName: "sparkles")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white))
+            if let icon = Self.appIcon(tool.name) {
+                Image(nsImage: icon).resizable().interpolation(.high)
+                    .frame(width: 22, height: 22)
+                    .accessibilityHidden(true)
+            } else {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.pink.gradient)
+                    .frame(width: 22, height: 22)
+                    .overlay(Image(systemName: "sparkles")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white))
+            }
             Text(Self.displayName(tool.name))
                 .font(.system(size: 13, weight: .semibold))
             Spacer(minLength: 8)
-            Text(Readings.bytes(UInt64(tool.bytes)))
+            Text(Readings.size(UInt64(tool.bytes)))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
@@ -478,16 +508,20 @@ private struct AssistantHeader: View {
     /// The product's own name for what `AIAssistants` reports by folder.
     /// Brand names, so not localised; anything unknown is capitalised rather
     /// than shown as a lowercase directory name.
-    static func displayName(_ name: String) -> String {
-        let known: [String: String] = [
-            "claude": "Claude Code", "codex": "Codex", "grok": "Grok", "gemini": "Gemini",
-            "copilot": "GitHub Copilot", "opencode": "OpenCode", "cursor": "Cursor",
-            "windsurf": "Windsurf", "aider": "Aider", "continue": "Continue", "amp": "Amp",
-            "qwen": "Qwen Code", "goose": "Goose", "crush": "Crush",
-            "antigravity": "Antigravity", "chatgpt": "ChatGPT",
-            "huggingface": "Hugging Face", "ollama": "Ollama", "lm studio": "LM Studio"
-        ]
-        return known[name.lowercased()] ?? name.prefix(1).uppercased() + name.dropFirst()
+    static func displayName(_ name: String) -> String { AIAssistants.title(of: name) }
+
+    /// The assistant's own app icon, when it has an app and it is installed.
+    /// Every header had the same pink sparkles, so the list could only be
+    /// told apart by reading it. The bundle identifiers are the ones its
+    /// folders are already known by; a command-line tool keeps the sparkles.
+    static func appIcon(_ name: String) -> NSImage? {
+        for root in AIAssistants.extraRoots[name] ?? [] {
+            let id = (root as NSString).lastPathComponent
+            guard id.hasPrefix("com."),
+                  let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { continue }
+            return NSWorkspace.shared.icon(forFile: url.path)
+        }
+        return nil
     }
 }
 

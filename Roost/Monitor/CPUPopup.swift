@@ -20,17 +20,21 @@ final class CPUModule: PopupContent {
     private let status = StatusLine()
     private let history = HistoryChart(height: 60)
     private let bars = CoreBars()
-    private let clusterRow = ValueRow(localized("Efficiency · performance"))
+    private let clusterRow = ValueRow(localized("Power-saving · fast cores"))
+        .explained(localized("Your Mac has power-saving cores for light work and fast cores for heavy work."))
 
     // The user/system split as a bar with a chip per row, the same colours
     // the menu bar's ring divides into. Idle is the track the bar leaves.
     private let splitBar = ShareBar(height: 8)
     private let userRow = ValueRow(localized("User"), symbol: "square.fill", tint: .roostBlue)
+        .explained(localized("Time spent running apps."))
     private let systemRow = ValueRow(localized("System"), symbol: "square.fill", tint: .roostMagenta)
+        .explained(localized("Time spent in macOS itself, much of it on work apps asked for."))
 
     // One row, not three under their own header: the three figures are only
     // ever read against each other, rising or falling.
     private let averageRow = ValueRow(localized("Load average · 1, 5, 15 min"))
+        .explained(localized("How many tasks were waiting for the processor, on average. Below the number of cores means it is keeping up."))
 
     private let brandRow = ValueRow(localized("Processor"))
     private let coresRow = ValueRow(localized("Cores"))
@@ -41,13 +45,16 @@ final class CPUModule: PopupContent {
     /// Shown only on a Mac that is being held back. See `CPUReadings.Limits`:
     /// macOS reports these once it has had cause to, and an idle machine has
     /// nothing to report.
-    private let limitsHeader = SectionHeader(localized("Limits"))
-    private let schedulerRow = ValueRow(localized("Scheduler"))
+    private let limitsHeader = SectionHeader(localized("Held back to cool down"))
+    private let schedulerRow = ValueRow(localized("Processor time allowed"))
+        .explained(localized("macOS lets apps use only this share of the processor while it cools down."))
     private let availableCoresRow = ValueRow(localized("Cores available"))
-    private let speedRow = ValueRow(localized("Clock ceiling"))
+    private let speedRow = ValueRow(localized("Top speed allowed"))
+        .explained(localized("The highest speed the processor may run at right now, as a share of its full speed."))
 
     /// Built for the largest the setting allows, and the surplus hidden, so
     /// changing the count does not mean rebuilding the view.
+    private let processPlaceholder = ProcessPlaceholder()
     private let processRows = (0..<12).map { _ in ProcessRow() }
 
     /// The tile the combined details popup stacks, once something has asked
@@ -67,7 +74,7 @@ final class CPUModule: PopupContent {
 
     /// The thresholds this module is watching, if any are switched on.
     private let thresholds = ThresholdWatcher<CPUThreshold>(
-        title: localized("CPU usage threshold"))
+        title: localized("CPU is busy"))
 
     // MARK: - View
 
@@ -106,7 +113,8 @@ final class CPUModule: PopupContent {
         }
         setLimits(CPUReadings.Limits())
 
-        stack.addArrangedSubview(SectionHeader(localized("Top processes · % of one core")))
+        stack.addArrangedSubview(SectionHeader(localized("Busiest apps · 100% = one core")))
+        stack.addArrangedSubview(processPlaceholder)
         for row in processRows {
             row.isHidden = true
             stack.addArrangedSubview(row)
@@ -271,10 +279,12 @@ final class CPUModule: PopupContent {
         let wanted = min(CPUSettings.processCount, processRows.count)
         guard wanted > 0 else {
             processRows.forEach { $0.isHidden = true }
+            processPlaceholder.isHidden = true
             return
         }
         ProcessCPU.top(wanted) { [weak self] entries in
             guard let self else { return }
+            self.processPlaceholder.show(rows: entries.count, empty: localized("Nothing is busy"))
             for (index, row) in self.processRows.enumerated() {
                 if index < entries.count {
                     let entry = entries[index]

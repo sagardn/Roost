@@ -4,7 +4,7 @@
 //  Exercises the sensor layer: the byte decoding, the family rule, and what
 //  survives the plausibility filter.
 //
-//  Run:  cat Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
 //            Roost/Monitor/SensorReadings.swift \
 //            Tools/sensors-test.swift | swift -
 //

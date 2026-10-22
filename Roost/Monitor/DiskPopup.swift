@@ -76,7 +76,7 @@ final class DiskModule: PopupContent {
     private var tile: DiskTile?
 
     private let thresholds = ThresholdWatcher<DiskThreshold>(
-        title: localized("Disk usage threshold"))
+        title: localized("Disk is filling up"))
 
     // MARK: - View
 
@@ -174,7 +174,7 @@ final class DiskModule: PopupContent {
             severity: .ofDisk(volume.percent),
             history: usageHistory,
             segments: [.init(Double(volume.used) / total, LoadBand.of(volume.percent).color)],
-            pair: .init(Readings.bytes(volume.used), Readings.bytes(volume.free)),
+            pair: .init(Readings.size(volume.used), Readings.size(volume.free)),
             // Written on top: the shape puts ↑ on the top figure, and ↑ is
             // write in this popup, the tile and the chart below. Read on top
             // labelled reads as writes.
@@ -226,7 +226,7 @@ final class DiskModule: PopupContent {
         freeReading.set(bytes: volume.free)
 
         capacityRow.label = volume.name
-        capacityRow.value = "\(Readings.bytes(volume.used)) of \(Readings.bytes(volume.total))"
+        capacityRow.value = "\(Readings.size(volume.used)) of \(Readings.size(volume.total))"
         capacityBar.segments = [.init(fraction: volume.percent, color: severity.tint)]
 
         traffic.upper = writeHistory
@@ -236,17 +236,17 @@ final class DiskModule: PopupContent {
         // Write first, as the chart and the menu bar both put it: ↑ is write
         // everywhere this module draws.
         nowRow.value = "↑ \(Readings.rate(activity.written))   ↓ \(Readings.rate(activity.read))"
-        sessionRow.value = "↑ \(Readings.bytes(sessionWritten))   ↓ \(Readings.bytes(sessionRead))"
+        sessionRow.value = "↑ \(Readings.size(sessionWritten))   ↓ \(Readings.size(sessionRead))"
 
         // Space macOS will hand back when something needs it. Hidden at zero,
         // because the row exists to explain a gap and there is no gap to
         // explain then.
         purgeableRow.isHidden = !detailsToggle.isOpen || volume.purgeable == 0
-        purgeableRow.value = Readings.bytes(volume.purgeable)
+        purgeableRow.value = Readings.size(volume.purgeable)
 
         formatRow.value = volume.format ?? "—"
-        totalRow.value = Readings.bytes(volume.total)
-        mountRow.value = volume.path
+        totalRow.value = Readings.size(volume.total)
+        mountRow.value = volume.path == "/" ? localized("/ (the startup disk)") : volume.path
 
         let others = volumes.filter { $0.path != volume.path }
         othersHeader.isHidden = others.isEmpty
@@ -266,8 +266,12 @@ final class DiskModule: PopupContent {
                 row.isHidden = true
                 continue
             }
-            row.label = "\(deviceNames[index]) since attached"
-            row.value = "↑ \(Readings.bytes(entry.written))   ↓ \(Readings.bytes(entry.read))"
+            // Written and read since the drive appeared, which for the
+            // built-in one is since startup. The BSD name stays, as the
+            // only name the counters have; the words say what it counts.
+            row.label = localized("%0, written · read", deviceNames[index])
+            row.toolTip = localized("Since the drive was connected; for a built-in drive, since startup.")
+            row.value = "↑ \(Readings.size(entry.written))   ↓ \(Readings.size(entry.read))"
             row.isHidden = false
         }
     }
@@ -298,7 +302,7 @@ private final class VolumeRow: NSView {
 
     func set(_ volume: DiskReadings.Volume) {
         row.label = volume.name
-        row.value = "\(Readings.bytes(volume.used)) of \(Readings.bytes(volume.total))"
+        row.value = "\(Readings.size(volume.used)) of \(Readings.size(volume.total))"
         bar.segments = [.init(fraction: volume.percent,
                               color: MenuBarReading.Severity.ofDisk(volume.percent).tint)]
     }
@@ -316,10 +320,10 @@ extension DiskModule: DashboardReporting {
             severity: .ofDisk(volume.percent),
             // Available is what Finder calls free: space for important use,
             // after purgeable space -- the same figure the popup shows.
-            facts: [.init(label: localized("Available"), value: Readings.bytes(volume.free)),
-                    .init(label: localized("Used"), value: Readings.bytes(volume.used)),
+            facts: [.init(label: localized("Available"), value: Readings.size(volume.free)),
+                    .init(label: localized("Used"), value: Readings.size(volume.used)),
                     .init(label: localized("Capacity"),
-                          value: "\(Readings.bytes(volume.total)) · \(volume.name)"),
+                          value: "\(Readings.size(volume.total)) · \(volume.name)"),
                     // What the disk is doing right now, which the capacity
                     // figures cannot say. Already differenced on this tick
                     // for the menu bar's traffic chart, so it costs nothing

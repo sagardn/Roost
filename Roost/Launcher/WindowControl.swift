@@ -59,12 +59,19 @@ enum WindowControl {
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: askedKey) {
             defaults.set(true, forKey: askedKey)
-            requestAccessibility()
+            // Roost's own words first. The system dialog names the
+            // permission and nothing else, so it arrived, the first time a
+            // window key was pressed, with nobody having said why.
+            Alert.show(localized("Allow Roost to control windows?"),
+                       localized("Roost needs Accessibility to bring windows forward, minimise and snap them. System Settings will open; switch Roost on there."),
+                       actionTitle: localized("Open System Settings")) {
+                grantFromSettings()
+            }
         } else if wasRevoked {
-            Notify.show("Roost lost Accessibility in the update — re-add it in Settings",
+            Notify.show(localized("Roost needs Accessibility again after the update. Click Allow… in Roost's settings."),
                         symbol: "hand.raised.fill", for: 4)
         } else {
-            Notify.show("\(what) needs Accessibility — Settings → Privacy & Security",
+            Notify.show(localized("%0 needs Accessibility. Turn Roost on in System Settings ▸ Privacy & Security ▸ Accessibility.", what),
                         symbol: "hand.raised.fill", for: 4)
         }
         return false
@@ -78,8 +85,41 @@ enum WindowControl {
             return
         }
         UserDefaults.standard.set(true, forKey: askedKey)
+        clearStaleGrant()
         requestAccessibility()
         openAccessibilitySettings()
+    }
+
+    /// Forgets the Accessibility entry macOS holds for this bundle ID.
+    ///
+    /// The entry stores the code requirement of the build that was allowed.
+    /// A build signed differently -- the ad-hoc release after a locally
+    /// signed one, or the other way round -- does not match it, so
+    /// `AXIsProcessTrusted()` says no while System Settings still shows
+    /// Roost switched on. The prompt then only says "grant access in System
+    /// Settings", where the switch is already on, and flipping it does not
+    /// rewrite the stored requirement. Removing the entry is what does:
+    /// the prompt that follows adds Roost back for *this* build, and its
+    /// switch then means what it shows.
+    ///
+    /// Only reached from the button, while Roost is not trusted, so it never
+    /// removes a grant that is working. `tccutil` resets an app's own entry
+    /// without administrator rights; measured on macOS 27.
+    private static func clearStaleGrant() {
+        guard let bundleID = Bundle.main.bundleIdentifier else { return }
+        let reset = Process()
+        reset.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        reset.arguments = ["reset", "Accessibility", bundleID]
+        reset.standardOutput = FileHandle.nullDevice
+        reset.standardError = FileHandle.nullDevice
+        do {
+            try reset.run()
+            // Waited for: the prompt below has to find the entry gone, or it
+            // reads the stale one again.
+            reset.waitUntilExit()
+        } catch {
+            Log.error("tccutil reset failed: \(error.localizedDescription)")
+        }
     }
 
     /// Opens the Accessibility list itself rather than the top of Settings.
@@ -310,7 +350,7 @@ enum WindowControl {
             }
         }
         if running != nil, snapshot.isActive, !snapshot.isHidden, !entry.launchOnly,
-           !ensureTrusted(for: "Minimising a window") { return }
+           !ensureTrusted(for: localized("Minimising a window")) { return }
 
         var action = ClickToggle.decide(snapshot)
         // With minimising switched off the launcher is a plain launcher: a
@@ -562,7 +602,7 @@ enum WindowControl {
     }
 
     static func minimize(_ bundleID: String) {
-        guard ensureTrusted(for: "Minimising a window"),
+        guard ensureTrusted(for: localized("Minimising a window")),
               let running = runningApp(bundleID) else { return }
         let axApp = appElement(running.processIdentifier)
         guard let window = targetWindow(of: axApp) else { return }
@@ -613,7 +653,7 @@ enum WindowControl {
 
     /// Used by the minimize/restore hotkey.
     static func minimizeFrontmost() -> String? {
-        guard ensureTrusted(for: "Minimising a window") else { return nil }
+        guard ensureTrusted(for: localized("Minimising a window")) else { return nil }
         defer { invalidateState(NSWorkspace.shared.frontmostApplication?.bundleIdentifier) }
         guard let running = NSWorkspace.shared.frontmostApplication,
               let bundleID = running.bundleIdentifier else { return nil }

@@ -34,7 +34,7 @@ final class RAMModule: PopupContent {
     private static let cachedTint = NSColor.secondaryLabelColor.withAlphaComponent(0.45)
 
     private let swapUsedRow = ValueRow(localized("Swap used"))
-    private let totalRow = ValueRow(localized("Physical"))
+    private let totalRow = ValueRow(localized("Installed memory"))
     private let swapTotalRow = ValueRow(localized("Swap size"))
     private let detailsToggle = DisclosureButton(key: "RAM_popupDetails")
 
@@ -42,6 +42,7 @@ final class RAMModule: PopupContent {
 
     /// Built for the largest the setting allows and the surplus hidden, so
     /// changing the count does not mean rebuilding the view.
+    private let processPlaceholder = ProcessPlaceholder()
     private let processRows = (0..<12).map { _ in ProcessRow() }
 
     /// The tile, once something has asked for it.
@@ -61,7 +62,7 @@ final class RAMModule: PopupContent {
     private var ticks = 0
 
     private let thresholds = ThresholdWatcher<RAMThreshold>(
-        title: localized("Memory threshold"))
+        title: localized("Memory needs attention"))
 
     /// The six, plus the pair of figures -- used over free -- that the
     /// module this replaces called `memory`. Not the two network shapes:
@@ -93,8 +94,19 @@ final class RAMModule: PopupContent {
         for row in [appRow, wiredRow, compressedRow, cachedRow, freeRow, swapUsedRow] {
             stack.addArrangedSubview(row)
         }
+        // The kernel's words, kept because Activity Monitor uses the same
+        // ones, but each said in plain terms on hover: "Wired" and "Swap"
+        // are what someone looks up, not what they already know.
+        appRow.toolTip = localized("Memory your apps are using.")
+        wiredRow.toolTip = localized("Memory macOS itself needs and keeps in place; it cannot be freed.")
+        compressedRow.toolTip = localized("Memory macOS has squeezed to make room. This is normal.")
+        cachedRow.toolTip = localized("Recently used files kept in memory to open faster; given back as soon as an app needs it.")
+        freeRow.toolTip = localized("Memory nothing is using at all.")
+        swapUsedRow.toolTip = localized("Memory moved out to the disk when RAM ran short. A lot of it makes the Mac slower.")
+        swapTotalRow.toolTip = swapUsedRow.toolTip
 
-        stack.addArrangedSubview(SectionHeader(localized("Top processes · resident")))
+        stack.addArrangedSubview(SectionHeader(localized("Apps using the most memory")))
+        stack.addArrangedSubview(processPlaceholder)
         for row in processRows {
             row.isHidden = true
             stack.addArrangedSubview(row)
@@ -195,15 +207,22 @@ final class RAMModule: PopupContent {
         let tint: NSColor = latestPressure == .critical ? .roostCritical
             : latestPressure == .warning ? .roostWarning : .roostCalm
         var details: [String] = []
-        if let swap = latestSwap {
-            details.append(swap.isInUse
-                ? "\(Readings.bytes(swap.used)) swapped" : "no swap in use")
+        if let swap = latestSwap, swap.isInUse {
+            details.append(localized("%0 moved to disk", Readings.bytes(swap.used)))
         }
-        status.set("Pressure \(latestPressure.label.lowercased())", tint: tint, details: details)
+        // A verdict, as the other popups give: "Pressure warning" was the
+        // kernel's level, and said nothing about what to do.
+        let verdict: String
+        switch latestPressure {
+        case .normal:   verdict = localized("Memory is fine")
+        case .warning:  verdict = localized("Memory is getting tight")
+        case .critical: verdict = localized("Memory is very tight — close some apps")
+        }
+        status.set(verdict, tint: tint, details: details)
 
         if let swap = latestSwap {
             swapUsedRow.value = Readings.bytes(swap.used)
-            swapTotalRow.value = swap.total == 0 ? "none" : Readings.bytes(swap.total)
+            swapTotalRow.value = swap.total == 0 ? localized("None") : Readings.bytes(swap.total)
         } else {
             swapUsedRow.value = "—"
             swapTotalRow.value = "—"
@@ -217,10 +236,12 @@ final class RAMModule: PopupContent {
         let wanted = min(RAMSettings.processCount, processRows.count)
         guard wanted > 0 else {
             processRows.forEach { $0.isHidden = true }
+            processPlaceholder.isHidden = true
             return
         }
         ProcessMemory.top(wanted) { [weak self] entries in
             guard let self else { return }
+            self.processPlaceholder.show(rows: entries.count, empty: localized("Nothing to show"))
             for (index, row) in self.processRows.enumerated() {
                 if index < entries.count {
                     let entry = entries[index]

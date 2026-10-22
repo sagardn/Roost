@@ -123,7 +123,9 @@ enum NetworkAlert: String, CaseIterable {
 /// address, not making the request.
 final class NetworkAlerts {
 
-    private var connection = ChangeTracker<Bool>(confirmations: 2)
+    /// Read from the setting rather than fixed at 2: the setting existed and
+    /// `confirmations` read it, and nothing read `confirmations`.
+    private var connection = ChangeTracker<Bool>(confirmations: NetworkAlert.connection.confirmations)
     private var interface = ChangeTracker<String>()
     private var localIP = ChangeTracker<String>()
     private var publicIP = ChangeTracker<String>(confirmations: 3)
@@ -134,7 +136,11 @@ final class NetworkAlerts {
     /// often than the tick and only while something is watching it.
     private var ticks = 0
 
-    func check(link: NetworkMonitor.Link, details: NetworkInfo.Details) {
+    /// `probed` is whether reachability has been asked at all yet. Before
+    /// the first answer `isReachable` is a default, not a reading, and taking
+    /// it as one recorded "no connection" at launch -- so the first probe to
+    /// come back reported a connection established that had never gone.
+    func check(link: NetworkMonitor.Link, details: NetworkInfo.Details, probed: Bool) {
         let watched = Set(NetworkAlert.allCases.filter { $0.isWatched })
         // A watch switched off forgets what it saw, so switching it back on
         // does not immediately report a change that happened while nobody
@@ -143,7 +149,7 @@ final class NetworkAlerts {
         watchedLast = watched
         ticks += 1
 
-        if watched.contains(.connection),
+        if watched.contains(.connection), probed,
            let change = connection.check(link.isReachable) {
             post(.connection, change.to ? localized("Internet connection established")
                                         : localized("Internet connection lost"))
@@ -229,7 +235,8 @@ final class NetworkSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Network")),
+            [ModuleSwitch.row("Network"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Network")),
              Controls.shapes(self.styles, shown: self.shown, label: "NET",
                              value: "1.2 MB/s", ) { chosen in
                 self.shown = chosen

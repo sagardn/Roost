@@ -38,6 +38,11 @@ extension AppDelegate {
 
     private func installSilently(_ release: Release) {
         appUpdater.download(release) { outcome in
+            // Silent asks for no window, not for no record: a checksum that
+            // does not match is worth a line in the log at the least.
+            if case .failure(let error) = outcome {
+                Log.error("silent update: could not download \(release.version): \(error)")
+            }
             guard case .success(let image) = outcome else { return }
             appUpdater.install(image) { error in
                 if let error { Alert.show("Could not install the update", error: error) }
@@ -57,10 +62,13 @@ extension AppDelegate {
                 case .notDetermined:
                     // Asking is itself a dialog, so this is the one branch
                     // that may show two things in a row. The window is the
-                    // fallback for a refusal, not for an error.
-                    center.requestAuthorization(options: [.sound, .alert, .badge]) { _, error in
+                    // fallback for a refusal as well as an error: Don't
+                    // Allow is no error, and checking only `error` posted
+                    // the notice to a centre that drops it -- the first
+                    // update after a refusal was never offered at all.
+                    center.requestAuthorization(options: [.sound, .alert, .badge]) { granted, error in
                         DispatchQueue.main.async {
-                            guard error == nil else {
+                            guard granted, error == nil else {
                                 self.showUpdateWindow(release)
                                 return
                             }
@@ -77,8 +85,8 @@ extension AppDelegate {
     }
 
     private func postUpdateNotification(_ release: Release) {
-        Notice.post(title: localized("New version available"),
-                    detail: localized("Click to install the new version of Roost"),
+        Notice.post(title: localized("Roost %0 is available", release.tag.hasPrefix("v") ? String(release.tag.dropFirst()) : release.tag),
+                    detail: localized("Click to install it."),
                     userInfo: ["url": release.downloadURL.absoluteString],
                     delegate: self)
     }

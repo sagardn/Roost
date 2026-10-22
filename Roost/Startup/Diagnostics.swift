@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// The launch arguments that drive the UI so a machine can look at it.
 ///
@@ -249,6 +250,8 @@ extension AppDelegate {
             } else if subject.hasPrefix("settings:") {
                 self.renderSettingsPane(String(subject.dropFirst("settings:".count)),
                                         to: request.path)
+            } else if subject.hasPrefix("spacemap:") {
+                self.renderSpaceMap(String(subject.dropFirst("spacemap:".count)), to: request.path)
             } else if subject.hasPrefix("window:") {
                 self.renderSettingsWindow(String(subject.dropFirst("window:".count)),
                                           to: request.path)
@@ -461,7 +464,27 @@ extension AppDelegate {
                 NSApp.terminate(nil)
                 return
             }
-            self.renderWindow(of: ReadingPopup.self, to: path, after: 2) {}
+            // Four seconds, not two: the process lists refresh every other
+            // second and need two samples for a rate, so at two the CPU, RAM
+            // and GPU lists were always still "Measuring…" in the picture.
+            self.renderWindow(of: ReadingPopup.self, to: path, after: 4) {}
+        }
+    }
+
+    /// `spacemap:<folder>`: the Space map after mapping that folder, with its
+    /// first two removable entries ticked so the selection is in the picture
+    /// too. Ticking moves nothing; only the page's button and its alert do.
+    private func renderSpaceMap(_ folder: String, to path: String) {
+        let model = SpaceMapModel(root: URL(fileURLWithPath: (folder as NSString).expandingTildeInPath))
+        renderWindow(of: SpaceMapRenderWindow.self, to: path, after: 10) {
+            let window = SpaceMapRenderWindow(contentRect: NSRect(x: 200, y: 200, width: 1000, height: 640),
+                                              styleMask: [.titled], backing: .buffered, defer: false)
+            window.contentView = NSHostingView(rootView: SpaceMapView(model: model))
+            window.makeKeyAndOrderFront(nil)
+            model.scan()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                model.node?.children.filter(model.canSelect).prefix(2).forEach(model.toggle)
+            }
         }
     }
 
@@ -507,3 +530,6 @@ extension AppDelegate {
         }
     }
 }
+
+/// Only so `renderWindow(of:)` can tell the Space map's render window apart.
+private final class SpaceMapRenderWindow: NSWindow {}

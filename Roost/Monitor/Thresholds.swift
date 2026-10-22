@@ -247,8 +247,8 @@ enum CPUThreshold: String, CaseIterable, ThresholdKind {
         case .total:       return localized("Total load")
         case .system:      return localized("System load")
         case .user:        return localized("User load")
-        case .efficiency:  return localized("Efficiency cores load")
-        case .performance: return localized("Performance cores load")
+        case .efficiency:  return localized("Power-saving cores load")
+        case .performance: return localized("Fast cores load")
         }
     }
 
@@ -297,7 +297,7 @@ enum RAMThreshold: String, CaseIterable, ThresholdKind {
         switch self {
         case .total:    return localized("Memory used")
         case .free:     return localized("Memory free")
-        case .pressure: return localized("Memory pressure")
+        case .pressure: return localized("Memory running short")
         case .swap:     return localized("Swap in use")
         }
     }

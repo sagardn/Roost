@@ -177,7 +177,8 @@ final class DiskSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Disk")),
+            [ModuleSwitch.row("Disk"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Disk")),
              Controls.row(localized("Watch"), Controls.choice(choices, selected: chosen) { value in
                  DiskSettings.watchedVolume = value
              }),

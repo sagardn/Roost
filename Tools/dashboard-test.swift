@@ -7,7 +7,7 @@
 //
 //  Run:  cat Roost/UI/Localized.swift Roost/UI/Palette.swift \
 //            Roost/System/DashboardLogic.swift Roost/System/DeviceInfo.swift \
-//            Roost/System/BatteryHealth.swift \
+//            Roost/System/BatteryHealth.swift Roost/Monitor/Readings.swift \
 //            Tools/dashboard-test.swift | swift -
 //
 //  Each of these is a place where the page could say something untrue

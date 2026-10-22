@@ -110,7 +110,18 @@ struct DashboardView: View {
         if model.watching == 0, model.states.values.contains(where: Self.isPending) {
             return localized("Waiting for the first readings")
         }
+        // On, but with nothing in the menu bar, a module is not sampled and
+        // reports nothing -- which the summary below took for "no modules
+        // are on", above cards that each said they were.
+        if model.watching == 0, model.states.values.contains(where: Self.isUnsampled) {
+            return localized("Nothing that is on is in the menu bar, so nothing is being measured")
+        }
         return model.summary
+    }
+
+    private static func isUnsampled(_ state: DashboardModel.CardState) -> Bool {
+        if case .notSampled = state { return true }
+        return false
     }
 
     private var summaryTone: StatusTone {
@@ -356,8 +367,8 @@ struct MetricCard: View {
                         action: (localized("Turn On"), enable))
         case .notSampled:
             placeholder(badge: localized("Not measured"), tone: .neutral,
-                        message: localized("Roost measures what the menu bar shows, and every shape of this module is switched off."),
-                        action: (localized("Choose a shape…"), open))
+                        message: localized("Nothing from this module is in the menu bar, so Roost is not measuring it."),
+                        action: (localized("Show in menu bar…"), open))
         case .waiting:
             placeholder(badge: localized("Starting"), tone: .neutral,
                         message: localized("Waiting for the first reading."),
@@ -680,17 +691,16 @@ private struct DeviceDetails: View {
         if let cores = coreLine { rows.append((localized("Cores"), text(cores))) }
         rows.append((localized("Memory"), text(Readings.bytes(UInt64(max(0, DeviceInfo.memory))))))
         if let gpu = DeviceInfo.gpu { rows.append((localized("Graphics"), text(gpu))) }
-        let drives = DeviceInfo.drives.map { "\($0.name) · \($0.medium)" }
+        let drives = DeviceInfo.drives.map { "\($0.name) · \(Self.medium($0.medium))" }
         if !drives.isEmpty { rows.append((localized("Storage"), text(drives.joined(separator: "\n")))) }
-        // In Roost's own units, the ones the Storage card above uses: the
-        // file-style formatter said 195.38 GB here for the 182 GB disk the
+        // In the units the Storage card above uses, which are Finder's: a
+        // second formatter here once said 195.38 GB for the 182 GB disk the
         // card described, two honest numbers that read as a contradiction.
         let volumes = DeviceInfo.volumes.map {
-            "\($0.name) · \(Readings.bytes(UInt64(max(0, $0.capacity))))"
+            "\($0.name) · \(Readings.size(UInt64(max(0, $0.capacity))))"
         }
         if !volumes.isEmpty { rows.append((localized("Volumes"), text(volumes.joined(separator: "\n")))) }
         for display in displays { rows.append((localized("Display"), text(panel(display)))) }
-        rows.append((localized("Model identifier"), text(DeviceInfo.model.identifier)))
         // Apple silicon names carry the chip rather than the year, so most
         // Macs have none to show; the row goes rather than saying Unknown.
         if let year = DeviceInfo.model.year {
@@ -699,7 +709,19 @@ private struct DeviceDetails: View {
         if let serial = DeviceInfo.serialNumber {
             rows.append((localized("Serial number"), AnyView(serialRow(serial))))
         }
+        // Last: "Mac15,3" is for a support form, not for reading down the
+        // list, where it sat between the display and the year.
+        rows.append((localized("Model identifier"), text(DeviceInfo.model.identifier)))
         return rows
+    }
+
+    /// IOKit's medium type, in the words people use for drives.
+    private static func medium(_ raw: String) -> String {
+        switch raw {
+        case "Solid State": return localized("SSD")
+        case "Rotational":  return localized("Hard disk")
+        default:            return raw
+        }
     }
 
     private var current: [(String, AnyView)] {

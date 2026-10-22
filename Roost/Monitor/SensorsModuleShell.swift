@@ -148,19 +148,19 @@ final class SensorsSettingsPage: NSView {
         // How readings are taken, ahead of the list they decide: the last
         // switch says whether unnamed keys are listed below it at all.
         let sources: [NSView] = [
-            Controls.row(localized("Read the HID sensors"),
+            Controls.row(localized("Include the chip's own sensors"),
                          Controls.toggle(SensorsSettings.includesHID) { on in
                              SensorsSettings.includesHID = on
-                         }),
+                         }, detail: localized("Temperatures the processor and battery report themselves, named as macOS names them.")),
             Controls.row(localized("Read every"), Controls.choice(
                 [("1 second", "1"), ("3 seconds", "3"), ("10 seconds", "10")],
                 selected: "\(SensorsSettings.interval)") { value in
                     SensorsSettings.interval = Int(value) ?? 3
                 }),
-            Controls.row(localized("List the keys nobody has named"),
+            Controls.row(localized("Show unidentified sensors"),
                          Controls.toggle(SensorsSettings.showsUnnamed) { on in
                              SensorsSettings.showsUnnamed = on
-                         })
+                         }, detail: localized("Readings the hardware gives only a code for, like Tp09. Many of them; mostly useful for troubleshooting."))
         ]
 
         // Grouped by where each setting shows -- the menu bar item, the popup
@@ -171,7 +171,8 @@ final class SensorsSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Sensors")),
+            [ModuleSwitch.row("Sensors"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Sensors")),
              Controls.row(localized("Watch"), Controls.choice(choices,
                                                    selected: SensorsSettings.watched ?? "") { id in
                  SensorsSettings.watched = id.isEmpty ? nil : id
@@ -196,7 +197,7 @@ final class SensorsSettingsPage: NSView {
         for family in SensorReadings.Family.allCases {
             let group = listed.filter { $0.family == family }
             guard !group.isEmpty else { continue }
-            listRows.append(Controls.subheading(family.rawValue))
+            listRows.append(Controls.subheading(family.title))
             // The reading beside its switch, not run into its name: "Battery
             // 34°" as one string put the figure wherever the name ended.
             listRows += group.map { sensor in

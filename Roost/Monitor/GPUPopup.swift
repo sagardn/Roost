@@ -3,9 +3,14 @@ import AppKit
 /// The GPU popup: how busy the graphics processor is, what it is busy with,
 /// and what the machine has.
 ///
-/// Reads `GPUStats` only -- the `PerformanceStatistics` dictionary every
-/// accelerator driver publishes in the IORegistry. Public, no entitlement,
-/// no private framework.
+/// Reads `GPUStats` -- the `PerformanceStatistics` dictionary every
+/// accelerator driver publishes in the IORegistry -- and `ProcessGPU`, the
+/// per-app GPU time from the same registry's user clients. Public, no
+/// entitlement, no private framework.
+///
+/// The process list is what the popup was missing: "Heavy load" with no
+/// word on what was loading it sent everyone to Activity Monitor, which has
+/// the same figure in a column most people never switch on.
 final class GPUModule: PopupContent {
 
     let title = "GPU"
@@ -33,6 +38,10 @@ final class GPUModule: PopupContent {
     /// not need the view rebuilt.
     private let deviceRows = (0..<4).map { _ in ValueRow("") }
 
+    private let processPlaceholder = ProcessPlaceholder()
+    private let processRows = (0..<8).map { _ in ProcessRow() }
+    private var ticks = 0
+
     private var latest: GPUStats.Reading?
     private var devices: [GPUStats.Reading] = []
     private var usageHistory: [Double] = []
@@ -41,7 +50,7 @@ final class GPUModule: PopupContent {
     private var tile: GPUTile?
 
     private let thresholds = ThresholdWatcher<GPUThreshold>(
-        title: localized("GPU usage threshold"))
+        title: localized("Graphics are busy"))
 
     // MARK: - View
 
@@ -72,6 +81,16 @@ final class GPUModule: PopupContent {
             stack.addArrangedSubview(row)
         }
 
+        // Above the details, under the figures it explains: the busy
+        // number, then who is making it busy.
+        stack.setCustomSpacing(12, after: deviceRows.last ?? splitRow)
+        stack.addArrangedSubview(SectionHeader(localized("Busiest apps · GPU time")))
+        stack.addArrangedSubview(processPlaceholder)
+        for row in processRows {
+            row.isHidden = true
+            stack.addArrangedSubview(row)
+        }
+
         detailsToggle.install(in: stack, rows: [modelRow, coresRow])
 
         coresRow.value = GPUStats.coreCount.map { "\($0)" } ?? "—"
@@ -88,6 +107,8 @@ final class GPUModule: PopupContent {
     }
 
     func willStop() { thresholds.withdrawAll() }
+
+    func didHide() { ProcessGPU.top(0) { _ in } }
 
     // MARK: - Sampling
 
@@ -137,6 +158,11 @@ final class GPUModule: PopupContent {
     }
 
     func refresh() {
+        // Every other second, as the CPU list does: a rate needs two
+        // samples, and a list that resorts every second cannot be read.
+        ticks += 1
+        if ticks % 2 == 1 { refreshProcesses() }
+
         guard let reading = latest else { return }
 
         if let utilization = reading.utilization {
@@ -173,6 +199,49 @@ final class GPUModule: PopupContent {
             row.label = device.name
             row.value = device.utilization.map { String(format: "%.0f%%", $0) } ?? "—"
             row.isHidden = false
+        }
+    }
+}
+
+// MARK: - Processes
+
+extension GPUModule {
+    private func refreshProcesses() {
+        let wanted = min(GPUSettings.processCount, processRows.count)
+        guard wanted > 0 else {
+            processRows.forEach { $0.isHidden = true }
+            processPlaceholder.isHidden = true
+            return
+        }
+        ProcessGPU.top(wanted) { [weak self] sample in
+            guard let self else { return }
+            let entries: [ProcessGPU.Entry]
+            switch sample {
+            case .measuring:
+                self.processPlaceholder.show(rows: 0, empty: localized("Measuring…"))
+                self.processRows.forEach { $0.isHidden = true }
+                return
+            case .unreported:
+                // Said in words: an empty list would claim nothing is using
+                // a GPU the headline says is busy.
+                self.processPlaceholder.show(rows: 0,
+                    empty: localized("This GPU does not report which apps use it"))
+                self.processRows.forEach { $0.isHidden = true }
+                return
+            case .busiest(let found):
+                entries = found
+            }
+            self.processPlaceholder.show(rows: entries.count, empty: localized("Nothing is using the GPU"))
+            for (index, row) in self.processRows.enumerated() {
+                if index < entries.count {
+                    let entry = entries[index]
+                    row.set(name: entry.name, pid: entry.pid,
+                            value: String(format: "%.1f%%", entry.usage))
+                    row.isHidden = false
+                } else {
+                    row.isHidden = true
+                }
+            }
         }
     }
 }

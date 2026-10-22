@@ -76,12 +76,12 @@ final class DiskTile: NSView {
         // Free space first, because that is the number somebody checks a
         // disk for. The rates follow it only when there is something to say:
         // "0 B/s" on an idle disk is a line that says nothing.
-        var parts = ["\(volume.name)   \(Readings.bytes(volume.free)) \(localized("free"))"]
+        var parts = ["\(volume.name)   \(Readings.size(volume.free)) \(localized("free"))"]
         if activity.read > 0 || activity.written > 0 {
             parts.append("↓ \(Readings.rate(activity.read))")
             parts.append("↑ \(Readings.rate(activity.written))")
         } else {
-            parts.append(Readings.bytes(volume.total))
+            parts.append(Readings.size(volume.total))
         }
         detail.stringValue = parts.joined(separator: "   ")
     }

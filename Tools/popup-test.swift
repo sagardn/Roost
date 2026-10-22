@@ -8,7 +8,7 @@
 //            Roost/Monitor/MenuBarWidget.swift Roost/Monitor/Readings.swift \
 //            Roost/Monitor/ProcessNetwork.swift Roost/UI/Alert.swift \
 //            Roost/Launcher/Notify.swift Roost/Monitor/ProcessControl.swift \
-//            Roost/Monitor/PopupSection.swift \
+//            Roost/Monitor/PopupSection.swift Roost/Monitor/ProcessIdentity.swift \
 //            Roost/Monitor/PopupParts.swift Tools/popup-test.swift | swift -
 //
 //  The status line's word and its dot are worked out separately -- the word

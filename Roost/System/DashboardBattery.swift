@@ -52,7 +52,11 @@ struct BatteryCard: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
+                // A bare 312 had no scale to read it against; Apple's rating
+                // for its notebook batteries is the scale (support article
+                // "Determine battery cycle count for Mac notebooks").
                 fact(localized("Cycle count"), model.health?.cycleCount.map(String.init) ?? placeholder)
+                    .help(localized("One cycle is 100% of the battery's charge used, in any number of goes. Apple rates recent Mac notebook batteries for 1,000 cycles."))
                 if let charge = model.charge {
                     fact(localized("Charge"), "\(charge.percent)%")
                     fact(localized("Power"), charge.state.title)

@@ -90,10 +90,13 @@ explains this and how to open a browser download instead.
     </td>
     <td width="50%" valign="top">
       <h3>Free up space</h3>
-      Find large files, uninstall apps together with the files they leave
-      behind, remove command-line tools, and clear caches and old downloads
-      from AI assistants. Everything goes to the Bin, never straight to
-      deletion.
+      A <strong>Check-up</strong> looks for leftovers of removed apps,
+      finished downloads, duplicates and AI tool caches at once, and says
+      which are worth acting on. Find large files and identical files, map
+      where the space went, uninstall apps with what they leave behind, and
+      see what starts in the background. Everything goes to the Bin, never
+      straight to deletion. Roost is not a malware scanner and does not
+      "clean" memory.
     </td>
   </tr>
 </table>
@@ -146,6 +149,8 @@ snapping and the keys inside the search panel, is in the manual.
   such as passwords from a password manager, are never kept.
 - **Permissions:** Accessibility for window control, and Location only if you
   ask to see your Wi-Fi network's name. Roost never asks for Full Disk Access.
+  macOS asks once before Roost first looks in Desktop, Documents or Downloads
+  for large or duplicate files.
 
 Details are in the manual's [Privacy](docs/USER_MANUAL.md#privacy) section.
 

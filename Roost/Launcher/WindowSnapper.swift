@@ -80,10 +80,10 @@ final class WindowSnapper {
             let taken = self.start()
             guard !taken.isEmpty else { return }
             if taken.count == Self.bindings.count {
-                Notify.show("Window snapping keys are in use by another app",
+                Notify.show(localized("Window snapping keys are in use by another app"),
                             symbol: "rectangle.split.2x1", for: 4)
             } else {
-                Notify.show("Taken by another app: \(taken.joined(separator: " "))",
+                Notify.show(localized("Some window-snapping keys are used by another app: %0", taken.joined(separator: " ")),
                             symbol: "rectangle.split.2x1", for: 4)
             }
         }
@@ -92,7 +92,7 @@ final class WindowSnapper {
     // MARK: Moving
 
     func perform(_ action: Snap.Action) {
-        guard WindowControl.ensureTrusted(for: "Window snapping") else { return }
+        guard WindowControl.ensureTrusted(for: localized("Window snapping")) else { return }
         guard let app = NSWorkspace.shared.frontmostApplication,
               app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
         let axApp = WindowControl.appElement(app.processIdentifier)

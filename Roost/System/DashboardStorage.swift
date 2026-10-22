@@ -100,9 +100,9 @@ struct StoragePanel: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                     VStack(alignment: .leading, spacing: 4) {
-                        legend(localized("Used"), Readings.bytes(storage.used), swatch: tone.color)
-                        legend(localized("Available"), Readings.bytes(storage.free), swatch: StorageRing.freeColor)
-                        legend(localized("Capacity"), Readings.bytes(storage.total), swatch: nil)
+                        legend(localized("Used"), Readings.size(storage.used), swatch: tone.color)
+                        legend(localized("Available"), Readings.size(storage.free), swatch: StorageRing.freeColor)
+                        legend(localized("Capacity"), Readings.size(storage.total), swatch: nil)
                     }
                     .font(.callout)
                 }
@@ -139,9 +139,9 @@ struct StoragePanel: View {
     private func spoken(_ report: DashboardReport, _ storage: StorageDetail) -> String {
         let used = storage.usedFraction.map { "\(Int(($0 * 100).rounded()))%" } ?? "—"
         return [localized("%0 used", used), report.caption, storage.volume,
-                "\(localized("Used")) \(Readings.bytes(storage.used))",
-                "\(localized("Available")) \(Readings.bytes(storage.free))",
-                "\(localized("Capacity")) \(Readings.bytes(storage.total))"].joined(separator: ", ")
+                "\(localized("Used")) \(Readings.size(storage.used))",
+                "\(localized("Available")) \(Readings.size(storage.free))",
+                "\(localized("Capacity")) \(Readings.size(storage.total))"].joined(separator: ", ")
     }
 
     // MARK: - Activity
@@ -311,7 +311,7 @@ struct PartitionMap: View {
                 Label(localized("Partitions"), systemImage: "square.split.3x1")
                     .font(.headline)
                     .accessibilityAddTraits(.isHeader)
-                Text("\(drive.model) · \(Readings.bytes(drive.size))")
+                Text("\(drive.model) · \(Readings.size(drive.size))")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -333,7 +333,7 @@ struct PartitionMap: View {
                         Text(partition.name == partition.kind.title ? "" : partition.kind.title)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
-                        Text(Readings.bytes(partition.size))
+                        Text(Readings.size(partition.size))
                             .monospacedDigit()
                             .gridColumnAlignment(.trailing)
                         Text(usage(partition))
@@ -353,7 +353,7 @@ struct PartitionMap: View {
                             .frame(width: 9, height: 9).accessibilityHidden(true)
                         Text(localized("Unallocated")).foregroundStyle(.secondary)
                         Text("")
-                        Text(Readings.bytes(drive.unallocated)).monospacedDigit()
+                        Text(Readings.size(drive.unallocated)).monospacedDigit()
                         Text("")
                     }
                 }
@@ -398,7 +398,7 @@ struct PartitionMap: View {
 
     private func usage(_ partition: DiskPartitions.Partition) -> String {
         if let used = partition.used, let free = partition.free {
-            return localized("%0 used · %1 free", Readings.bytes(used), Readings.bytes(free))
+            return localized("%0 used · %1 free", Readings.size(used), Readings.size(free))
         }
         switch partition.kind {
         case .linux, .linuxLVM, .linuxSwap:

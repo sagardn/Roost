@@ -25,6 +25,18 @@ enum SensorReadings {
     enum Family: String, CaseIterable {
         case temperature, voltage, current, power, fan
 
+        /// The heading over a group. The raw value is storage, and was shown
+        /// as-is: a lower-case "temperature" over the list, in every language.
+        var title: String {
+            switch self {
+            case .temperature: return localized("Temperatures")
+            case .voltage:     return localized("Voltages")
+            case .current:     return localized("Currents")
+            case .power:       return localized("Power")
+            case .fan:         return localized("Fans")
+            }
+        }
+
         var unit: String {
             switch self {
             case .temperature: return "°C"

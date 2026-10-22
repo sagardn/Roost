@@ -54,7 +54,10 @@ struct BusiestProcesses: View {
                     GridRow {
                         Text(localized("Process"))
                             .gridColumnAlignment(.leading)
-                        Text(localized("% of one core"))
+                        // "% of one core" was right and read as jargon; and
+                        // a busy app's 312% looked like a bug without it.
+                        Text(localized("CPU"))
+                            .help(localized("100% is one core fully busy, so a busy app can go over 100%."))
                             .gridColumnAlignment(.trailing)
                         Text(localized("Memory"))
                             .gridColumnAlignment(.trailing)
@@ -64,11 +67,24 @@ struct BusiestProcesses: View {
                     .accessibilityHidden(true)
 
                     ForEach(processes.rows) { row in
+                        let identity = ProcessIdentity.identify(pid: row.pid, fallback: row.name)
                         GridRow {
-                            Text(row.name)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .gridColumnAlignment(.leading)
+                            HStack(spacing: 6) {
+                                Group {
+                                    if let icon = identity.icon {
+                                        Image(nsImage: icon).resizable().interpolation(.high)
+                                    } else {
+                                        Image(systemName: "gearshape").foregroundStyle(.secondary)
+                                    }
+                                }
+                                .frame(width: 16, height: 16)
+                                .accessibilityHidden(true)
+                                Text(identity.name)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                            .help(row.name)
+                            .gridColumnAlignment(.leading)
                             // The same format the CPU popup uses for the
                             // same figure, so the two never disagree about
                             // a process by a decimal place.

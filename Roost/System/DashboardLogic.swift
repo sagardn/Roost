@@ -300,8 +300,7 @@ enum Health {
                     title: zone >= 2 ? localized("%0 is almost full", volume)
                                      : localized("%0 is getting full", volume),
                     explanation: localized("%0 free. Free up space can find large files and apps you no longer use.",
-                                           ByteCountFormatter.string(fromByteCount: Int64(clamping: free),
-                                                                     countStyle: .file))))
+                                           Readings.size(free))))
 
             case let .network(linkUp):
                 if !linkUp {

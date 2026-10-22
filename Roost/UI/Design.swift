@@ -44,6 +44,37 @@ enum RoostMetrics {
     static let gridSpacing: CGFloat = 12
     /// The tinted square behind a sidebar or section symbol.
     static let glyphTile: CGFloat = 20
+
+    // The settings sidebar, named here so the rows cannot drift apart again
+    // one hard-coded padding at a time. A 20pt tile with 3pt above and below
+    // measured 34pt from row to row in a render -- the top of the range a
+    // Mac sidebar sits in, and with seventeen rows it was the reason the
+    // column scrolled at the default window height. An 18pt tile with 1pt
+    // above and below measures 32pt, and the column fits.
+    //
+    // The gap above each group heading (about 37pt) is the sidebar list
+    // style's own. `defaultMinListHeaderHeight` was tried and changed
+    // nothing; closing it further would take offsets against the list's
+    // layout, which break on the next release that changes it.
+    static let sidebarGlyph: CGFloat = 18
+    /// Between a row's tile and its name.
+    static let sidebarRowSpacing: CGFloat = 8
+    static let sidebarRowPadding: CGFloat = 1
+    static let sidebarFooterHeight: CGFloat = 36
+    /// Each footer icon's square hit area.
+    static let sidebarFooterButton: CGFloat = 26
+    /// Between footer buttons. With the 26pt hit areas, a 30pt pitch: the
+    /// highlights of two neighbours never touch under a moving pointer.
+    static let sidebarFooterSpacing: CGFloat = 4
+    /// The footer's inset from the column's sides, and Support's inside its
+    /// highlight: 8 and 8 put its heart 16pt in, on the column of the rows'
+    /// tiles, measured in a render.
+    static let sidebarFooterInset: CGFloat = 8
+    /// The footer's symbols and Support's word. A size under the rows' 13,
+    /// so the bar reads as quieter than the list above it.
+    static let sidebarFooterSymbol: CGFloat = 12
+    static let sidebarFooterLabel: CGFloat = 11
+    static let sidebarFooterRadius: CGFloat = 7
 }
 
 // MARK: - Status
@@ -268,14 +299,19 @@ struct FillGauge: View {
 struct GlyphTile: View {
     let glyph: Glyph
     var size: CGFloat = RoostMetrics.glyphTile
+    /// One flat colour instead of the gradient. A column of fifteen tiles
+    /// each lit from the top read as fifteen buttons; flat, they read as
+    /// labels, and the names beside them carry the weight.
+    var flat = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
-            .fill(glyph.color.gradient)
+            .fill(flat ? AnyShapeStyle(glyph.color) : AnyShapeStyle(glyph.color.gradient))
             .frame(width: size, height: size)
             .overlay(
                 Image(systemName: glyph.symbol)
-                    .font(.system(size: size * 0.55, weight: .semibold))
+                    .font(.system(size: size * 0.55 * Glyph.opticalScale(of: glyph.symbol),
+                                  weight: .semibold))
                     .foregroundStyle(.white)
             )
             .accessibilityHidden(true)

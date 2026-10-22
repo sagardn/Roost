@@ -86,3 +86,52 @@ enum NativeModules {
         all.first { $0.title == title }
     }
 }
+
+/// "Show in the menu bar", the first row of a module's page: the module's
+/// on/off switch, now that the sidebar rows are only for going places.
+///
+/// A view of its own rather than `Controls.toggle` with a closure, because it
+/// has to follow the module as well as change it -- the sidebar row's context
+/// menu can switch the module while this page is open -- and the observer
+/// that does that has to go when the page does.
+final class ModuleSwitch: NSView {
+
+    private let name: String
+    private let control: NSSwitch
+    private var observer: NSObjectProtocol?
+
+    init(module name: String) {
+        self.name = name
+        self.control = Controls.toggle(ModuleRegistry.shared.named(name)?.isEnabled ?? false) { on in
+            SettingsModel.setModule(name, enabled: on)
+        }
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.setAccessibilityLabel(localized("Show in the menu bar"))
+        addSubview(control)
+        NSLayoutConstraint.activate([
+            control.leadingAnchor.constraint(equalTo: leadingAnchor),
+            control.trailingAnchor.constraint(equalTo: trailingAnchor),
+            control.topAnchor.constraint(equalTo: topAnchor),
+            control.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+        observer = NotificationCenter.default.addObserver(
+            forName: .toggleModule, object: nil, queue: .main) { [weak self] note in
+            guard let self, note.userInfo?["module"] as? String == self.name,
+                  let on = note.userInfo?["state"] as? Bool else { return }
+            self.control.state = on ? .on : .off
+        }
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    deinit {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+    }
+
+    /// The row, as every module page opens its Menu bar section with it.
+    static func row(_ name: String) -> NSView {
+        Controls.row(localized("Show in the menu bar"), ModuleSwitch(module: name))
+    }
+}

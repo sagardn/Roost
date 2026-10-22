@@ -273,7 +273,7 @@ final class CleanerModel: ObservableObject {
             : localized("Move %0 items to the Bin?", String(items.count))
         Alert.show(question,
                    localized("%0 will be freed once the Bin is emptied. Until then everything can be put back from Finder.",
-                             Readings.bytes(UInt64(bytes))),
+                             Readings.size(UInt64(bytes))),
                    style: .warning,
                    actionTitle: localized("Move to Bin")) {
             let removal = LargeFiles.moveToBin(items)
@@ -453,7 +453,7 @@ private struct CleanerHero: View {
                     .tracking(1.2)
                 if let volume = model.volume {
                     Text(localized("%0 free of %1",
-                                   Readings.bytes(volume.free), Readings.bytes(volume.total)))
+                                   Readings.size(volume.free), Readings.size(volume.total)))
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
                         .padding(.top, 4)
@@ -490,7 +490,7 @@ private struct CleanerScanning: View {
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
                         .tracking(1.1)
-                    Text(Readings.bytes(UInt64(max(0, model.progress.bytes))))
+                    Text(Readings.size(UInt64(max(0, model.progress.bytes))))
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(CleanerTint.calm)
@@ -808,9 +808,9 @@ private struct CleanerResults: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(model.found.count == 1 && model.found[0].name.count < 40
-                     ? localized("%0, %1", model.found[0].name, Readings.bytes(UInt64(model.totalBytes)))
+                     ? localized("%0, %1", model.found[0].name, Readings.size(UInt64(model.totalBytes)))
                      : localized("%0 items, %1 in total",
-                                 String(model.found.count), Readings.bytes(UInt64(model.totalBytes))))
+                                 String(model.found.count), Readings.size(UInt64(model.totalBytes))))
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .contentTransition(.numericText())
                 Text(model.note ?? localized("%0 files scanned in %1 s",
@@ -856,6 +856,16 @@ private struct CleanerResults: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 360)
+            // The cause was named and then left there. The way out is a
+            // switch in System Settings, and coming back to scan again.
+            Text(localized("Turn on Roost under Full Disk Access, then scan again."))
+                .font(.system(size: 11.5))
+                .foregroundStyle(.tertiary)
+            HStack(spacing: 8) {
+                Button(localized("Open Full Disk Access…")) { SettingsLink.fullDiskAccess.open() }
+                Button(localized("Scan again")) { model.scan() }
+            }
+            .controlSize(.small)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -934,7 +944,7 @@ private struct CleanerResults: View {
 
             if !model.chosen.isEmpty {
                 Text(localized("%0 selected · %1",
-                               String(model.chosen.count), Readings.bytes(UInt64(model.chosenBytes))))
+                               String(model.chosen.count), Readings.size(UInt64(model.chosenBytes))))
                     .font(.system(size: 12, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -1011,7 +1021,7 @@ struct FilterChip: View {
             HStack(spacing: 6) {
                 Circle().fill(tint).frame(width: 7, height: 7)
                 Text(title).font(.system(size: 11.5, weight: .medium))
-                Text(Readings.bytes(UInt64(bytes)))
+                Text(Readings.size(UInt64(bytes)))
                     .font(.system(size: 11, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -1084,7 +1094,7 @@ private struct FileRow: View {
             }
             .frame(width: 64, height: 5)
 
-            Text(Readings.bytes(UInt64(item.bytes)))
+            Text(Readings.size(UInt64(item.bytes)))
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .frame(width: 64, alignment: .trailing)
@@ -1231,7 +1241,7 @@ private struct FolderRow: View {
             }
             .frame(width: 64, height: 5)
 
-            Text(Readings.bytes(UInt64(folder.bytes)))
+            Text(Readings.size(UInt64(folder.bytes)))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .frame(width: 64, alignment: .trailing)

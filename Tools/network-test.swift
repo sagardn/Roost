@@ -3,7 +3,7 @@
 //
 //  Exercises the Network module's maths and formatting.
 //
-//  Run:  cat Roost/Monitor/Readings.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Monitor/Readings.swift \
 //            Roost/Monitor/NetworkInfo.swift \
 //            Roost/Monitor/NetworkMonitor.swift \
 //            Tools/network-test.swift | swift -
@@ -100,6 +100,28 @@ do {
           NetworkMonitor.rate(from: Counters(received: 0, sent: 5_000),
                               to: Counters(received: 10, sent: 10),
                               elapsed: 1) == nil)
+}
+
+// MARK: - The 32-bit wrap
+
+print("\nNetworkMonitor.advance")
+
+do {
+    // `ifi_ibytes` is a u_int32_t: every 4 GiB it starts again from zero.
+    // Taken for a reset, it zeroed "since launch" after each big download.
+    let top: UInt64 = UInt64(UInt32.max)
+    check("a counter that moved forward moved that far",
+          NetworkMonitor.advance(from: 100, to: 350) == 250)
+    check("a counter that wrapped moved round the top",
+          NetworkMonitor.advance(from: top - 99, to: 400) == 500)
+    check("a rate across the wrap is measured, not dropped",
+          NetworkMonitor.rate(from: Counters(received: top - 999, sent: 0),
+                              to: Counters(received: 1_000, sent: 0),
+                              elapsed: 1)?.download == 2_000)
+    check("a small step backwards is a reset, not 4 GiB of traffic",
+          NetworkMonitor.advance(from: 5_000, to: 10) == nil)
+    check("a 64-bit counter going backwards is a reset",
+          NetworkMonitor.advance(from: top + 10, to: 5) == nil)
 }
 
 do {

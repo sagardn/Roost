@@ -228,3 +228,43 @@ enum NetworkInfo {
         return nil
     }
 }
+
+// MARK: - What an interface is called
+
+extension NetworkInfo {
+
+    /// "Wi-Fi", "Thunderbolt Bridge", "USB 10/100/1000 LAN" for `en0`,
+    /// `bridge0`, `en7` -- the names System Settings ▸ Network uses.
+    ///
+    /// The BSD name was what the tile, the status line and the dashboard
+    /// showed, and "en0" is a fact about the kernel, not about the Mac in
+    /// front of somebody. SystemConfiguration knows the hardware ports by
+    /// the name macOS gives them; a tunnel it does not list is a VPN as far
+    /// as anybody using it is concerned.
+    static func displayName(ofInterface bsdName: String) -> String {
+        if let known = portNames()[bsdName] { return known }
+        let prefixes: [(String, String)] = [
+            ("utun", localized("VPN")), ("ipsec", localized("VPN")), ("ppp", localized("VPN")),
+            ("pdp_ip", localized("Cellular")), ("bridge", localized("Bridge")),
+            ("en", localized("Ethernet"))
+        ]
+        for (prefix, name) in prefixes where bsdName.hasPrefix(prefix) { return name }
+        return bsdName
+    }
+
+    /// Hardware ports change when an adapter is plugged in, which is rare
+    /// next to how often a popup redraws; a minute is fresh enough.
+    private static var portCache: (names: [String: String], read: Date)?
+
+    private static func portNames() -> [String: String] {
+        if let cache = portCache, Date().timeIntervalSince(cache.read) < 60 { return cache.names }
+        var names: [String: String] = [:]
+        for interface in (SCNetworkInterfaceCopyAll() as? [SCNetworkInterface]) ?? [] {
+            guard let bsd = SCNetworkInterfaceGetBSDName(interface) as String?,
+                  let name = SCNetworkInterfaceGetLocalizedDisplayName(interface) as String? else { continue }
+            names[bsd] = name
+        }
+        portCache = (names, Date())
+        return names
+    }
+}

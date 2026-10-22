@@ -148,13 +148,14 @@ final class GeneralPane: NSStackView {
                 self?.prefs.dockIcon = on
                 NSApp.setActivationPolicy(on ? .regular : .accessory)
             }),
+            // Built from the schedule itself. It was a hand-written list
+            // that offered "Once per hour", which the scheduler has no case
+            // for -- so picking it switched update checks off without a word.
             Controls.row(localized("Check for updates"), Controls.choice(
-                [("Never", "Never"), ("Once per hour", "Once per hour"),
-                 ("Once per day", "Once per day"), ("Once per week", "Once per week"),
-                 ("Silent", "Silent")],
-                selected: prefs.updateInterval) { [weak self] value in
+                UpdateInterval.offered.map { ($0.title, $0.rawValue) },
+                selected: UpdateInterval.interval(from: prefs.updateInterval)?.rawValue ?? prefs.updateInterval) { [weak self] value in
                     self?.prefs.updateInterval = value
-                }),
+                }, detail: localized("The last choice replaces Roost with the new version without asking.")),
             Controls.row(localized("Temperature unit"), Controls.choice(
                 [("System", "system"), ("Celsius", "celsius"), ("Fahrenheit", "fahrenheit")],
                 selected: prefs.temperatureUnits) { [weak self] value in
@@ -171,10 +172,10 @@ final class GeneralPane: NSStackView {
             }, indented: true)
         let separator = Controls.row(localized("Separators"), Controls.toggle(prefs.combinedSeparator) { [weak self] on in
             self?.prefs.combinedSeparator = on
-        }, indented: true)
+        }, indented: true, detail: localized("A thin line between the modules."))
         let details = Controls.row(localized("One popup for all"), Controls.toggle(prefs.combinedPopup) { [weak self] on in
             self?.prefs.combinedPopup = on
-        }, indented: true)
+        }, indented: true, detail: localized("Clicking anywhere on the item opens one popup with every module, instead of the one you clicked."))
         dependent["combined.spacing"] = spacing
         dependent["combined.separator"] = separator
         dependent["combined.details"] = details
@@ -188,11 +189,11 @@ final class GeneralPane: NSStackView {
                              self?.prefs.combinedModules = on
                              self?.syncDependentRows()
                          }),
-            spacing, separator, details,
-            Controls.row(localized("Keep item positions"),
-                         Controls.toggle(prefs.keepMenuBarPositions) { [weak self] on in
-                             self?.prefs.keepMenuBarPositions = on
-                         })
+            // "Keep item positions" was here. Nothing read it: every item
+            // has an `autosaveName`, so macOS keeps a ⌘-dragged position
+            // whatever the switch said, and a switch that changes nothing
+            // teaches a person that switches here may not work.
+            spacing, separator, details
         ])
     }
 
@@ -206,7 +207,8 @@ final class GeneralPane: NSStackView {
             Controls.row(localized("Colour the menu bar"),
                          Controls.toggle(RoostColors.menuBarColoured) { RoostColors.menuBarColoured = $0 }),
             Controls.row(localized("Normal"), Controls.colour(.calm)),
-            Controls.row(localized("Busy · upload and write"), Controls.colour(.warning)),
+            Controls.row(localized("Busy"), Controls.colour(.warning),
+                         detail: localized("Also the colour of uploads and disk writes in charts.")),
             Controls.row(localized("Critical"), Controls.colour(.critical))
         ])
     }
@@ -349,7 +351,7 @@ final class GeneralPane: NSStackView {
 
     static var accessibilityState: String {
         if WindowControl.isTrusted { return localized("Allowed") }
-        return WindowControl.wasRevoked ? localized("Allowed, but stale since the update")
+        return WindowControl.wasRevoked ? localized("Needs allowing again after the update")
                                         : localized("Not allowed")
     }
 
@@ -360,10 +362,14 @@ final class GeneralPane: NSStackView {
             // switch must not sit there claiming it took.
             if on && !LoginItem.isEnabled {
                 self?.launchAtLoginSwitch?.state = .off
-                Alert.show("Move Roost to /Applications first",
-                           "Roost is running from \(Bundle.main.bundleURL.deletingLastPathComponent().path). "
-                           + "A login item pointing there starts a copy that the next build replaces, "
-                           + "which makes macOS ask for Accessibility again at every login.")
+                // Said as what to do. The folder Roost was running from is
+                // a build path nobody else needs to read; it is one click
+                // away in Finder.
+                Alert.show(localized("Move Roost to Applications first"),
+                           localized("Roost can only start at login from your Applications folder. Drag Roost into Applications, open it from there, then turn this on again."),
+                           asks: false, actionTitle: localized("Show Roost in Finder")) {
+                    NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+                }
             }
         }
         launchAtLoginSwitch = control as? ActionSwitch

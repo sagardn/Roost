@@ -9,7 +9,7 @@ import AppKit
 /// preferences, their keys and their side effects are exactly what they were
 /// there; only the page they are on moved.
 ///
-/// What is new is the Keyboard section. A global key belongs to whichever
+/// What is new is the Shortcuts section. A global key belongs to whichever
 /// process registers it first, and until now the only report that another
 /// app had ⌃Space was a HUD at launch that was gone in four seconds. The
 /// section reads what `Launcher` actually holds, and says so.
@@ -19,6 +19,7 @@ final class LauncherPane: NSStackView {
     private var keyRows: [() -> Void] = []
     private var accessibilityStatus: NSTextField?
     private var accessibilityButton: NSButton?
+    private var permissionSection: NSView?
 
     init() {
         super.init(frame: .zero)
@@ -29,12 +30,18 @@ final class LauncherPane: NSStackView {
         edgeInsets = NSEdgeInsets(top: RoostMetrics.pageTop, left: RoostMetrics.pageInset,
                                   bottom: RoostMetrics.pageInset, right: RoostMetrics.pageInset)
 
-        for section in [keyboard(), behaviour(), gesture(), permission()] {
+        // Ordered as somebody learns the thing: what it is and how to use
+        // it, then the ways to open it, then how it behaves once open. The
+        // page used to start on a list of shortcuts and put a section named
+        // after the feature second, so nothing on it said what the feature
+        // was for.
+        for section in [howItWorks(), permission(), keyboard(), snapping(), gesture(), searchWindow(), clicking()] {
             addArrangedSubview(section)
             section.widthAnchor.constraint(equalTo: widthAnchor,
                                            constant: -RoostMetrics.pageInset * 2).isActive = true
         }
         syncDependentRows()
+        placePermission()
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -47,6 +54,25 @@ final class LauncherPane: NSStackView {
     }
 
     // MARK: - Sections
+
+    /// The three steps of using it, and a button that does the first one.
+    /// A switcher is learned by trying it, and until now the only way to try
+    /// it from here was to know the key already.
+    private func howItWorks() -> NSView {
+        let steps = StepStrip([
+            (localized("Press %0", Launcher.shared.searchKey.keys),
+             localized("From any app. Or double-tap the trackpad, if that is on below.")),
+            (localized("Type a few letters"),
+             localized("Part of an app's name is enough. A dot means it is running.")),
+            (localized("Press Return"),
+             localized("Roost brings the app forward, or opens it if it is not running."))
+        ], tint: .systemPurple)
+        let tryIt = Controls.row(localized("Try it now"),
+                                 Controls.button("Open the search") { Launcher.shared.showSearch() },
+                                 detail: localized("⌃Tab and the shortcuts below switch apps without opening it at all."))
+        return Controls.section(localized("How it works"), symbol: "magnifyingglass",
+                                tint: .systemPurple, [Controls.row(steps), tryIt])
+    }
 
     private func keyboard() -> NSView {
         let launcher = Launcher.shared
@@ -79,21 +105,62 @@ final class LauncherPane: NSStackView {
                                  Controls.group([cycleStatus, cycleSwitch]),
                                  detail: localized("Add apps to it from an app's options menu in the search. With none added it walks your recent apps."))
 
-        let apps = Controls.row(localized("Your apps"),
-                                Controls.button("Edit apps…") { Launcher.shared.editApps() },
+        let apps = Controls.row(localized("My Apps"),
+                                Controls.button(localized("Edit apps…")) { Launcher.shared.editApps() },
                                 detail: localized("Reorder them, and give any of them a ⌃ shortcut that switches straight to it."))
 
-        return Controls.section(localized("Keyboard"), symbol: "keyboard.fill", tint: .systemPurple,
+        return Controls.section(localized("Shortcuts"), symbol: "keyboard.fill", tint: .systemPurple,
                                 footer: localized("A key another app registered first stays that app's. Roost does not take it over; it says so here instead."),
                                 [search, minimise, cycle, apps])
     }
 
-    private func behaviour() -> NSView {
-        Controls.section(localized("Search & switcher"), symbol: "magnifyingglass", tint: .systemPurple, [
+    /// Thirteen system-wide keys, which were taken at launch and listed
+    /// nowhere but one line of the welcome tour. Listed, so a person knows
+    /// what ⌃⌥← is doing to their window, and why another app's ⌃⌥C
+    /// might not work.
+    private func snapping() -> NSView {
+        let rows = WindowSnapper.bindings.map { binding -> NSView in
+            let keys = Controls.label(binding.label)
+            keys.font = .monospacedSystemFont(ofSize: 12, weight: .medium)
+            return Controls.row(Self.title(of: binding.action), keys)
+        }
+        return Controls.section(localized("Window snapping"), symbol: "rectangle.split.2x1", tint: .systemPurple,
+                                footer: localized("Works on the window in front. Pressing a half again makes it two thirds, then one third."),
+                                rows)
+    }
+
+    private static func title(of action: Snap.Action) -> String {
+        switch action {
+        case .leftHalf:        return localized("Left half")
+        case .rightHalf:       return localized("Right half")
+        case .topHalf:         return localized("Top half")
+        case .bottomHalf:      return localized("Bottom half")
+        case .topLeft:         return localized("Top-left quarter")
+        case .topRight:        return localized("Top-right quarter")
+        case .bottomLeft:      return localized("Bottom-left quarter")
+        case .bottomRight:     return localized("Bottom-right quarter")
+        case .maximize:        return localized("Fill the screen")
+        case .center:          return localized("Centre")
+        case .restore:         return localized("Put it back where it was")
+        case .previousDisplay: return localized("Move to the previous display")
+        case .nextDisplay:     return localized("Move to the next display")
+        }
+    }
+
+    private func searchWindow() -> NSView {
+        Controls.section(localized("The search window"), symbol: "macwindow", tint: .systemPurple, [
             Controls.row(localized("Open where the pointer is"),
                          Controls.toggle(Prefs.openAtPointer) { Prefs.openAtPointer = $0 }),
             Controls.row(localized("Close when it loses focus"),
-                         Controls.toggle(Prefs.hideOnOutsideClick) { Prefs.hideOnOutsideClick = $0 }),
+                         Controls.toggle(Prefs.hideOnOutsideClick) { Prefs.hideOnOutsideClick = $0 })
+        ])
+    }
+
+    /// Apart from the window's own settings: these change what a click on an
+    /// app does everywhere, the Dock included, and under the window's
+    /// heading they read as though they were about the window.
+    private func clicking() -> NSView {
+        Controls.section(localized("Clicking an app"), symbol: "cursorarrow.click.2", tint: .systemPurple, [
             Controls.row(localized("Click an app in front to minimise it"),
                          Controls.toggle(Prefs.clickMinimizes) { Prefs.clickMinimizes = $0 },
                          detail: localized("In the search and with an app's own shortcut. Off, a click only brings an app forward.")),
@@ -153,6 +220,7 @@ final class LauncherPane: NSStackView {
             Controls.row(localized("Window control"), Controls.group([status, allow]),
                          detail: localized("Accessibility access, which the switcher needs to bring windows forward."))
         ])
+        permissionSection = section
         syncAccessibility()
         return section
     }
@@ -179,6 +247,19 @@ final class LauncherPane: NSStackView {
     private func syncAccessibility() {
         accessibilityStatus?.stringValue = GeneralPane.accessibilityState
         accessibilityButton?.isHidden = WindowControl.isTrusted
+        placePermission()
+    }
+
+    /// Second on the page while it is missing, last once it is granted.
+    /// Without it the switcher cannot bring a window forward, and a section
+    /// at the bottom of a long page is where that went unnoticed -- the keys
+    /// worked, the search opened, and picking an app did nothing.
+    private func placePermission() {
+        guard let section = permissionSection, section.superview === self else { return }
+        let wanted = WindowControl.isTrusted ? arrangedSubviews.count - 1 : 1
+        guard arrangedSubviews.firstIndex(of: section) != wanted else { return }
+        removeArrangedSubview(section)
+        insertArrangedSubview(section, at: wanted)
     }
 
     /// Turning every finger count off would leave the gesture listening for

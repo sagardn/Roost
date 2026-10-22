@@ -35,10 +35,12 @@ final class NetworkModule: PopupContent {
                                            tint: .roostAmber)
     private let chart = SplitTrafficChart()
     private let peaks = PeakLegend()
-    private let reachability = ValueRow(localized("Probes answered"))
+    private let reachability = ValueRow(localized("Internet checks answered"))
+        .explained(localized("Roost checks every few seconds that the internet answers. Each bar below is one check."))
     private let strip = ReachabilityStrip()
 
-    private let latency = ValueRow(localized("Latency · jitter"))
+    private let latency = ValueRow(localized("Response time · variation"))
+        .explained(localized("How long the internet takes to answer, and how much that changes from one check to the next. Lower is better for both."))
     private let signal = SignalRow()
     /// The network's name, or the button that gets permission to read it.
     /// A row of its own on Wi-Fi rather than only in the status line, where
@@ -62,13 +64,18 @@ final class NetworkModule: PopupContent {
     // not say since when.
     private let sinceLaunch = ValueRow(localized("Sent · received since launch"))
 
+    private let processPlaceholder = ProcessPlaceholder()
     private let processRows = (0..<8).map { _ in ProcessRow() }
 
     private let detailsToggle = DisclosureButton(key: "Network_popupDetails")
     private let macAddress = ValueRow(localized("Physical address"))
+        .explained(localized("The hardware address (MAC address). macOS may use a private one for each Wi-Fi network."))
     private let router = ValueRow(localized("Router"))
-    private let dns = ValueRow(localized("DNS"))
-    private let channel = ValueRow(localized("Channel · link rate"))
+        .explained(localized("The address of the box this Mac connects through."))
+    private let dns = ValueRow(localized("DNS servers"))
+        .explained(localized("The servers that turn names like apple.com into addresses."))
+    private let channel = ValueRow(localized("Wi-Fi channel · speed"))
+        .explained(localized("The radio channel, and the speed the Mac and the router agreed on. The internet itself may be slower."))
     private var detailRows: [NSView] { [macAddress, router, dns, channel] }
 
     /// Ticks since the popup opened, used to throttle the two expensive jobs
@@ -123,8 +130,9 @@ final class NetworkModule: PopupContent {
             stack.addArrangedSubview(row)
         }
 
-        stack.addArrangedSubview(SectionHeader(localized("Top processes")))
+        stack.addArrangedSubview(SectionHeader(localized("Apps using the network")))
         stack.addArrangedSubview(ProcessHeader())
+        stack.addArrangedSubview(processPlaceholder)
         for row in processRows {
             row.isHidden = true
             stack.addArrangedSubview(row)
@@ -203,7 +211,8 @@ final class NetworkModule: PopupContent {
     func makeTile() -> NetworkTile {
         if let tile { return tile }
         let made = NetworkTile()
-        made.update(NetworkMonitor.shared, interface: cachedDetails.primaryInterface)
+        made.update(NetworkMonitor.shared, interface: cachedDetails.primaryInterface
+                        .map(NetworkInfo.displayName(ofInterface:)))
         tile = made
         return made
     }
@@ -220,11 +229,17 @@ final class NetworkModule: PopupContent {
         // CoreWLAN one. Every fifteen seconds with the popup shut is enough
         // to notice a change; the popup refreshes them faster while it is up.
         if samples % 15 == 1 { cachedDetails = NetworkInfo.current() }
-        alerts.check(link: monitor.link, details: cachedDetails)
+        // Reachability is a probe, and only the popup asked for one: with it
+        // shut, "Connection comes or goes" compared a value nothing updated
+        // and never fired. Asked here while that alert is watched, at the
+        // popup's own pace; `probe()` skips a call while one is in flight.
+        if NetworkAlert.connection.isWatched, samples % 5 == 0 { monitor.probe() }
+        alerts.check(link: monitor.link, details: cachedDetails,
+                     probed: !monitor.connectivityHistory.isEmpty)
 
         if let tile, tile.window?.isVisible == true {
-            tile.update(monitor, interface: monitor.link.interface
-                                 ?? cachedDetails.primaryInterface)
+            tile.update(monitor, interface: (monitor.link.interface ?? cachedDetails.primaryInterface)
+                                 .map(NetworkInfo.displayName(ofInterface:)))
         }
 
         return MenuBarReading(
@@ -310,10 +325,13 @@ final class NetworkModule: PopupContent {
             // the part that got cut off.
             medium = "Wi-Fi"
         } else {
-            interfaceName.value = name
+            // Named as System Settings names it, with the BSD name kept in
+            // brackets for whoever is matching it against `ifconfig`.
+            let display = NetworkInfo.displayName(ofInterface: name)
+            interfaceName.value = display == name ? name : "\(display) (\(name))"
             // Any other physical en* is a cable: NetworkMonitor only picks
             // physical interfaces, and Wi-Fi was ruled out above.
-            medium = name.hasPrefix("en") ? "Ethernet" : name
+            medium = name.hasPrefix("en") ? "Ethernet" : display
         }
 
         let health = NetworkInfo.health(isUp: monitor.link.isUp,
@@ -353,10 +371,12 @@ final class NetworkModule: PopupContent {
         let wanted = min(NetworkSettings.processCount, processRows.count)
         guard wanted > 0 else {
             processRows.forEach { $0.isHidden = true }
+            processPlaceholder.isHidden = true
             return
         }
         ProcessNetwork.top(wanted) { [weak self] entries in
             guard let self else { return }
+            self.processPlaceholder.show(rows: entries.count, empty: localized("No app is using the network right now"))
             for (index, row) in self.processRows.enumerated() {
                 if index < entries.count {
                     row.set(entries[index])
@@ -493,7 +513,9 @@ extension NetworkModule: DashboardReporting {
                                           value: Readings.bytes(monitor.sessionDownload)),
                      DashboardReport.Fact(label: localized("Sent since launch"),
                                           value: Readings.bytes(monitor.sessionUpload))]
-        if let interface { facts.append(.init(label: localized("Interface"), value: interface)) }
+        if let interface {
+            facts.append(.init(label: localized("Connection"), value: NetworkInfo.displayName(ofInterface: interface)))
+        }
         return DashboardReport(
             value: "↓ " + Readings.rate(monitor.rates.download),
             pair: ((localized("Download"), "↓ " + Readings.rate(monitor.rates.download)),

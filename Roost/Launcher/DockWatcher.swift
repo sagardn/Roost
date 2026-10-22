@@ -52,6 +52,17 @@ final class DockWatcher {
             self?.activatedBundle = app?.bundleIdentifier
             self?.activatedAt = Date()
         }
+        // `start()` returns quietly while Roost is not trusted, which is how
+        // every first launch and every launch after an update begins -- and
+        // nothing called it again once the grant arrived, so the switch in
+        // Settings read on while the Dock click did nothing until a relaunch.
+        // macOS posts this whenever the Accessibility list changes; the
+        // trust it reports lags the notification by a moment.
+        DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name("com.apple.accessibility.api"),
+            object: nil, queue: .main) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self?.refresh() }
+        }
     }
 
     var isRunning: Bool { tap != nil }
@@ -67,6 +78,15 @@ final class DockWatcher {
             options: .listenOnly,
             eventsOfInterest: CGEventMask(mask),
             callback: { _, type, event, _ in
+                // macOS switches a tap off when a callback runs long -- and
+                // this one does Accessibility reads near the Dock -- or on
+                // secure input. It says so with these two event types and
+                // then stays off: the Dock click went dead until a relaunch,
+                // while `isRunning` still said yes and `refresh()` believed it.
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    if let tap = DockWatcher.shared.tap { CGEvent.tapEnable(tap: tap, enable: true) }
+                    return Unmanaged.passUnretained(event)
+                }
                 DockWatcher.shared.handle(type, event)
                 return Unmanaged.passUnretained(event)
             },

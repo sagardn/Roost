@@ -66,7 +66,9 @@ final class ClipboardStore {
                 // it is somebody's history. The next save writes a new index.
                 let aside = directory.appendingPathComponent("index-unreadable-\(Int(Date().timeIntervalSince1970)).json")
                 try? files.moveItem(at: index, to: aside)
-                problem = localized("The saved clipboard history could not be read, so it was set aside as %0.", aside.lastPathComponent)
+                // The file name stays out of the sentence: it is a
+                // timestamp nobody reads, and the file is kept regardless.
+                problem = localized("Your saved clipboard history could not be opened. It was kept aside, and a new history was started.")
             }
         }
         removeOrphans(keeping: entries)

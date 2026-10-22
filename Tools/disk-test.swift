@@ -114,8 +114,12 @@ do {
     let v = volume(total: 195_383_263_232, free: 4_888_379_392)
     check("the figure matches the machine it was measured on",
           Int((v.percent * 100).rounded()) == 97)
-    check("and the bytes format the way the menu bar formats them",
-          Readings.bytes(v.free) == "4.6 GB")
+    // In Finder's decimal units: 4,888,379,392 bytes is what Get Info
+    // calls 4.89 GB. Binary units said 4.6 GB, 7% short of Finder.
+    check("and the bytes format the way the menu bar and Finder format them",
+          Readings.size(v.free) == "4.9 GB")
+    check("memory keeps the binary units macOS uses for it",
+          Readings.bytes(16 * 1024 * 1024 * 1024) == "16.0 GB")
 }
 
 // MARK: - The rate

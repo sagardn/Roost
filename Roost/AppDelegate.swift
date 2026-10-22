@@ -99,9 +99,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
     }
 
     private var launchBegan: Date?
+    private var terminationSignal: DispatchSourceSignal?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let began = launchBegan ?? Date()
+
+        // SIGTERM is how the updater's script quits the running copy, and how
+        // `pkill` and a logout ask. Its default action ends the process on the
+        // spot, so `applicationWillTerminate` never ran: clipboard history set
+        // to clear unpinned entries on quit survived every update, and its
+        // last save was skipped. Taken here, it is an ordinary quit.
+        //
+        // An empty handler rather than SIG_IGN, which the dispatch source
+        // would equally accept: an ignored signal stays ignored across exec,
+        // so every tool Roost launches would have shrugged off its own
+        // `terminate()`. A handler is reset to the default in the child.
+        signal(SIGTERM) { _ in }
+        let termination = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        termination.setEventHandler { NSApp.terminate(nil) }
+        termination.resume()
+        terminationSignal = termination
+        installMainMenu()
 
         ModuleRegistry.shared.register(allModules)
         suppressStatusBarTilingConstraintUpdates()
@@ -116,6 +134,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
         // the menu bar behind a window asking which ones to show.
         setup {
             ModuleRegistry.shared.startAll()
+            // Paused at the last quit: still paused. The modules start --
+            // Clipboard's history runs whatever the menu bar shows -- and
+            // their items come straight back down, in the same turn of the
+            // run loop, so nothing is drawn in between.
+            if self.pauseState { ModuleRegistry.shared.stopAll() }
             RunawayApps.shared.start()
             Throttling.startWatching()
             // After the modules: the menu bar is built from what they say
@@ -311,10 +334,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
         // the update".
         if response.notification.request.content.userInfo["url"] is String {
             Log.debug("update notification clicked; re-checking before installing")
+            // Every failure says so. Each guard here used to return without a
+            // word, so a click made offline, or on a release whose checksum
+            // could not be fetched, did nothing at all -- the update window
+            // reports the same failures, and a click on the notice is the
+            // same request.
             appUpdater.check { result in
-                guard case .success(.available(let release)) = result else { return }
+                let release: Release
+                switch result {
+                case .success(.available(let found)):
+                    release = found
+                case .success(.upToDate):
+                    return
+                case .failure(let error):
+                    Alert.show(localized("Could not check for updates"), error: error)
+                    return
+                }
                 appUpdater.download(release) { outcome in
-                    guard case .success(let image) = outcome else { return }
+                    let image: URL
+                    switch outcome {
+                    case .success(let downloaded):
+                        image = downloaded
+                    case .failure(let error):
+                        Alert.show("Could not download the update", error: error)
+                        return
+                    }
                     appUpdater.install(image) { error in
                         if let error {
                             Alert.show("Could not install the update", error: error)

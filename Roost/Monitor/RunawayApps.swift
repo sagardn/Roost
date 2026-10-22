@@ -24,7 +24,10 @@ final class RunawayApps {
 
     private var timer: Timer?
     private var detector = Detector()
-    private var previous: [String: (cpu: UInt64, at: TimeInterval)] = [:]
+    /// Each process's CPU time at the last tick, by pid -- with the app it
+    /// counted towards, so a pid reused by something else starts clean.
+    private var previous: [Int32: ProcessTime] = [:]
+    private var previousAt: TimeInterval?
     private let queue = DispatchQueue(label: "com.sagar.roost.runaway", qos: .utility)
 
     // MARK: Settings
@@ -66,28 +69,31 @@ final class RunawayApps {
     func stop() {
         timer?.invalidate()
         timer = nil
-        previous.removeAll()
-        detector = Detector()
+        // On the queue `tick()` works on: reset from here, it raced a tick
+        // already in flight for the same two dictionaries.
+        queue.async { [self] in
+            previous.removeAll()
+            previousAt = nil
+            detector = Detector()
+        }
     }
 
     private func tick() {
         queue.async { [weak self] in
             guard let self else { return }
             let now = ProcessInfo.processInfo.systemUptime
-            let apps = Self.cpuByApp()
-            var usage: [String: Double] = [:]
-            var names: [String: (name: String, bundle: URL?)] = [:]
-            for app in apps {
-                defer { self.previous[app.key] = (app.cpuNanoseconds, now) }
-                guard let before = self.previous[app.key], app.cpuNanoseconds >= before.cpu,
-                      now > before.at else { continue }
-                // Percent of one core over the interval.
-                usage[app.key] = Double(app.cpuNanoseconds - before.cpu) / 1e9 / (now - before.at) * 100
-                names[app.key] = (app.name, app.bundle)
+            let processes = Self.cpuByProcess()
+            defer {
+                self.previous = Dictionary(processes.map { ($0.pid, $0) },
+                                           uniquingKeysWith: { first, _ in first })
+                self.previousAt = now
             }
-            // Apps that quit are forgotten, so a relaunch starts clean.
-            let live = Set(apps.map(\.key))
-            self.previous = self.previous.filter { live.contains($0.key) }
+            guard let before = self.previousAt, now > before else { return }
+            let usage = Self.usage(from: self.previous, to: processes, elapsed: now - before)
+            var names: [String: (name: String, bundle: URL?)] = [:]
+            for process in processes where usage[process.key] != nil {
+                names[process.key] = (process.name, process.bundle)
+            }
 
             let needed = max(1, Int((Double(Self.minutes) * 60 / Self.interval).rounded(.up)))
             let flagged = self.detector.observe(usage, threshold: Double(Self.threshold), samples: needed)
@@ -149,19 +155,63 @@ final class RunawayApps {
         let cpuNanoseconds: UInt64
     }
 
-    /// Per-app CPU time so far, helpers folded into their app.
-    static func cpuByApp() -> [AppTime] {
+    /// One process's CPU time so far, and the app it counts towards.
+    struct ProcessTime {
+        let pid: Int32
+        /// The app bundle's path, or the process name for a command-line tool.
+        let key: String
+        let name: String
+        let bundle: URL?
+        let cpuNanoseconds: UInt64
+    }
+
+    /// Every process Roost may report on, with the app it belongs to.
+    static func cpuByProcess() -> [ProcessTime] {
         let own = getpid()
-        var totals: [String: AppTime] = [:]
+        var processes: [ProcessTime] = []
         for pid in allPIDs() where pid > 0 && pid != own {
             guard let cpu = cpuTime(pid), let path = executablePath(pid),
                   !isSystem(path) else { continue }
             let owner = Self.owner(of: path)
-            let key = owner.bundle?.path ?? owner.name
-            let sum = (totals[key]?.cpuNanoseconds ?? 0) + cpu
-            totals[key] = AppTime(key: key, name: owner.name, bundle: owner.bundle, cpuNanoseconds: sum)
+            processes.append(ProcessTime(pid: pid, key: owner.bundle?.path ?? owner.name,
+                                         name: owner.name, bundle: owner.bundle,
+                                         cpuNanoseconds: cpu))
+        }
+        return processes
+    }
+
+    /// Per-app CPU time so far, helpers folded into their app.
+    static func cpuByApp() -> [AppTime] {
+        var totals: [String: AppTime] = [:]
+        for process in cpuByProcess() {
+            let sum = (totals[process.key]?.cpuNanoseconds ?? 0) + process.cpuNanoseconds
+            totals[process.key] = AppTime(key: process.key, name: process.name,
+                                          bundle: process.bundle, cpuNanoseconds: sum)
         }
         return Array(totals.values)
+    }
+
+    /// Percent of one core each app used between two readings.
+    ///
+    /// Differenced per process and then added up per app. It was the other
+    /// way round -- each app's total, differenced -- and a helper exiting
+    /// took its whole lifetime's CPU out of the total: the app's time went
+    /// backwards, its sample was dropped, and the detector, seeing it gone,
+    /// took it for quit and forgot it had already reported it. A browser
+    /// held at 200% while tabs came and went was announced again every five
+    /// minutes. An app is measured when any process of it was seen last time
+    /// and is still running; a process new since then has no baseline yet
+    /// and counts from the next reading.
+    static func usage(from previous: [Int32: ProcessTime], to current: [ProcessTime],
+                      elapsed: TimeInterval) -> [String: Double] {
+        guard elapsed > 0 else { return [:] }
+        var nanoseconds: [String: UInt64] = [:]
+        for process in current {
+            guard let before = previous[process.pid], before.key == process.key,
+                  process.cpuNanoseconds >= before.cpuNanoseconds else { continue }
+            nanoseconds[process.key, default: 0] += process.cpuNanoseconds - before.cpuNanoseconds
+        }
+        return nanoseconds.mapValues { Double($0) / 1e9 / elapsed * 100 }
     }
 
     /// The app an executable belongs to: the outermost `.app` in its path,

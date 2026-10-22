@@ -68,6 +68,14 @@ enum GPUSettings {
         set { prefs.set("GPU_historyLength", newValue) }
     }
 
+    /// How many apps the popup lists. Zero stops `ProcessGPU` reading the
+    /// registry at all. Five rather than CPU's eight: a handful of apps hold
+    /// the GPU at once, and past five the list was WindowServer's helpers.
+    static var processCount: Int {
+        get { prefs.int("GPU_processCount", default: 5) }
+        set { prefs.set("GPU_processCount", newValue) }
+    }
+
     static var popupShortcut: [UInt16] {
         (UserDefaults.standard.array(forKey: "GPU_popupShortcut") as? [Int])?
             .map { UInt16($0) } ?? []
@@ -92,7 +100,8 @@ final class GPUSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "GPU")),
+            [ModuleSwitch.row("GPU"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "GPU")),
              Controls.shapes(self.styles, shown: self.shown, label: GPUModule().menuBarLabel,
                              value: "42%", ) { chosen in
                 self.shown = chosen
@@ -106,6 +115,11 @@ final class GPUSettingsPage: NSView {
                 [("1 minute", "60"), ("2 minutes", "120"), ("5 minutes", "300")],
                 selected: "\(GPUSettings.historyLength)") { value in
                     GPUSettings.historyLength = Int(value) ?? 120
+                }),
+            Controls.row(localized("Top processes"), Controls.choice(
+                [("None", "0"), ("5", "5"), ("8", "8")],
+                selected: "\(GPUSettings.processCount)") { value in
+                    GPUSettings.processCount = Int(value) ?? 5
                 })
         ])
 

@@ -71,10 +71,17 @@ enum AIAssistants {
         /// Codex one. nil for a whole store, cache or model.
         let context: String?
 
+        /// The assistant, for a folder that is one of its roots kept under
+        /// another name -- `Library/Caches/com.todesktop.230313mzl4w4u92` is
+        /// Cursor's, and its own name says so to nobody.
+        var tool: String?
+
         var name: String { url.lastPathComponent }
 
-        /// For a list a person reads: "Roost · 560e3c32" rather than a UUID.
+        /// For a list a person reads: "Roost · 560e3c32" rather than a UUID,
+        /// and "Cursor · cache" rather than a bundle identifier.
         var displayName: String {
+            if context == nil, let tool { return "\(AIAssistants.title(of: tool)) · \(kind.label)" }
             guard let context else { return name }
             let looksLikeID = name.range(of: #"^[0-9a-f]{8}-[0-9a-f]{4}-"#,
                                          options: .regularExpression) != nil
@@ -82,13 +89,14 @@ enum AIAssistants {
         }
 
         init(url: URL, kind: Kind, bytes: Int64, isMeasured: Bool = true,
-             lastUsed: Date = Date(), context: String? = nil) {
+             lastUsed: Date = Date(), context: String? = nil, tool: String? = nil) {
             self.url = url
             self.kind = kind
             self.bytes = bytes
             self.isMeasured = isMeasured
             self.lastUsed = lastUsed
             self.context = context
+            self.tool = tool
         }
 
         /// Whether the age rule lets this be offered. nil is "any age".
@@ -107,6 +115,19 @@ enum AIAssistants {
         var bytes: Int64 { items.reduce(0) { $0 + $1.bytes } }
 
         static func == (a: Tool, b: Tool) -> Bool { a.name == b.name }
+    }
+
+    /// What a person calls each assistant, by the name this file knows it by.
+    static func title(of name: String) -> String {
+        let known: [String: String] = [
+            "claude": "Claude Code", "codex": "Codex", "grok": "Grok", "gemini": "Gemini",
+            "copilot": "GitHub Copilot", "opencode": "OpenCode", "cursor": "Cursor",
+            "windsurf": "Windsurf", "aider": "Aider", "continue": "Continue", "amp": "Amp",
+            "qwen": "Qwen Code", "goose": "Goose", "crush": "Crush",
+            "antigravity": "Antigravity", "chatgpt": "ChatGPT",
+            "huggingface": "Hugging Face", "ollama": "Ollama", "lm studio": "LM Studio"
+        ]
+        return known[name.lowercased()] ?? name.prefix(1).uppercased() + name.dropFirst()
     }
 
     /// The assistants this knows the shape of.
@@ -255,7 +276,8 @@ enum AIAssistants {
                                           kind: root.path.contains("/Logs/") ? .logs : .caches,
                                           bytes: measured ?? 0,
                                           isMeasured: measured != nil,
-                                          lastUsed: lastModified(root)))
+                                          lastUsed: lastModified(root),
+                                          tool: name))
                     }
                     continue
                 }

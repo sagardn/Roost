@@ -109,7 +109,8 @@ final class RAMSettingsPage: NSView {
         let shapes = Controls.section(
             localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "RAM")),
+            [ModuleSwitch.row("RAM"),
+             Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "RAM")),
              Controls.shapes(self.styles, shown: self.shown, label: RAMModule().menuBarLabel,
                              value: "42%", ) { chosen in
                 self.shown = chosen
@@ -154,7 +155,7 @@ final class RAMSettingsPage: NSView {
                 threshold.level = level
             }
         }
-        let choice = Controls.choice([("Warning", "2"), ("Critical", "4")],
+        let choice = Controls.choice([(localized("When memory gets tight"), "2"), (localized("When memory gets very tight"), "4")],
                                      selected: "\(threshold.level)") { value in
             threshold.level = Int(value) ?? 2
         }

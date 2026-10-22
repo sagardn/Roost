@@ -48,6 +48,20 @@ enum CommandLineTools {
             case .link:        return localized("linked")
             }
         }
+
+        /// How it got here, in words for somebody who has never typed
+        /// `brew`: the manager's name alone ("pipx", "linked") said nothing
+        /// to them.
+        var source: String {
+            switch self {
+            case .brewFormula: return localized("Installed with Homebrew")
+            case .brewCask:    return localized("App installed with Homebrew")
+            case .npmGlobal:   return localized("Installed with npm (Node.js)")
+            case .pipxApp:     return localized("Installed with pipx (Python)")
+            case .loose:       return localized("Installed by hand")
+            case .link:        return localized("Shortcut to a program elsewhere")
+            }
+        }
     }
 
     /// The command that removes a managed tool.
@@ -415,8 +429,16 @@ extension CommandLineTools {
         // are not offered as something to put in the Bin. An unmanaged one's
         // are the whole point.
         if !tool.isManaged, fm.fileExists(atPath: tool.location.path) {
+            // A link is listed at its target's size, which is what the tool
+            // takes -- but only the link goes to the Bin, so this row is the
+            // link's own size. Otherwise removing `~/.local/bin/claude` said
+            // it freed hundreds of megabytes, and freed a few bytes.
+            // `attributesOfItem` does not follow the link.
+            let bytes = tool.kind == .link
+                ? ((try? fm.attributesOfItem(atPath: tool.location.path))?[.size] as? NSNumber)?.int64Value ?? 0
+                : tool.bytes
             found.append(AppLeftovers.Item(url: tool.location,
-                                           bytes: tool.bytes,
+                                           bytes: bytes,
                                            confidence: .certain))
         }
 
@@ -478,17 +500,19 @@ extension CommandLineTools {
             process.standardOutput = pipe
             process.standardError = pipe
 
-            var data = Data()
-            // Read while it runs. A pipe's buffer is 64 KB and a brew
-            // uninstall that fills it blocks for ever waiting for somebody
-            // to read, which looks exactly like a hang.
-            pipe.fileHandleForReading.readabilityHandler = { handle in
-                data.append(handle.availableData)
-            }
-
+            // Read to the end while it runs, then wait. A pipe's buffer is
+            // 64 KB and a brew uninstall that fills it blocks for ever waiting
+            // for somebody to read, which looks exactly like a hang. It was
+            // read by a readability handler, appending on its own queue to
+            // the same `Data` this thread appended the tail to after setting
+            // the handler to nil -- which does not wait for a call already
+            // running. Two threads writing one buffer, and the tail, where
+            // brew says why it refused, could be lost.
+            let data: Data
             let status: Int32
             do {
                 try process.run()
+                data = pipe.fileHandleForReading.readDataToEndOfFile()
                 process.waitUntilExit()
                 status = process.terminationStatus
             } catch {
@@ -498,9 +522,6 @@ extension CommandLineTools {
                 }
                 return
             }
-
-            pipe.fileHandleForReading.readabilityHandler = nil
-            data.append(pipe.fileHandleForReading.availableData)
 
             let text = String(data: data, encoding: .utf8) ?? ""
             DispatchQueue.main.async {

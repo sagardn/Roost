@@ -54,12 +54,25 @@ final class ScrollingPage: NSView {
             // starts its column exactly `pageTop` down.
             page.topAnchor.constraint(equalTo: document.topAnchor,
                                       constant: RoostMetrics.contentTop - RoostMetrics.pageTop),
-            page.bottomAnchor.constraint(equalTo: document.bottomAnchor),
+            // Within the document, not pinned to its bottom. Pinned, a page
+            // shorter than the window was stretched to the window's height,
+            // and most pages are vertical stack views: a stack given more
+            // room than its views take has nothing saying where the rest
+            // goes. The Storage page put it after its first card -- the disk,
+            // then half a window of nothing, then the rest -- in one window,
+            // and at the bottom in another the same size. A page as tall as its content
+            // has no slack to place.
+            page.bottomAnchor.constraint(lessThanOrEqualTo: document.bottomAnchor),
             document.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
-            // At least the visible height, so a short page still fills the
-            // pane instead of floating in it.
+            // At least the visible height, so the scroll view's document
+            // still fills the pane however short the page in it is.
             document.heightAnchor.constraint(greaterThanOrEqualTo: scroll.contentView.heightAnchor)
         ]
+        // And no taller than that or the page, whichever is more: the page's
+        // bottom no longer holds the document's, so this does.
+        let documentShortest = document.heightAnchor.constraint(equalToConstant: 0)
+        documentShortest.priority = .defaultLow
+        constraints.append(documentShortest)
         // The pages' columns hang from the top with nothing below them; this
         // is what gives the page a height of its own. Each subview, not just
         // the first, because a page is free to add a second.

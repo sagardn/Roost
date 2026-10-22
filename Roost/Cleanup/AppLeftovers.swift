@@ -209,7 +209,25 @@ extension AppLeftovers {
     /// The same `trashItem` the large-files list uses, and for the same
     /// reason: an uninstaller that is wrong about one folder should cost
     /// somebody a trip to Finder, not their data.
-    static func moveToBin(_ items: [Item]) -> LargeFiles.Removal {
-        LargeFiles.moveToBin(items.map { LargeFiles.Item(url: $0.url, bytes: $0.bytes) })
+    ///
+    /// `bundle` is the app itself, when it is among `items`. It goes first,
+    /// and if it will not go nothing else does. Moved independently, as they
+    /// were, an app that could not be moved -- Safari, a sealed system app
+    /// behind a symlink, or one that is running -- kept its place in
+    /// /Applications and lost its preferences and caches: still installed,
+    /// and reset. Leftovers are only leftovers once the app is gone.
+    static func moveToBin(_ items: [Item], bundle: URL? = nil) -> LargeFiles.Removal {
+        let all = items.map { LargeFiles.Item(url: $0.url, bytes: $0.bytes) }
+        guard let bundle, let app = all.first(where: { $0.url == bundle }) else {
+            return LargeFiles.moveToBin(all)
+        }
+        var result = LargeFiles.moveToBin([app])
+        guard result.isCompleteSuccess else { return result }
+        let rest = LargeFiles.moveToBin(all.filter { $0.url != bundle })
+        result.moved += rest.moved
+        result.failed += rest.failed
+        result.bytesFreed += rest.bytesFreed
+        result.reason = result.reason ?? rest.reason
+        return result
     }
 }

@@ -440,9 +440,10 @@ and drag an item along the menu bar.
 **Click a reading** to open its popup. Every popup opens the same way: a
 one-line verdict with a coloured dot (**● Light load**, **● Pressure warning**,
 **● Online · Wi-Fi · 65 ms**), the headline figures, then a chart or bar of the
-reading, then the detail. Rows you need once — a model name, a mount point, a
-hardware address — are folded under **More details**, which remembers whether
-you left it open.
+reading, then the detail, then the busiest apps where there are any — with an
+**⊗** on hover to quit or force quit one. Rows you need less often — a model
+name, a mount point, a hardware address — sit at the foot under **Details**,
+always shown.
 
 The **⚙︎ gear** in the popup header opens that module's page in Settings.
 
@@ -559,9 +560,14 @@ deny, history shows as **Blocked by macOS**.
 
 ## Free up space
 
-**Free up space** in the Settings sidebar has four tools, and one rule covers
-all of them: **everything Roost removes goes to the Bin**, so nothing is erased
-until you empty it.
+The Settings sidebar groups the tools by job: **Check-up** at the top, then
+**Cleanup** (Storage, Large files, Duplicates, Space map),
+**Applications** (Uninstaller, Background items), **Protection** (macOS
+protections) and **Tools** (AI tools). Each is a page of its own and nothing scans until you
+press its button. One rule covers all of them: **everything Roost removes goes
+to the Bin**, so nothing is erased until you empty it. **Storage** shows the
+disk, how cleaning up works, and the two jobs macOS does itself: Storage
+settings and the Bin.
 
 - **Large files** — the biggest files in your home folder, sorted by size and
   filtered by kind: video, audio, images, archives, installers, documents. It
@@ -583,6 +589,62 @@ until you empty it.
   Roost adds them up and lets you choose by age. Caches, logs and downloads
   come ticked, because the tool rebuilds them; **conversations and downloaded
   models never come ticked**, however large.
+- **Check-up** — runs the finders at once and puts what is worth doing first,
+  each with what it would gain, what it could cost and how sure Roost is.
+  Below that is one list to act on:
+  - *Left by removed apps*: caches, logs, settings and app data in
+    `~/Library` named for an app that is no longer installed, running or
+    started by launchd. Caches and logs come ticked; **settings and app data
+    never do**, because a command-line tool, which no installed app claims,
+    can keep its sign-in there. Apple's data, shared app-group data and
+    `~/Library/Containers` are not searched (looking inside another app's
+    container asks you for permission, once per app).
+  - *Finished downloads*: disk images and packages at the top of Downloads,
+    ticked once they are a month old, and browser downloads that stopped and
+    have not been touched for a day. A disk image that is mounted is left out.
+  - *AI tool caches*, by the AI assistants window's own age rule.
+
+  Everything is checked again just before it moves: an app reinstalled since,
+  a download that resumed or a file that changed is left where it is, and the
+  result says so. The result reports what was **moved**, because the space
+  only comes back when the Bin is emptied. The Check-up also shows the
+  duplicates it found, the state of macOS's protections and what runs in the
+  background. A report is reused for 15 minutes unless something has been
+  moved since; **Scan again** (⌘R) always rescans.
+- **Duplicate files** — files over 1 MB in Desktop, Documents, Downloads,
+  Movies, Music and Pictures, or folders you choose, compared byte for byte.
+  Hard links count as one file, and an APFS clone is marked *shares its
+  space* because moving it gives nothing back. Nothing comes ticked: **Keep
+  the oldest** or **Keep the newest** ticks the spares, and Roost refuses any
+  choice that would leave a set with no copy, both when you tick and again
+  before the move. App bundles, `node_modules` and `.git` are left out.
+- **Space map** — your home folder, or any folder or disk you choose, drawn as
+  rectangles in proportion to their size, with the same items listed beside
+  it. Click a folder to go into it. Folders Roost cannot open, and the
+  container folders it does not open, are named under the map rather than
+  counted as empty. A large home folder takes about as long as `du`;
+  **Stop** shows what was found so far, marked as partial. A bar above the
+  map shows how full the disk is and how much of it the folder holds. Tick
+  files and folders in the list (or click a file's row) and **Move to Bin**
+  moves them after asking; anything that changed since the map was drawn is
+  left where it is. The home folder's own folders (Documents, Downloads and
+  the rest), anything in `~/Library`, and anything outside your home folder
+  other than another disk cannot be ticked.
+
+**Background items** lists the launch agents and
+daemons in `~/Library/LaunchAgents`, `/Library/LaunchAgents` and
+`/Library/LaunchDaemons`, with the program each runs, whether that program is
+still there, and who signed it. It says what it saw (missing program,
+unsigned, a script handed to a shell), never "threat". The switches are in
+System Settings ▸ Login Items, one button away; the one thing Roost removes
+here is your own job whose program has gone, after asking. Login items that
+apps add for themselves can only be listed by System Settings.
+
+**macOS protections**, a page of its own and part of the Check-up, reads System Integrity Protection,
+Gatekeeper, FileVault, the firewall, automatic security responses and the
+XProtect version from macOS's own tools, without privileges. **Roost is not a
+malware scanner**; XProtect, built into macOS, is. Settings Roost cannot read
+are shown as "Could not be read", never as on.
 
 **What it will not touch.** Matching is an allowlist: a file is offered only
 if its name follows a convention Roost recognises, so no credential, settings
@@ -593,11 +655,14 @@ Disk Access, so a few corners stay invisible to it.
 
 ## Settings
 
-Open Settings from the **⚙︎** in any popup. The window has a sidebar in three
-groups: **Overview**, **Free up space** and **Search & switcher**; then
-**Monitoring**, one page per module with its on/off switch (a module that is
-off is dimmed); then **Settings**. The search field at the top filters all of
-them.
+Open Settings from the **⚙︎** in any popup. The sidebar starts with
+**Overview** and **Check-up**, then the tools under **Cleanup**,
+**Applications**, **Protection** and **Tools** (see [Free up space](#free-up-space)) --
+**Search & switcher** is under **Tools** too -- then **Monitoring**: one page per
+module. A module that is off shows a grey tile and "Off"; switch it on or off
+from its page, or from the row's context menu. Roost's own
+settings are the **⚙︎** at the bottom. The search field at the top filters
+all of them.
 
 ### Overview
 

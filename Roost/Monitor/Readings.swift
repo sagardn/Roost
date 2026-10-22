@@ -153,10 +153,24 @@ enum Readings {
 
     // MARK: - Formatting
 
-    static func bytes(_ value: UInt64) -> String {
+    /// A quantity of memory, in the binary units macOS uses for memory:
+    /// 16 GB of RAM is 16 GiB, and About This Mac and Activity Monitor say
+    /// "16 GB". Also the rates, whose slot widths were measured in these.
+    static func bytes(_ value: UInt64) -> String { format(value, step: 1024) }
+
+    /// A file or a disk, in the decimal units Finder has used since 10.6.
+    ///
+    /// Sizes on disk were in binary units like memory, so every file and
+    /// volume read about 7% smaller in Roost than in Finder's Get Info --
+    /// and the Cleanup pane, the one place on ByteCountFormatter, disagreed
+    /// with the pages around it. Same shape as `bytes`, so the two sit
+    /// side by side in a column without one looking foreign.
+    static func size(_ value: UInt64) -> String { format(value, step: 1000) }
+
+    private static func format(_ value: UInt64, step: Double) -> String {
         let units = ["B", "KB", "MB", "GB", "TB"]
         var size = Double(value), index = 0
-        while size >= 1024, index < units.count - 1 { size /= 1024; index += 1 }
+        while size >= step, index < units.count - 1 { size /= step; index += 1 }
         return String(format: size >= 100 || index == 0 ? "%.0f %@" : "%.1f %@", size, units[index])
     }
 

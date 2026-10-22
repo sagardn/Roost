@@ -38,7 +38,16 @@ check("and the last one in the list, not just the first",
       resolve("Network") == .module("Network"))
 check("Dashboard opens the dashboard", resolve("Dashboard") == .dashboard)
 check("Settings opens the app's own page", resolve("Settings") == .appSettings)
-check("Free up space opens the cleanup page", resolve("Free up space") == .cleanup)
+check("each tool opens by its own name",
+      SettingsSelection.Tool.allCases.allSatisfy { resolve($0.rawValue) == .tool($0) })
+// The names of the two hub pages the tools were split out of. The Disk
+// popup and the Overview still ask for the first when the disk is full.
+check("Free up space now opens the Check-up", resolve("Free up space") == .tool(.checkUp))
+check("Uninstall apps now opens the uninstaller", resolve("Uninstall apps") == .tool(.uninstaller))
+check("every tool but the Check-up sits in a group",
+      SettingsSelection.Tool.allCases.filter { $0.group == nil } == [.checkUp])
+check("every group holds at least one tool", SettingsSelection.Group.allCases.allSatisfy { group in
+    SettingsSelection.Tool.allCases.contains { $0.group == group } })
 check("Search & switcher opens the launcher page", resolve("Search & switcher") == .launcher)
 
 // MARK: - The alias
@@ -73,7 +82,9 @@ check("a module shadows a built-in page of the same name",
       resolve("Dashboard", ["Dashboard"]) == .module("Dashboard"))
 check("the same for the app settings page",
       resolve("Settings", ["Settings"]) == .module("Settings"))
-check("and for the cleanup page",
+check("and for a tool page",
+      resolve("Duplicates", ["Duplicates"]) == .module("Duplicates"))
+check("and for an old page name",
       resolve("Free up space", ["Free up space"]) == .module("Free up space"))
 // But the alias is translated before anything is matched, so a module could
 // not take it over by being named after it.
@@ -87,8 +98,9 @@ print("\nSettingsSelection.name and .isModule")
 check("a module reports its own name", SettingsSelection.module("GPU").name == "GPU")
 check("the dashboard reports Dashboard", SettingsSelection.dashboard.name == "Dashboard")
 check("the app page reports Settings", SettingsSelection.appSettings.name == "Settings")
-check("the cleanup page reports Free up space",
-      SettingsSelection.cleanup.name == "Free up space")
+check("a tool page reports its own name",
+      SettingsSelection.tool(.spaceMap).name == "Space map")
+check("and is not a module", !SettingsSelection.tool(.uninstaller).isModule)
 
 // .isModule decides the shape of the .openWindow notification: a module's
 // page brings that module's menu bar item forward, the other two pages must
@@ -98,7 +110,7 @@ check("the dashboard is not", !SettingsSelection.dashboard.isModule)
 check("the app settings page is not", !SettingsSelection.appSettings.isModule)
 // It has no menu bar item to bring forward: it configures nothing and
 // belongs to no reading.
-check("nor is the cleanup page", !SettingsSelection.cleanup.isModule)
+check("nor is a tool page", !SettingsSelection.tool(.checkUp).isModule)
 check("nor is the launcher page", !SettingsSelection.launcher.isModule)
 check("the launcher page reports its name",
       SettingsSelection.launcher.name == "Search & switcher")
@@ -107,8 +119,10 @@ check("the launcher page reports its name",
 
 print("\nResolving a page's own name returns the same page")
 
-for selection in [SettingsSelection.dashboard, .appSettings, .cleanup, .launcher]
-                 + modules.map({ SettingsSelection.module($0) }) {
+let pages: [SettingsSelection] = [.dashboard, .appSettings, .launcher]
+    + SettingsSelection.Tool.allCases.map { SettingsSelection.tool($0) }
+    + modules.map { SettingsSelection.module($0) }
+for selection in pages {
     check("\(selection.name) survives a round trip",
           resolve(selection.name) == selection)
 }

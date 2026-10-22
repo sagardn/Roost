@@ -98,11 +98,6 @@ final class Preferences {
         set { set("dockIcon", newValue) }
     }
 
-    var keepMenuBarPositions: Bool {
-        get { bool("keep_menubar_positions", default: false) }
-        set { set("keep_menubar_positions", newValue) }
-    }
-
     var combinedModules: Bool {
         get { bool("CombinedModules", default: false) }
         set { set("CombinedModules", newValue) }

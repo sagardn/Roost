@@ -23,7 +23,7 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
                               styleMask: [.titled, .closable, .resizable],
                               backing: .buffered,
                               defer: false)
-        window.title = localized("Roost Apps")
+        window.title = localized("My Apps")
         window.center()
         super.init(window: window)
 
@@ -46,14 +46,18 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
         let add = NSPopUpButton(frame: .zero, pullsDown: true)
         add.translatesAutoresizingMaskIntoConstraints = false
         add.addItem(withTitle: "＋")
+        add.toolTip = localized("Add an app")
         add.target = self
         add.action = #selector(addPicked(_:))
 
         let remove = NSButton(title: "－", target: self, action: #selector(removeSelected))
         remove.translatesAutoresizingMaskIntoConstraints = false
         remove.bezelStyle = .rounded
+        remove.toolTip = localized("Remove the selected app")
 
-        let hint = NSTextField(labelWithString: localized("Drag to reorder · ⌃1–⌃9 follow the first nine"))
+        // It said "⌃1–⌃9 follow the first nine", which they do not: a key
+        // belongs to the app it was given to, wherever that app is dragged.
+        let hint = NSTextField(labelWithString: localized("Drag to change the order in search · choose each app's shortcut on the right"))
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
         hint.translatesAutoresizingMaskIntoConstraints = false
@@ -113,13 +117,26 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
         let name = NSTextField(labelWithString: entry.name)
         name.translatesAutoresizingMaskIntoConstraints = false
 
-        // shortcut is editable inline: one character, or empty for none
-        let shortcut = NSTextField(string: entry.shortcut ?? "")
-        shortcut.placeholderString = "⌃-"
-        shortcut.alignment = .center
+        // A menu of the keys that work, not a text box. The box took any
+        // character and saved it, but `Hotkey.Key.code(for:)` knows only
+        // digits, ` and ; -- so ⌃S for Safari was kept, shown, and never
+        // fired. A key another app has says whose it is, and picking it
+        // moves it here rather than leaving two apps on one key.
+        let shortcut = NSPopUpButton(frame: .zero, pullsDown: false)
+        shortcut.controlSize = .small
+        shortcut.addItem(withTitle: localized("None"))
+        for key in Self.shortcutKeys {
+            let owner = entries.first { $0.shortcut == key && $0.bundleID != entry.bundleID }
+            shortcut.addItem(withTitle: owner.map { "⌃\(key)  —  \($0.name)" } ?? "⌃\(key)")
+            shortcut.lastItem?.representedObject = key
+        }
+        if let key = entry.shortcut, let index = Self.shortcutKeys.firstIndex(of: key) {
+            shortcut.selectItem(at: index + 1)
+        }
         shortcut.tag = row
         shortcut.target = self
-        shortcut.action = #selector(shortcutEdited(_:))
+        shortcut.action = #selector(shortcutPicked(_:))
+        shortcut.toolTip = localized("Press this anywhere to open or switch to the app")
         shortcut.translatesAutoresizingMaskIntoConstraints = false
 
         container.addSubview(icon)
@@ -136,7 +153,7 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
 
             shortcut.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
             shortcut.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            shortcut.widthAnchor.constraint(equalToConstant: 40),
+            shortcut.widthAnchor.constraint(equalToConstant: 72),
             name.trailingAnchor.constraint(lessThanOrEqualTo: shortcut.leadingAnchor, constant: -8)
         ])
         return container
@@ -198,8 +215,15 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
         for app in WindowControl.runningRegularApps() {
             guard let bundleID = app.bundleIdentifier, !known.contains(bundleID),
                   bundleID != Bundle.main.bundleIdentifier else { continue }
-            let item = NSMenuItem(title: app.localizedName ?? bundleID,
-                                  action: nil, keyEquivalent: "")
+            // An app with no name is left out rather than shown as its
+            // bundle identifier; "Choose from Applications…" still reaches it.
+            guard let name = app.localizedName else { continue }
+            let item = NSMenuItem(title: name, action: nil, keyEquivalent: "")
+            item.image = app.icon.map { icon in
+                let small = icon.copy() as? NSImage ?? icon
+                small.size = NSSize(width: 16, height: 16)
+                return small
+            }
             item.representedObject = bundleID
             button.menu?.addItem(item)
         }
@@ -242,10 +266,19 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
         commit()
     }
 
-    @objc private func shortcutEdited(_ sender: NSTextField) {
+    /// The keys `Hotkey.Key.code(for:)` can register with ⌃, in the order
+    /// they sit on the keyboard.
+    static let shortcutKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "`", ";"]
+
+    @objc private func shortcutPicked(_ sender: NSPopUpButton) {
         guard entries.indices.contains(sender.tag) else { return }
-        let text = sender.stringValue.trimmingCharacters(in: .whitespaces)
-        entries[sender.tag].shortcut = text.isEmpty ? nil : String(text.prefix(1))
+        let key = sender.selectedItem?.representedObject as? String
+        if let key {
+            for index in entries.indices where entries[index].shortcut == key { entries[index].shortcut = nil }
+        }
+        entries[sender.tag].shortcut = key
+        // Every row's menu names the owners, so all of them change.
+        table.reloadData()
         commit()
     }
 

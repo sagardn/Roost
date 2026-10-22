@@ -119,5 +119,34 @@ do {
           psSeconds > 0 && oursSeconds / psSeconds > 0.66 && oursSeconds / psSeconds < 1.5)
 }
 
+print("\nusage across processes")
+do {
+    typealias P = RunawayApps.ProcessTime
+    let app = "/Applications/Browser.app"
+    func p(_ pid: Int32, _ seconds: Double, key: String = app) -> P {
+        P(pid: pid, key: key, name: "Browser", bundle: nil, cpuNanoseconds: UInt64(seconds * 1e9))
+    }
+    // Main process and a helper, then the helper exits holding 100 s of CPU
+    // time. Summed per app and differenced, the app went backwards by 100 s
+    // and was dropped -- and the detector took it for quit.
+    let before: [Int32: P] = [10: p(10, 500), 11: p(11, 100)]
+    let after: [P] = [p(10, 530), p(12, 0)]
+    let usage: [String: Double] = RunawayApps.usage(from: before, to: after, elapsed: 30)
+    check("an app whose helper exited is still measured", usage[app] != nil)
+    check("at what its live process used: 30 s over 30 s is 100%",
+          abs((usage[app] ?? 0) - 100) < 0.001)
+
+    var detector = RunawayApps.Detector()
+    var reports = 0
+    for _ in 0..<20 {
+        reports += detector.observe(usage, threshold: 90, samples: 2).count
+    }
+    check("so a busy app is reported once, not every stretch (\(reports))", reports == 1)
+
+    let reused: [Int32: P] = [10: p(10, 500, key: "/Applications/Other.app")]
+    let reusedUsage: [String: Double] = RunawayApps.usage(from: reused, to: [p(10, 600)], elapsed: 30)
+    check("a pid reused by another app is not differenced against it", reusedUsage.isEmpty)
+}
+
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

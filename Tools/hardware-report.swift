@@ -3,9 +3,11 @@
 //
 //  What this Mac actually answers, reader by reader.
 //
-//  Run:  cat Roost/UI/Localized.swift Roost/Settings/Preferences.swift \
+//  Run:  cat Roost/UI/Localized.swift Roost/Startup/FormerName.swift \
+//            Roost/Settings/Preferences.swift \
 //            Roost/Monitor/Readings.swift Roost/Monitor/CPUReadings.swift \
 //            Roost/Monitor/MemoryReadings.swift Roost/Monitor/GPUStats.swift \
+//            Roost/Monitor/ProcessGPU.swift \
 //            Roost/Monitor/DiskReadings.swift Roost/Monitor/NetworkInfo.swift \
 //            Roost/Monitor/Temperature.swift Roost/Monitor/SMCKit.swift \
 //            Roost/Monitor/SensorReadings.swift Roost/System/DeviceInfo.swift \
@@ -141,6 +143,16 @@ for gpu in gpus {
            gpu.memoryUsed.map { "\($0 / 1_048_576) MB" },
            note: "not every driver reports it")
 }
+
+// Which apps use the GPU, from each client's `AppUsage`. A client count with
+// nothing timed is a driver that spells the key differently, or reports no
+// per-app time at all; the popup then says so rather than listing zeros.
+let gpuClients = ProcessGPU.census()
+report("GPU clients", gpuClients.clients > 0 ? "\(gpuClients.clients)" : nil,
+       note: "no process holds the GPU open")
+report("  reporting GPU time per app",
+       gpuClients.timed > 0 ? "\(gpuClients.timed)" : nil,
+       note: "key not one of \(ProcessGPU.timeKeys)")
 
 // The keys themselves, when something did not read. GPUStats looks each
 // reading up under several spellings and leaves it nil rather than guessing,
