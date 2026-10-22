@@ -114,10 +114,15 @@ final class CPUSettingsPage: NSView {
         super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
 
+        // Grouped by where each setting shows -- the menu bar item, the popup
+        // it opens, then notifications -- rather than under a heading that
+        // repeated the page title. The shortcut opens the popup from the
+        // keyboard, so it sits with the item it stands in for a click on.
         let shapes = Controls.section(
-            localized("Menu bar"), symbol: "menubar.rectangle", tint: .systemBlue,
+            localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.shapes(self.styles, shown: self.shown, label: CPUModule().menuBarLabel,
+            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "CPU")),
+             Controls.shapes(self.styles, shown: self.shown, label: CPUModule().menuBarLabel,
                              value: "42%", ) { chosen in
                 self.shown = chosen
                 // In the order the tiles are laid out, not the order they
@@ -150,8 +155,7 @@ final class CPUSettingsPage: NSView {
             localized("The Mac slows down to cool off"),
             Controls.toggle(Throttling.alertsEnabled) { Throttling.alertsEnabled = $0 },
             detail: localized("macOS lowers the processor's speed when the Mac runs hot, and raises it again once it cools."))
-        let alerts = Controls.section(localized("Notify me when"), symbol: "bell.badge.fill",
-                                      tint: .systemRed,
+        let alerts = Controls.section(localized("Notify me when"),
             CPUThreshold.allCases.filter { $0.isAvailable }.map { threshold in
                 Controls.row(threshold.title,
                              Controls.threshold(on: threshold.isWatched,
@@ -164,8 +168,7 @@ final class CPUSettingsPage: NSView {
                 })
             } + [runaway, throttling])
 
-        let section = Controls.section(localized("CPU"), symbol: "cpu.fill", tint: .systemBlue, [
-            Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "CPU")),
+        let popup = Controls.section(localized("Show in the popup"), [
             Controls.row(localized("Show temperature"),
                          Controls.toggle(CPUSettings.showsTemperature) { on in
                              CPUSettings.showsTemperature = on
@@ -182,7 +185,7 @@ final class CPUSettingsPage: NSView {
                 })
         ])
 
-        let column = NSStackView(views: [section, shapes, alerts])
+        let column = NSStackView(views: [shapes, popup, alerts])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 18
@@ -194,7 +197,7 @@ final class CPUSettingsPage: NSView {
             column.leadingAnchor.constraint(equalTo: leadingAnchor),
             column.trailingAnchor.constraint(equalTo: trailingAnchor),
             column.topAnchor.constraint(equalTo: topAnchor),
-            section.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
+            popup.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             shapes.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             alerts.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36)
         ])

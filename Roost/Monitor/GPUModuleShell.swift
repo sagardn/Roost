@@ -85,19 +85,15 @@ final class GPUSettingsPage: NSView {
         super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
 
-        let section = Controls.section(localized("GPU"), symbol: "display", tint: .systemPurple, [
-            Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "GPU")),
-            Controls.row(localized("Chart history"), Controls.choice(
-                [("1 minute", "60"), ("2 minutes", "120"), ("5 minutes", "300")],
-                selected: "\(GPUSettings.historyLength)") { value in
-                    GPUSettings.historyLength = Int(value) ?? 120
-                })
-        ])
-
+        // Grouped by where each setting shows -- the menu bar item, the popup
+        // it opens, then notifications -- rather than under a heading that
+        // repeated the page title. The shortcut opens the popup from the
+        // keyboard, so it sits with the item it stands in for a click on.
         let shapes = Controls.section(
-            localized("Menu bar"), symbol: "menubar.rectangle", tint: .systemBlue,
+            localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.shapes(self.styles, shown: self.shown, label: GPUModule().menuBarLabel,
+            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "GPU")),
+             Controls.shapes(self.styles, shown: self.shown, label: GPUModule().menuBarLabel,
                              value: "42%", ) { chosen in
                 self.shown = chosen
                 // In the order the tiles are laid out, not the order they
@@ -105,8 +101,15 @@ final class GPUSettingsPage: NSView {
                 MenuBarStyles.store(self.styles.filter(chosen.contains), for: "GPU")
             }])
 
-        let alerts = Controls.section(localized("Notify me when"), symbol: "bell.badge.fill",
-                                      tint: .systemRed,
+        let popup = Controls.section(localized("Show in the popup"), [
+            Controls.row(localized("Chart history"), Controls.choice(
+                [("1 minute", "60"), ("2 minutes", "120"), ("5 minutes", "300")],
+                selected: "\(GPUSettings.historyLength)") { value in
+                    GPUSettings.historyLength = Int(value) ?? 120
+                })
+        ])
+
+        let alerts = Controls.section(localized("Notify me when"),
             GPUThreshold.allCases.map { threshold in
                 Controls.row(threshold.title,
                              Controls.threshold(on: threshold.isWatched,
@@ -119,7 +122,7 @@ final class GPUSettingsPage: NSView {
                 })
             })
 
-        let column = NSStackView(views: [section, shapes, alerts])
+        let column = NSStackView(views: [shapes, popup, alerts])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 18
@@ -131,7 +134,7 @@ final class GPUSettingsPage: NSView {
             column.leadingAnchor.constraint(equalTo: leadingAnchor),
             column.trailingAnchor.constraint(equalTo: trailingAnchor),
             column.topAnchor.constraint(equalTo: topAnchor),
-            section.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
+            popup.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             shapes.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             alerts.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36)
         ])

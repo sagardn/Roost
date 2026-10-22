@@ -145,12 +145,9 @@ final class SensorsSettingsPage: NSView {
             + sensors.filter { SensorReadings.names[$0.id] != nil || $0.id.hasPrefix("hid:") }
                 .map { ($0.name, $0.id) }
 
-        let general = Controls.section(localized("Sensors"), symbol: "thermometer.medium", tint: .systemRed, [
-            Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Sensors")),
-            Controls.row(localized("Watch"), Controls.choice(choices,
-                                                  selected: SensorsSettings.watched ?? "") { id in
-                SensorsSettings.watched = id.isEmpty ? nil : id
-            }),
+        // How readings are taken, ahead of the list they decide: the last
+        // switch says whether unnamed keys are listed below it at all.
+        let sources: [NSView] = [
             Controls.row(localized("Read the HID sensors"),
                          Controls.toggle(SensorsSettings.includesHID) { on in
                              SensorsSettings.includesHID = on
@@ -164,12 +161,22 @@ final class SensorsSettingsPage: NSView {
                          Controls.toggle(SensorsSettings.showsUnnamed) { on in
                              SensorsSettings.showsUnnamed = on
                          })
-        ])
+        ]
 
+        // Grouped by where each setting shows -- the menu bar item, the popup
+        // it opens, then notifications -- rather than under a heading that
+        // repeated the page title. The shortcut opens the popup from the
+        // keyboard, so it sits with the item it stands in for a click on.
+        // "Watch" is here too: it picks the sensor the menu bar figure shows.
         let shapes = Controls.section(
-            localized("Menu bar"), symbol: "menubar.rectangle", tint: .systemBlue,
+            localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.shapes(self.styles, shown: self.shown, label: SensorsModule().menuBarLabel,
+            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Sensors")),
+             Controls.row(localized("Watch"), Controls.choice(choices,
+                                                   selected: SensorsSettings.watched ?? "") { id in
+                 SensorsSettings.watched = id.isEmpty ? nil : id
+             }),
+             Controls.shapes(self.styles, shown: self.shown, label: SensorsModule().menuBarLabel,
                              value: "62°",
                             title: self.titles, ) { chosen in
                 self.shown = chosen
@@ -201,10 +208,9 @@ final class SensorsSettingsPage: NSView {
                 ]))
             }
         }
-        let list = Controls.section(localized("Show in the popup"), symbol: "list.bullet",
-                                    tint: .systemGray, listRows)
+        let list = Controls.section(localized("Show in the popup"), sources + listRows)
 
-        let column = NSStackView(views: [general, shapes, list])
+        let column = NSStackView(views: [shapes, list])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 18

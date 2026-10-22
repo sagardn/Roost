@@ -208,8 +208,7 @@ final class NetworkSettingsPage: NSView {
         super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
 
-        let section = Controls.section(localized("Network"), symbol: "network", tint: .systemTeal, [
-            Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Network")),
+        let popup = Controls.section(localized("Show in the popup"), [
             Controls.row(localized("Top processes"), Controls.choice(
                 [("None", "0"), ("5", "5"), ("8", "8")],
                 selected: "\(NetworkSettings.processCount)") { value in
@@ -223,10 +222,15 @@ final class NetworkSettingsPage: NSView {
                             "Asks ifconfig.co, an outside server, while the popup is open: on opening, every two minutes, and when the connection changes."))
         ])
 
+        // Grouped by where each setting shows -- the menu bar item, the popup
+        // it opens, then notifications -- rather than under a heading that
+        // repeated the page title. The shortcut opens the popup from the
+        // keyboard, so it sits with the item it stands in for a click on.
         let shapes = Controls.section(
-            localized("Menu bar"), symbol: "menubar.rectangle", tint: .systemBlue,
+            localized("Menu bar"),
             footer: localized("Pick one or more. They sit side by side in the menu bar, in this order."),
-            [Controls.shapes(self.styles, shown: self.shown, label: "NET",
+            [Controls.row(localized("Keyboard shortcut"), ShortcutRecorder(module: "Network")),
+             Controls.shapes(self.styles, shown: self.shown, label: "NET",
                              value: "1.2 MB/s", ) { chosen in
                 self.shown = chosen
                 // In the order the tiles are laid out, not the order they
@@ -234,15 +238,14 @@ final class NetworkSettingsPage: NSView {
                 MenuBarStyles.store(self.styles.filter(chosen.contains), for: "Network")
             }])
 
-        let alerts = Controls.section(localized("Notify me when"), symbol: "bell.badge.fill",
-                                      tint: .systemRed,
+        let alerts = Controls.section(localized("Notify me when"),
             NetworkAlert.allCases.map { alert in
                 Controls.row(alert.title, Controls.toggle(alert.isWatched) { on in
                     alert.isWatched = on
                 })
             })
 
-        let column = NSStackView(views: [section, shapes, alerts])
+        let column = NSStackView(views: [shapes, popup, alerts])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 18
@@ -254,7 +257,7 @@ final class NetworkSettingsPage: NSView {
             column.leadingAnchor.constraint(equalTo: leadingAnchor),
             column.trailingAnchor.constraint(equalTo: trailingAnchor),
             column.topAnchor.constraint(equalTo: topAnchor),
-            section.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
+            popup.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             shapes.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36),
             alerts.widthAnchor.constraint(equalTo: column.widthAnchor, constant: -36)
         ])
