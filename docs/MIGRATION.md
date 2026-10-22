@@ -1,7 +1,12 @@
 # Migration checklist
 
+**Finished.** Every step under "Order of work" is done and `Kit/` and
+`Modules/` are deleted. The tables below are the record of where the work
+started, measured at the time; they are not a to-do list. Current state is
+in `docs/ARCHITECTURE.md` ▸ Migration status.
+
 Replacing the derived code with independent implementations. Measured
-from the source, not estimated. Update it as modules land.
+from the source, not estimated.
 
 **Rule:** implement → verify → remove the original → verify again. Nothing is
 deleted before its replacement works.
@@ -101,7 +106,12 @@ see `docs/ARCHITECTURE.md`.
 
 ---
 
-## Scope decision outstanding
+## Scope decision (settled)
+
+Settled as follows: Sensors was rebuilt without fan control or the key
+table, all 41 localisations were kept, and nine menu bar shapes were built
+rather than fourteen. Battery, Bluetooth and Clock were dropped. What follows
+is the reasoning as it stood before the decision.
 
 The honest cost is driven by breadth, not difficulty. Three levers:
 

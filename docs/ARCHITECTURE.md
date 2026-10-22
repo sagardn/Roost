@@ -125,7 +125,7 @@ The UI they feed:
 ### How to see it
 
 Nothing needs the flag any more. Every module Roost draws is a registered
-module in its own right — CPU, RAM and Network — rather than a preview beside
+module in its own right — CPU, RAM, Network, GPU, Disk and Sensors — rather than a preview beside
 the one it duplicates. The flag stays for the next module, which will spend a
 few commits behind it:
 
@@ -352,7 +352,7 @@ one worth knowing.
 
 ### What the files hold
 
-159 keys, the same 159 in every language, checked by CI:
+726 keys, the same 726 in every language, checked by CI:
 
 ```bash
 python3 Tools/i18n.py        # the 41 files are in step with en.lproj
@@ -402,7 +402,7 @@ so here if you do.
 Everything user-facing now goes through `localized()`. The rebuilt popups
 used to hand literals straight to the view — 122 of them at the worst point,
 including a `UpdateWindow` that called `localized()` zero times, so the whole
-update flow was English on a Japanese machine. 182 strings go through it
+update flow was English on a Japanese machine. 682 strings go through it
 today and fourteen literals remain, every one of them deliberate:
 
 | Still a literal | Why |
