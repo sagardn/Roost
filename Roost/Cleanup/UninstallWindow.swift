@@ -276,6 +276,7 @@ final class UninstallModel: ObservableObject {
         }
         Alert.show(localized("Remove %0?", name), detail,
                    style: .warning,
+                   icon: chosenApp.map { NSWorkspace.shared.icon(forFile: $0.url.path) },
                    actionTitle: localized("Move to Bin")) { [weak self] in
             let removal = AppLeftovers.moveToBin(items)
             Notify.show(LargeFiles.message(for: removal), symbol: "trash")

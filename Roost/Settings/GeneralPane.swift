@@ -413,7 +413,7 @@ final class GeneralPane: NSStackView {
             let count = try prefs.importAll(Data(contentsOf: url))
             Alert.show("Imported \(count) settings",
                        "Roost needs to restart for all of them to take effect.",
-                       actionTitle: "Restart now") { [weak self] in self?.onRestartNeeded() }
+                       asks: false, actionTitle: "Restart now") { [weak self] in self?.onRestartNeeded() }
         } catch {
             Alert.show("That is not a Roost settings file", error: error)
         }
