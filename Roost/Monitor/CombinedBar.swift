@@ -149,12 +149,15 @@ final class WidgetSegment: MenuBarSegment {
 /// widget resize.
 final class CombinedBar {
 
-    /// The menu bar's own height, so the row fills the item rather than
-    /// floating in the middle of it.
-    static var height: CGFloat {
-        let system = NSApplication.shared.mainMenu?.menuBarHeight ?? 0
-        return system > 0 ? system : 22
-    }
+    /// The height every shape is drawn for: 22, fixed.
+    ///
+    /// It was read from `mainMenu?.menuBarHeight`, falling back to 22. Roost
+    /// had no main menu, so that was nil and 22 is what every shape was
+    /// designed, measured and shipped at. The day a main menu was added it
+    /// answered the real bar's height -- taller on a Mac with a notch -- and
+    /// every item drew its figures below the space the status item gives
+    /// them: the names showed and the numbers were cut off.
+    static var height: CGFloat { 22 }
 
     private var item: NSStatusItem?
     private let row = CombinedRow()

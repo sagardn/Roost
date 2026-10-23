@@ -113,12 +113,15 @@ enum MenuBarMetrics {
     /// Breathing room on each side of a shape.
     static let padding: CGFloat = 2
 
-    /// The menu bar's own height. Asked for rather than assumed, because it
-    /// is taller on a Mac with a notch.
-    static var height: CGFloat {
-        let system = NSApplication.shared.mainMenu?.menuBarHeight ?? 0
-        return system > 0 ? system : 22
-    }
+    /// The height every shape is drawn for: 22, fixed.
+    ///
+    /// It was read from `mainMenu?.menuBarHeight`, falling back to 22. Roost
+    /// had no main menu, so that was nil and 22 is what every shape was
+    /// designed, measured and shipped at. The day a main menu was added it
+    /// answered the real bar's height -- taller on a Mac with a notch -- and
+    /// every item drew its figures below the space the status item gives
+    /// them: the names showed and the numbers were cut off.
+    static var height: CGFloat { 22 }
 
     /// How tall a drawn shape is: the bar, less a point of clearance top and
     /// bottom so nothing touches the screen edge or the item below it.
