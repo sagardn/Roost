@@ -272,7 +272,10 @@ struct SettingsShellView: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-                .navigationSplitViewColumnWidth(min: 200, ideal: 216, max: 280)
+                // 232 rather than 216: the footer floats inside its own
+                // margins now, and at 216 its five buttons were 5pt too wide
+                // for it -- Support's chip was squeezed off its own heart.
+                .navigationSplitViewColumnWidth(min: 212, ideal: 232, max: 300)
         } detail: {
             HostedView(view: model.detail)
                 // Take the whole pane, whatever the page inside wants to
@@ -327,16 +330,22 @@ struct SettingsShellView: View {
                 if !model.filteredTop.isEmpty {
                     Section {
                         ForEach(model.filteredTop) { item in row(item) }
+                    } header: {
+                        brand
                     }
                 }
                 ForEach(model.filteredGroups, id: \.title) { group in
-                    Section(group.title) {
+                    Section {
                         ForEach(group.items) { item in row(item) }
+                    } header: {
+                        heading(group.title)
                     }
                 }
                 if !model.filteredModules.isEmpty {
-                    Section(localized("Monitoring")) {
+                    Section {
                         ForEach(model.filteredModules) { item in row(item) }
+                    } header: {
+                        heading(localized("Monitoring"))
                     }
                 }
             }
@@ -346,9 +355,61 @@ struct SettingsShellView: View {
                         placement: .sidebar,
                         prompt: localized("Search"))
 
-            Divider()
+            // Floating on glass at the foot of the column, rather than a
+            // strip cut off by a rule: the rule and the bare row under it
+            // were most of what made the column look like an old form.
             actionBar
+                .padding(.horizontal, 2)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(.regularMaterial)
+                        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
+                        .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+                )
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
+                .padding(.top, 4)
         }
+    }
+
+    /// Whose window this is, at the top of the column, the way every
+    /// polished Mac utility opens its sidebar: the app's own icon and name.
+    /// The column used to start straight on a list of rows, with nothing to
+    /// say what it belonged to.
+    private var brand: some View {
+        HStack(spacing: 9) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 30, height: 30)
+                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Roost")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                    Text(version)
+                        .font(.system(size: 10.5, weight: .medium).monospacedDigit())
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .textCase(nil)
+        .padding(.bottom, 6)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// A group's heading: small capitals, spaced, quieter than the rows --
+    /// the list style's own heading was a second size of body text, which
+    /// is most of what made the column read as a plain form.
+    private func heading(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 10, weight: .semibold))
+            .tracking(0.8)
+            .foregroundStyle(.tertiary)
     }
 
     /// Selecting a row posts the notification; the window answers by setting
@@ -370,18 +431,23 @@ struct SettingsShellView: View {
     private func row(_ item: SettingsModel.Item) -> some View {
         let on = !item.isModule || (model.moduleStates[item.id] ?? false)
         return HStack(spacing: RoostMetrics.sidebarRowSpacing) {
-            GlyphTile(glyph: .named(item.id), size: RoostMetrics.sidebarGlyph, flat: true)
+            GlyphTile(glyph: .named(item.id), size: RoostMetrics.sidebarGlyph, raised: true)
                 .saturation(on ? 1 : 0)
-                .opacity(on ? 1 : 0.5)
+                .opacity(on ? 1 : 0.55)
             Text(item.title)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .foregroundStyle(on ? .primary : .secondary)
             if !on {
                 Spacer(minLength: 4)
+                // A pill, as System Settings marks a state, rather than a
+                // loose word at the row's end.
                 Text(localized("Off"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1.5)
+                    .background(Capsule().fill(Color.primary.opacity(0.08)))
                     .fixedSize()
             }
         }
@@ -416,9 +482,13 @@ struct SettingsShellView: View {
                 FooterButton(symbol: "heart.fill",
                              label: localized("Support"),
                              help: localized("Support the application"),
-                             tint: .pink) {
+                             tint: .pink,
+                             chip: true) {
                     if let url = AppLinks.donationURL { NSWorkspace.shared.open(url) }
                 }
+                // Its own width, always: squeezed, its fill shrank but the
+                // heart and the word did not, and hung outside it.
+                .fixedSize()
             }
 
             Spacer(minLength: 0)
@@ -497,6 +567,8 @@ private struct FooterButton: View {
     var hoverTint: Color?
     /// Draws the button as engaged, for pause.
     var isOn: Bool = false
+    /// A tinted capsule at rest: Support as a quiet chip, not loud pink text.
+    var chip: Bool = false
     let action: () -> Void
 
     @State private var hovering = false
@@ -509,6 +581,7 @@ private struct FooterButton: View {
 
     private var background: Color {
         if isOn { return (tint ?? .accentColor).opacity(0.18) }
+        if chip { return (tint ?? .accentColor).opacity(hovering ? 0.22 : 0.13) }
         return hovering ? Color.primary.opacity(0.08) : .clear
     }
 

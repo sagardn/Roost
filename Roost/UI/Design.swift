@@ -304,16 +304,39 @@ struct GlyphTile: View {
     /// labels, and the names beside them carry the weight.
     var flat = false
 
+    /// The sidebar's tile: lit like System Settings' own, with a deeper
+    /// gradient than `.gradient`, a hairline of light along its top edge and
+    /// a shadow a point deep. The flat tile it replaces was chosen so a
+    /// column of them read as labels, not buttons; next to every other Mac
+    /// sidebar it read as unfinished -- "1971", in a user's word.
+    var raised = false
+
     var body: some View {
-        RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
-            .fill(flat ? AnyShapeStyle(glyph.color) : AnyShapeStyle(glyph.color.gradient))
-            .frame(width: size, height: size)
-            .overlay(
-                Image(systemName: glyph.symbol)
-                    .font(.system(size: size * 0.55 * Glyph.opticalScale(of: glyph.symbol),
-                                  weight: .semibold))
-                    .foregroundStyle(.white)
-            )
-            .accessibilityHidden(true)
+        let shape = RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+        Group {
+            if raised {
+                // Light laid over the colour rather than mixed into it:
+                // `Color.mix` is macOS 15, and this has to draw on 13.
+                shape
+                    .fill(glyph.color)
+                    .overlay(shape.fill(LinearGradient(colors: [.white.opacity(0.34), .white.opacity(0.04), .black.opacity(0.18)],
+                                                       startPoint: .top, endPoint: .bottom)))
+                    .overlay(shape.strokeBorder(LinearGradient(colors: [.white.opacity(0.45), .white.opacity(0.04)],
+                                                               startPoint: .top, endPoint: .bottom),
+                                                lineWidth: 0.5))
+                    .shadow(color: .black.opacity(0.28), radius: 1.2, y: 0.6)
+            } else {
+                shape.fill(flat ? AnyShapeStyle(glyph.color) : AnyShapeStyle(glyph.color.gradient))
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(
+            Image(systemName: glyph.symbol)
+                .font(.system(size: size * 0.55 * Glyph.opticalScale(of: glyph.symbol),
+                              weight: .semibold))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(raised ? 0.18 : 0), radius: 0.5, y: 0.5)
+        )
+        .accessibilityHidden(true)
     }
 }
