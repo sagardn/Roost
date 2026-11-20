@@ -71,7 +71,11 @@ check("nothing above the home folder is ever named",
 print("\nConfidence")
 
 check("an exact name match is likely, never certain",
-      candidates("ripgrep").allSatisfy { $0.1 == .likely })
+      candidates("ripgrep").filter { !$0.0.path.contains("/Library/") }.allSatisfy { $0.1 == .likely })
+// ~/.local/bin/code is VS Code's shell link, and on a case-insensitive disk
+// Library/Application Support/code is all of VS Code's state.
+check("in ~/Library a name match is only a guess, which is labelled as one",
+      candidates("ripgrep").filter { $0.0.path.contains("/Library/") }.allSatisfy { $0.1 == .possible })
 check("and so is never ticked for somebody",
       !AppLeftovers.isTickedByDefault(
           AppLeftovers.Item(url: URL(fileURLWithPath: "/Users/someone/.ripgrep"),

@@ -287,7 +287,9 @@ extension SpaceMap {
     /// might hold gigabytes. A size somebody is asked to agree to has to be
     /// the real one.
     static func isRemovable(_ node: Node, root: URL, home: URL) -> Bool {
-        guard !node.isPartial else { return false }
+        // Nor one with a subfolder it could not open: "Move 2 GB" said of a
+        // folder whose locked parts may hold far more is the same wrong size.
+        guard !node.isPartial, node.unreadable == 0 else { return false }
         switch node.kind {
         case .file, .folder, .package: break
         case .smaller, .unreadable, .skipped: return false

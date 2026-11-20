@@ -69,7 +69,7 @@ final class SensorsTile: NSView {
 
         value.stringValue = watched.formatted
         if watched.family == .temperature {
-            let band = LoadBand.of(min(max((watched.value - 30) / 70, 0), 1))
+            let band = LoadBand.of(watched.value, on: .temperature)
             value.textColor = band.color
             value.font = .systemFont(ofSize: 22, weight: band.weight)
         } else {

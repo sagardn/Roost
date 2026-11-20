@@ -124,9 +124,17 @@ final class LauncherPane: NSStackView {
             keys.font = .monospacedSystemFont(ofSize: 12, weight: .medium)
             return Controls.row(Self.title(of: binding.action), keys)
         }
+        // The switch `Prefs.windowSnapping` always promised -- "off gives the
+        // keys back to Rectangle" -- and nothing ever set. Roost started at
+        // login before Rectangle kept all thirteen keys for good.
+        let toggle = Controls.row(localized("Window snapping"),
+                                  Controls.toggle(Prefs.windowSnapping) { on in
+                                      Prefs.windowSnapping = on
+                                      if on { WindowSnapper.shared.startAndReport() } else { WindowSnapper.shared.stop() }
+                                  })
         return Controls.section(localized("Window snapping"), symbol: "rectangle.split.2x1", tint: .systemPurple,
                                 footer: localized("Works on the window in front. Pressing a half again makes it two thirds, then one third."),
-                                rows)
+                                [toggle] + rows)
     }
 
     private static func title(of action: Snap.Action) -> String {

@@ -80,7 +80,17 @@ final class NetworkTile: NSView {
 
         var parts: [String] = []
         if let interface { parts.append(interface) }
-        parts.append(monitor.link.isReachable ? localized("Online") : localized("Offline"))
+        // The same verdict as the popup's. `isReachable` stays false until
+        // a probe runs, and probes only run with the popup open or the alert
+        // on -- so a tile that was never paired with them said Offline
+        // forever on a Mac that was online. Up but unprobed is "Connected".
+        switch NetworkInfo.health(isUp: monitor.link.isUp, isReachable: monitor.link.isReachable,
+                                  probed: !monitor.connectivityHistory.isEmpty) {
+        case .offline:    parts.append(localized("Offline"))
+        case .checking:   parts.append(localized("Connected"))
+        case .online:     parts.append(localized("Online"))
+        case .noInternet: parts.append(localized("No internet"))
+        }
         parts.append("↓ " + Readings.bytes(monitor.sessionDownload))
         parts.append("↑ " + Readings.bytes(monitor.sessionUpload))
         detail.stringValue = parts.joined(separator: "   ")

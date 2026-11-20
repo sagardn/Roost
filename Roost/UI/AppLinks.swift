@@ -54,7 +54,14 @@ enum AppLinks {
 func restartRoost(after seconds: TimeInterval = 0.5) -> Never {
     let task = Process()
     task.executableURL = URL(fileURLWithPath: "/bin/sh")
-    task.arguments = ["-c", "sleep \(seconds); open \"\(Bundle.main.bundlePath)\""]
+    // Waits for this process to be gone, not only for a fixed half second:
+    // a shutdown that took longer (stopping modules, saving the clipboard)
+    // meant `open` found the quitting copy, brought it forward, and it then
+    // exited -- leaving no Roost after "Restart now". Capped at 15 s. The
+    // path goes as an argument, never into the script text.
+    task.arguments = ["-c",
+                      "sleep \(seconds); for i in $(seq 1 150); do kill -0 \(getpid()) 2>/dev/null || break; sleep 0.1; done; open \"$0\"",
+                      Bundle.main.bundlePath]
     try? task.run()
     NSApp.terminate(nil)
     exit(0)

@@ -69,10 +69,35 @@ final class ClipboardStore {
                 // The file name stays out of the sentence: it is a
                 // timestamp nobody reads, and the file is kept regardless.
                 problem = localized("Your saved clipboard history could not be opened. It was kept aside, and a new history was started.")
+                // No orphan sweep this time. Every payload is an orphan of
+                // the new, empty index -- and every one is named by the index
+                // just set aside, so the sweep deleted every stored image and
+                // rich text the message above says was kept. They go when
+                // the set-aside index does: `discardSetAside`.
+                return []
             }
         }
-        removeOrphans(keeping: entries)
+        // Not while an index is set aside, at this launch or any later one:
+        // the files it names are orphans of every index after it, and the
+        // next launch's sweep deleted what this one spared. They go with it,
+        // at Clear All.
+        if setAsideIndexes.isEmpty { removeOrphans(keeping: entries) }
         return entries
+    }
+
+    /// Indexes set aside as unreadable, which still hold copied text.
+    var setAsideIndexes: [URL] {
+        let names = (try? files.contentsOfDirectory(atPath: directory.path)) ?? []
+        return names.filter { $0.hasPrefix("index-unreadable-") && $0.hasSuffix(".json") }
+            .map { directory.appendingPathComponent($0) }
+    }
+
+    /// For Clear All: the set-aside indexes hold copied text too, and "deleted
+    /// from this Mac" has to include them, along with the payloads only they
+    /// named.
+    func discardSetAside(keeping entries: [ClipboardEntry]) {
+        for url in setAsideIndexes { try? files.removeItem(at: url) }
+        removeOrphans(keeping: entries)
     }
 
     /// Called at quit.

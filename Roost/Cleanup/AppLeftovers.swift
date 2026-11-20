@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// What an application has left around the system.
 ///
@@ -127,11 +127,43 @@ extension AppLeftovers {
     /// thousand files for nothing.
     ///
     /// Blocking; call it off the main thread.
+    /// Whether LaunchServices' answer is a second *installed* copy, not the
+    /// one being removed reached another way, nor a copy that is not
+    /// installed at all. It knows every bundle on disk: Discord's updater
+    /// keeps one in Application Support (itself a leftover), Xcode builds
+    /// sit in DerivedData, Notes keeps attachments, and a symlink in
+    /// /Applications came back as a different URL from its target -- each
+    /// of which made an ordinary app look shared, so nothing was ticked.
+    static func isInstalledCopy(_ url: URL, besides bundle: URL?, home: URL) -> Bool {
+        func real(_ url: URL) -> String {
+            guard let resolved = realpath(url.path, nil) else { return url.standardizedFileURL.path }
+            defer { free(resolved) }
+            return String(cString: resolved)
+        }
+        let path = real(url)
+        if let bundle, path == real(bundle) { return false }
+        let homeApps = real(home.appendingPathComponent("Applications"))
+        let places = ["/Applications/", "/System/Applications/", homeApps + "/"]
+        guard places.contains(where: { path.hasPrefix($0) }) else { return false }
+        // Inside another bundle is a helper, not an installed copy.
+        let inner = path.split(separator: "/").dropLast().contains { $0.hasSuffix(".app") }
+        return !inner
+    }
+
     static func find(bundleID: String, appName: String,
                      home: URL = FileManager.default.homeDirectoryForCurrentUser,
-                     includingBundle bundle: URL? = nil) -> [Item] {
+                     includingBundle bundle: URL? = nil,
+                     installed: (String) -> [URL] = { NSWorkspace.shared.urlsForApplications(withBundleIdentifier: $0) })
+                     -> [Item] {
         let fm = FileManager.default
         var found: [Item] = []
+        // Another copy with the same identifier -- Xcode and Xcode-beta are
+        // both com.apple.dt.Xcode, and Chrome can be in /Applications and
+        // ~/Applications at once -- shares every file named for it. Those
+        // were ticked as certain, and removing the beta reset the Xcode
+        // still installed. With a second copy present nothing is certain.
+        let others = installed(bundleID).filter { isInstalledCopy($0, besides: bundle, home: home) }
+        let sharedWithAnotherCopy = !bundleID.isEmpty && !others.isEmpty
 
         if let bundle, fm.fileExists(atPath: bundle.path) {
             let measured = measure(bundle, fm: fm)
@@ -142,8 +174,16 @@ extension AppLeftovers {
         for root in searchRoots(home: home) {
             guard let names = try? fm.contentsOfDirectory(atPath: root.path) else { continue }
             for name in names {
-                guard let confidence = match(filename: name, bundleID: bundleID,
+                guard var confidence = match(filename: name, bundleID: bundleID,
                                              appName: appName) else { continue }
+                if sharedWithAnotherCopy { confidence = .possible }
+                // A child identifier that is an app of its own --
+                // com.google.Chrome.canary when Chrome is removed -- is that
+                // app's, not this one's.
+                if confidence == .likely,
+                   installed(stripSuffix(name)).contains(where: { isInstalledCopy($0, besides: bundle, home: home) }) {
+                    confidence = .possible
+                }
                 let url = root.appendingPathComponent(name)
                 let measured = measure(url, fm: fm)
                 found.append(Item(url: url, bytes: measured ?? 0,

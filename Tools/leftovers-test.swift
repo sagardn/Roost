@@ -178,6 +178,34 @@ do {
 
     check("an app that left nothing finds nothing",
           AppLeftovers.find(bundleID: "com.nobody.absent", appName: "Absent", home: home).isEmpty)
+
+    // Xcode and Xcode-beta share com.apple.dt.Xcode. Removing one must not
+    // tick the other's settings.
+    let beta = home.appendingPathComponent("Applications/Thing-beta.app")
+    try? fm.createDirectory(at: beta, withIntermediateDirectories: true)
+    let shared = AppLeftovers.find(bundleID: "com.maker.thing", appName: "Thing", home: home,
+                                   includingBundle: bundle,
+                                   installed: { $0 == "com.maker.thing" ? [bundle, beta] : [] })
+    check("with a second copy installed, its shared files are not ticked",
+          shared.filter(AppLeftovers.isTickedByDefault).map(\.name) == ["Thing.app"])
+    check("the copy being removed is still certain", shared.first { $0.name == "Thing.app" }?.confidence == .certain)
+    let alone = AppLeftovers.find(bundleID: "com.maker.thing", appName: "Thing", home: home,
+                                  includingBundle: bundle,
+                                  installed: { $0 == "com.maker.thing" ? [bundle] : [] })
+    check("the copy being removed does not count as another",
+          alone.contains { $0.name == "com.maker.thing.plist" && $0.confidence == .certain })
+    check("a copy in Application Support is not an installed copy",
+          !AppLeftovers.isInstalledCopy(home.appendingPathComponent("Library/Application Support/thing/app-1/Thing.app"),
+                                        besides: bundle, home: home))
+    check("a helper inside another app is not an installed copy",
+          !AppLeftovers.isInstalledCopy(URL(fileURLWithPath: "/Applications/Big.app/Contents/Helpers/Thing.app"),
+                                        besides: bundle, home: home))
+    check("the app being removed is not a copy of itself", !AppLeftovers.isInstalledCopy(bundle, besides: bundle, home: home))
+    check("a second copy in ~/Applications is one", AppLeftovers.isInstalledCopy(beta, besides: bundle, home: home))
+    let sibling = AppLeftovers.find(bundleID: "com.maker.thing", appName: "Thing", home: home,
+                                    installed: { $0 == "com.maker.thing.helper" ? [beta] : [] })
+    check("a child identifier that is an installed app of its own is only a guess",
+          sibling.first { $0.name == "com.maker.thing.helper" }?.confidence == .possible)
 }
 
 print("\nThe app before its leftovers")

@@ -170,10 +170,10 @@ final class SensorsModule: PopupContent {
 
         if let watched {
             headline.set(text: watched.formatted.replacingOccurrences(of: "°", with: ""),
-                         unit: watched.family == .temperature ? "°C" : watched.family.unit)
+                         unit: watched.family.unit)
         }
         if let hot = sensors.filter({ $0.family == .temperature }).max(by: { $0.value < $1.value }) {
-            hottest.set(text: String(format: "%.0f", hot.value), unit: "°C")
+            hottest.set(text: String(format: "%.0f", TemperatureUnit.shown(hot.value)), unit: TemperatureUnit.symbol)
             let severity = MenuBarReading.Severity.ofTemperature(hot.value)
             let word: String
             switch severity {

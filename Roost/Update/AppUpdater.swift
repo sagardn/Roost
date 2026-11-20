@@ -180,34 +180,82 @@ final class AppUpdater {
         let mountPoint = FileManager.default.temporaryDirectory
             .appendingPathComponent("roost-update-\(UUID().uuidString)")
 
+        // Refused here, while there is still a running Roost to say so. The
+        // script used to find out at `rm -rf`, after it had quit the app:
+        // `set -e` then stopped it with nothing relaunched, the image still
+        // mounted -- and a failure after the `rm` left no Roost at all.
+        guard FileManager.default.isWritableFile(atPath: bundle.deletingLastPathComponent().path) else {
+            completion(CocoaError(.fileWriteNoPermission, userInfo: [NSFilePathErrorKey: bundle.path]))
+            return
+        }
+
+        // Copied beside the app *before* it is quit, here and waited on, so a
+        // bad image or a full disk is reported while Roost is still running
+        // -- the detached script could only fail silently, leaving the window
+        // on "Installing…". Only the quit, the two-`mv` swap and the relaunch
+        // happen after Roost has gone.
+        let stage = URL(fileURLWithPath: bundle.path + ".update-\(getpid())")
+        DispatchQueue.global(qos: .userInitiated).async {
+            let fm = FileManager.default
+            func fail(_ what: String, _ output: String) {
+                _ = Self.run("/usr/bin/hdiutil", ["detach", "-quiet", mountPoint.path])
+                try? fm.removeItem(at: mountPoint)
+                try? fm.removeItem(at: stage)
+                let text = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                let error = NSError(domain: "Roost.Update", code: 1, userInfo: [
+                    NSLocalizedDescriptionKey: text.isEmpty ? what : "\(what): \(text)"])
+                DispatchQueue.main.async { completion(error) }
+            }
+            try? fm.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+            let attach = Self.run("/usr/bin/hdiutil", ["attach", "-quiet", "-nobrowse", "-noautoopen",
+                                                       "-mountpoint", mountPoint.path, image.path])
+            guard attach.status == 0 else { return fail("The downloaded image could not be opened", attach.output) }
+            let source = mountPoint.appendingPathComponent("Roost.app")
+            guard fm.fileExists(atPath: source.path) else { return fail("The downloaded image has no Roost in it", "") }
+            try? fm.removeItem(at: stage)
+            let copy = Self.run("/usr/bin/ditto", [source.path, stage.path])
+            guard copy.status == 0 else { return fail("The new version could not be copied", copy.output) }
+            _ = Self.run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", stage.path])
+            _ = Self.run("/usr/bin/hdiutil", ["detach", "-quiet", mountPoint.path])
+            try? fm.removeItem(at: mountPoint)
+            DispatchQueue.main.async { self.swap(in: stage, for: bundle, image: image, completion: completion) }
+        }
+    }
+
+    /// Quits Roost, puts the staged copy in its place and relaunches it.
+    ///
+    /// Detached, because it outlives the app. Whatever happens the trap puts
+    /// the old app back if the new one did not arrive, and opens whichever
+    /// is there -- and nothing in it runs under `set -e`, so a failed step
+    /// cannot stop the cleanup before the relaunch.
+    private func swap(in stage: URL, for bundle: URL, image: URL, completion: @escaping (Error?) -> Void) {
         let script = """
         #!/bin/bash
-        set -e
-        IMAGE=\(shellQuoted(image.path))
-        MOUNT=\(shellQuoted(mountPoint.path))
         TARGET=\(shellQuoted(bundle.path))
+        STAGE=\(shellQuoted(stage.path))
+        IMAGE=\(shellQuoted(image.path))
+        OLD="$TARGET.old-$$"
 
-        mkdir -p "$MOUNT"
-        hdiutil attach -quiet -nobrowse -noautoopen -mountpoint "$MOUNT" "$IMAGE"
-        SOURCE="$MOUNT/Roost.app"
-        if [ ! -d "$SOURCE" ]; then hdiutil detach -quiet "$MOUNT" || true; exit 2; fi
+        finish() {
+          if [ -d "$OLD" ] && [ ! -d "$TARGET" ]; then mv "$OLD" "$TARGET"; fi
+          rm -rf "$STAGE" "$OLD" 2>/dev/null
+          open "$TARGET"
+        }
+        trap finish EXIT
 
         # Quit the running copy and wait for it, rather than launching a second
         # one beside it.
-        pkill -x Roost 2>/dev/null || true
+        pkill -x Roost 2>/dev/null
         for _ in $(seq 1 25); do
           pgrep -x Roost >/dev/null || break
           sleep 0.2
         done
-        pgrep -x Roost >/dev/null && pkill -9 -x Roost || true
+        pgrep -x Roost >/dev/null && pkill -9 -x Roost
 
-        rm -rf "$TARGET"
-        ditto "$SOURCE" "$TARGET"
-        xattr -dr com.apple.quarantine "$TARGET" 2>/dev/null || true
-        hdiutil detach -quiet "$MOUNT" || true
-        rmdir "$MOUNT" 2>/dev/null || true
-        rm -f "$IMAGE"
-        open "$TARGET"
+        # An app moved or deleted while it ran has nothing to set aside; the
+        # new one simply goes where it was.
+        if [ -e "$TARGET" ]; then mv "$TARGET" "$OLD" || exit 1; fi
+        mv "$STAGE" "$TARGET" && rm -f "$IMAGE"
         """
 
         let scriptURL = FileManager.default.temporaryDirectory
@@ -217,6 +265,7 @@ final class AppUpdater {
             try FileManager.default.setAttributes([.posixPermissions: 0o755],
                                                   ofItemAtPath: scriptURL.path)
         } catch {
+            try? FileManager.default.removeItem(at: stage)
             completion(error); return
         }
 
@@ -227,8 +276,23 @@ final class AppUpdater {
             try process.run()      // deliberately not waited on: it outlives us
             completion(nil)
         } catch {
+            try? FileManager.default.removeItem(at: stage)
             completion(error)
         }
+    }
+
+    /// A tool run to completion, with what it said.
+    private static func run(_ tool: String, _ arguments: [String]) -> (status: Int32, output: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = arguments
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        do { try process.run() } catch { return (-1, error.localizedDescription) }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return (process.terminationStatus, String(data: data, encoding: .utf8) ?? "")
     }
 
     private func shellQuoted(_ path: String) -> String {

@@ -238,8 +238,12 @@ enum CommandLineTools {
                     name: name, kind: .npmGlobal, location: location,
                     bytes: AppLeftovers.size(of: location, fm: fm),
                     detail: packageVersion(in: location),
+                    // The prefix it was found under, said outright. Without it
+                    // npm uses its configured one -- `prefix=` in ~/.npmrc --
+                    // and a package listed from Homebrew's node_modules was
+                    // "removed" from another prefix, exit 0, still installed.
                     command: Command(executable: npm,
-                                     arguments: ["uninstall", "-g", name])))
+                                     arguments: ["uninstall", "-g", "--prefix", prefix.path, name])))
             }
         }
         return tools
@@ -405,8 +409,12 @@ extension CommandLineTools {
             // looked for directories.
             relative += configSuffixes.map { ".\(name)\($0)" }
 
+            // The ~/Library ones only ever as a guess: on a case-insensitive
+            // disk `Application Support/code` is VS Code's whole state, and
+            // `.../claude` the Claude app's, reached from a shell link of the
+            // same name. Those carry the "matched by name only" label.
             candidates += relative
-                .map { (home.appendingPathComponent($0), confidence) }
+                .map { (home.appendingPathComponent($0), $0.hasPrefix("Library/") ? .possible : confidence) }
                 // A suffixed name can land on something shared that the bare
                 // name never would: a tool called `zsh` reaching `.zshrc`.
                 .filter { !isProtected($0.0) }

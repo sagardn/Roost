@@ -186,7 +186,7 @@ final class DockWatcher {
                 // screen, windows that refuse to minimise and apps with no
                 // window all behave identically wherever the click came from.
                 WindowControl.toggle(AppEntry(name: bundleID, bundleID: bundleID),
-                                     activeApp: bundleID)
+                                     activeApp: bundleID, honoursClickSetting: false)
             }
 
         default:

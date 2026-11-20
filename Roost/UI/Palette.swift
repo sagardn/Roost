@@ -58,6 +58,20 @@ struct LoadBand {
         default: return LoadBand(color: .roostCritical, weight: .bold)
         }
     }
+
+    /// For a reading whose percentage is not its health -- a disk 86% full,
+    /// memory 82% "used" by cache, a die at 66 °C. The ramp above coloured
+    /// those red or amber in the tiles while the menu bar, on the module's
+    /// own bands, said calm. Zone 0, 1, 2 as `SeverityBands.zone` gives.
+    static func of(zone: Int) -> LoadBand {
+        switch zone {
+        case 2:  return LoadBand(color: .roostCritical, weight: .bold)
+        case 1:  return LoadBand(color: .roostWarning, weight: .semibold)
+        default: return LoadBand(color: .roostCalm, weight: .regular)
+        }
+    }
+
+    static func of(_ value: Double, on bands: SeverityBands) -> LoadBand { of(zone: bands.zone(value)) }
 }
 
 /// The three load colours, each the measured default unless the user has

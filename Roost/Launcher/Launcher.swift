@@ -10,7 +10,13 @@ final class Launcher {
 
     static let shared = Launcher()
 
-    private var entries: [AppEntry] = []
+    private var entries: [AppEntry] = [] {
+        // An open My Apps editor works from its own copy, and saved that copy
+        // over anything changed elsewhere meanwhile -- an app marked for
+        // ⌃Tab in the search panel was lost at the editor's next drag.
+        didSet { if !applyingEditor { appsWindow?.adopt(entries) } }
+    }
+    private var applyingEditor = false
     private var searchPanel: SearchPanel?
     private var appsWindow: AppsWindow?
 
@@ -295,9 +301,18 @@ final class Launcher {
     }
 
     func editApps() {
+        // One editor. A second replaced the first's controller and left its
+        // window on screen with nothing behind its table.
+        if let open = appsWindow, open.window?.isVisible == true {
+            open.adopt(entries)
+            open.present()
+            return
+        }
         let window = AppsWindow(entries: entries) { [weak self] updated in
             guard let self else { return }
+            self.applyingEditor = true
             self.entries = updated
+            self.applyingEditor = false
             self.registerAppHotkeys()
         }
         appsWindow = window
@@ -317,6 +332,12 @@ final class Launcher {
     /// put away".
     private func toggleFrontmost() {
         guard ensureAccessibility(for: localized("Minimising a window")) else { return }
+        // Only what is still put away. An app brought back from the Dock
+        // since stayed on the stack, and the next press raised it instead of
+        // minimising the app in front.
+        while let last = stashed.last, !WindowControl.hasPutAway(last) {
+            stashed.removeLast()
+        }
         if let last = stashed.popLast() {
             if !WindowControl.restore(last) { Notify.show("Nothing to restore", symbol: "arrow.uturn.backward") }
             return

@@ -115,6 +115,9 @@ final class UpdateWindow: NSWindow, NSWindowDelegate {
         dismiss.title = localized("Later")
         act.title = localized("Download")
         act.isHidden = false
+        // A failed install earlier left the button disabled, and this window
+        // is reused: the next offer showed a Download nobody could click.
+        act.isEnabled = true
         present()
     }
 

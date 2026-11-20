@@ -73,6 +73,10 @@ final class DiskModule: PopupContent {
     private var historyLimit: Int { max(30, DiskSettings.historyLength) }
 
     private var ticks = 0
+    /// A volume read in flight, so a slow one is not stacked up behind
+    /// another every fifteen seconds.
+    private var readingVolumes = false
+    private static let volumeQueue = DispatchQueue(label: "com.sagar.roost.disk.volumes", qos: .utility)
     private var tile: DiskTile?
 
     private let thresholds = ThresholdWatcher<DiskThreshold>(
@@ -145,10 +149,26 @@ final class DiskModule: PopupContent {
 
         // Capacity moves in hours, not seconds, and asking costs a stat() of
         // every mounted volume. Every fifteenth tick, and once immediately.
-        if ticks % 15 == 0 || latest == nil {
+        if latest == nil {
+            // Once, in line: until a volume answers there is nothing to draw.
             volumes = DiskReadings.volumes(includingRemovable: DiskSettings.showsRemovable)
             latest = DiskReadings.choose(from: volumes,
                                          preferring: DiskSettings.watchedVolume)
+        } else if ticks % 15 == 0, !readingVolumes {
+            // Off the main thread after that. The list includes network
+            // shares, and one whose server has gone blocks statfs for
+            // seconds -- which, here, froze the whole app every 15 s.
+            readingVolumes = true
+            let removable = DiskSettings.showsRemovable, watched = DiskSettings.watchedVolume
+            Self.volumeQueue.async { [weak self] in
+                let found = DiskReadings.volumes(includingRemovable: removable)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.readingVolumes = false
+                    self.volumes = found
+                    self.latest = DiskReadings.choose(from: found, preferring: watched)
+                }
+            }
         }
         ticks += 1
 
@@ -173,7 +193,7 @@ final class DiskModule: PopupContent {
             value: "\(Int((volume.percent * 100).rounded()))%",
             severity: .ofDisk(volume.percent),
             history: usageHistory,
-            segments: [.init(Double(volume.used) / total, LoadBand.of(volume.percent).color)],
+            segments: [.init(Double(volume.used) / total, LoadBand.of(volume.percent, on: .disk).color)],
             pair: .init(Readings.size(volume.used), Readings.size(volume.free)),
             // Written on top: the shape puts ↑ on the top figure, and ↑ is
             // write in this popup, the tile and the chart below. Read on top
@@ -223,7 +243,7 @@ final class DiskModule: PopupContent {
         freeUpSpace.isHidden = !(volume.path == "/" && volume.percent >= StatusWords.fillingUpFrom)
 
         usedReading.set(percent: volume.percent)
-        freeReading.set(bytes: volume.free)
+        freeReading.set(size: volume.free)
 
         capacityRow.label = volume.name
         capacityRow.value = "\(Readings.size(volume.used)) of \(Readings.size(volume.total))"

@@ -69,6 +69,10 @@ enum LargeFiles {
     struct Item: Equatable {
         let url: URL
         let bytes: Int64
+        /// The file's modification date at the scan, checked again before
+        /// the Bin. nil for a bundle, whose folder date says nothing about
+        /// what is inside, and for items made elsewhere.
+        var modified: Date?
 
         var name: String { url.lastPathComponent }
         var category: Category { Category.of(url) }
@@ -248,7 +252,7 @@ extension LargeFiles {
                 }
 
                 let values = try? url.resourceValues(forKeys: [
-                    .isDirectoryKey, .totalFileAllocatedSizeKey, .isPackageKey])
+                    .isDirectoryKey, .totalFileAllocatedSizeKey, .isPackageKey, .contentModificationDateKey])
 
                 let isDirectory = values?.isDirectory ?? false
                 let isBundle = (values?.isPackage ?? false) || isOpaque(url)
@@ -266,7 +270,7 @@ extension LargeFiles {
                 if isDirectory { continue }
 
                 if let size = values?.totalFileAllocatedSize, size > 0 {
-                    found.append(Item(url: url, bytes: Int64(size)))
+                    found.append(Item(url: url, bytes: Int64(size), modified: values?.contentModificationDate))
                     report.bytes += Int64(size)
                 }
             }
@@ -350,6 +354,19 @@ extension LargeFiles {
     static func moveToBin(_ items: [Item]) -> Removal {
         var result = Removal()
         for item in items {
+            // The only tool that did not look again before the Bin. A new
+            // export saved over the same name since the scan was moved,
+            // and reported at the old file's size.
+            //
+            // A fresh URL: the scan's own one has the date cached from the
+            // scan and answers with it however the file has changed since.
+            if let modified = item.modified,
+               (try? URL(fileURLWithPath: item.url.path).resourceValues(forKeys: [.contentModificationDateKey]))?
+                   .contentModificationDate != modified {
+                result.failed.append(item.url)
+                if result.reason == nil { result.reason = localized("it changed after the scan; scan again to see it") }
+                continue
+            }
             do {
                 try FileManager.default.trashItem(at: item.url, resultingItemURL: nil)
                 result.moved.append(item.url)

@@ -276,6 +276,17 @@ do {
           [1.0, .nan, 3.0].range().high < 10)
 }
 
+print("\nSigned decoding")
+check("si8 -1", SMCKit.decode([0xFF], type: "si8 ", size: 1) == -1)
+check("si16 -2", SMCKit.decode([0xFF, 0xFE], type: "si16", size: 2) == -2)
+check("si32 positive", SMCKit.decode([0, 0, 1, 0], type: "si32", size: 4) == 256)
+check("sp78 negative is -1.5", SMCKit.decode([0xFE, 0x80], type: "sp78", size: 2) == -1.5)
+// The case that trapped: eight bytes with the top bit set.
+check("an 8-byte signed fixed-point value with its top bit set decodes",
+      SMCKit.decode([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00], type: "sp78", size: 8) == -1)
+check("over eight bytes is refused, not trapped",
+      SMCKit.decode(Array(repeating: 0xFF, count: 9), type: "sp78", size: 9) == nil)
+
 let note = skipped == 0 ? "" : " (\(skipped) skipped)"
 print("\nOne sensor read again")
 

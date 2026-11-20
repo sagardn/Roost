@@ -16,7 +16,10 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
     private let table = SingleColumnTableView()
 
     init(entries: [AppEntry], onChange: @escaping ([AppEntry]) -> Void) {
-        self.entries = entries
+        // A key no longer offered -- ⌃`, given out before it was taken away --
+        // would sit in the config invisible here, shown as None and never
+        // clearable. Dropped, so the first save puts the file right.
+        self.entries = Self.offeredKeysOnly(entries)
         self.onChange = onChange
 
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 460),
@@ -90,6 +93,13 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    /// The list as it is now, from wherever it was changed last.
+    func adopt(_ latest: [AppEntry]) {
+        entries = Self.offeredKeysOnly(latest)
+        table.reloadData()
+        rebuildAddMenu()
+    }
 
     func present() {
         rebuildAddMenu()
@@ -268,7 +278,18 @@ final class AppsWindow: NSWindowController, NSTableViewDataSource, NSTableViewDe
 
     /// The keys `Hotkey.Key.code(for:)` can register with ⌃, in the order
     /// they sit on the keyboard.
-    static let shortcutKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "`", ";"]
+    ///
+    /// The backtick is left out: ⌃` is Roost's own minimise-and-restore key,
+    /// registered first, so an app given it showed it and never opened.
+    static let shortcutKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ";"]
+
+    private static func offeredKeysOnly(_ entries: [AppEntry]) -> [AppEntry] {
+        entries.map { entry in
+            var entry = entry
+            if let key = entry.shortcut, !shortcutKeys.contains(key) { entry.shortcut = nil }
+            return entry
+        }
+    }
 
     @objc private func shortcutPicked(_ sender: NSPopUpButton) {
         guard entries.indices.contains(sender.tag) else { return }

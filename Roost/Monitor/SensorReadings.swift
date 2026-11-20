@@ -39,7 +39,7 @@ enum SensorReadings {
 
         var unit: String {
             switch self {
-            case .temperature: return "°C"
+            case .temperature: return TemperatureUnit.symbol
             case .voltage:     return "V"
             case .current:     return "A"
             case .power:       return "W"
@@ -71,7 +71,7 @@ enum SensorReadings {
 
         var formatted: String {
             switch family {
-            case .temperature: return String(format: "%.0f°", value)
+            case .temperature: return String(format: "%.0f°", TemperatureUnit.shown(value))
             case .voltage:     return String(format: "%.2f V", value)
             case .current:     return String(format: "%.2f A", value)
             case .power:       return String(format: "%.2f W", value)
@@ -274,4 +274,30 @@ extension Array where Element == Double {
 /// That agreement is better evidence than either could produce alone.
 extension SMCKit: SensorReadings.SMCSource {
     func read(_ key: String) -> Double? { value(key) }
+}
+
+/// The unit temperatures are shown in: Settings ▸ General ▸ Temperature unit.
+///
+/// That setting was written and never read -- Fahrenheit was offered, and
+/// every figure stayed in Celsius. Readings, bands and alert levels stay in
+/// Celsius throughout; only what is shown is converted, here, so nothing
+/// that compares a temperature has to know.
+///
+/// Read from the standard defaults directly, where `Preferences` keeps it,
+/// so the sensor layer needs nothing of the settings layer to compile.
+enum TemperatureUnit {
+
+    static var isFahrenheit: Bool {
+        switch UserDefaults.standard.string(forKey: "temperature_units") ?? "system" {
+        case "fahrenheit": return true
+        case "celsius":    return false
+        default:
+            if #available(macOS 13, *) { return Locale.current.measurementSystem == .us }
+            return !Locale.current.usesMetricSystem
+        }
+    }
+
+    static func shown(_ celsius: Double) -> Double { isFahrenheit ? celsius * 9 / 5 + 32 : celsius }
+
+    static var symbol: String { isFahrenheit ? "°F" : "°C" }
 }

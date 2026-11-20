@@ -267,8 +267,13 @@ final class BigReading: NSView {
     }
 
     /// A byte count, large number and unit split apart.
-    func set(bytes: UInt64) {
-        let text = Readings.bytes(bytes)
+    func set(bytes: UInt64) { show(Readings.bytes(bytes)) }
+
+    /// A file or disk size, in Finder's units -- the Disk headline used the
+    /// memory units above and read 7% less free space than the row under it.
+    func set(size: UInt64) { show(Readings.size(size)) }
+
+    private func show(_ text: String) {
         let parts = text.split(separator: " ", maxSplits: 1)
         figure.stringValue = parts.first.map(String.init) ?? "0"
         unit.stringValue = parts.count > 1 ? String(parts[1]) : ""

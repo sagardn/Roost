@@ -15,6 +15,10 @@ protocol ClipboardPasteboard: AnyObject {
     var changeCount: Int { get }
     /// The types on the first item, or nil when the pasteboard is empty.
     var typeNames: [String]? { get }
+    /// The types on every item, for the privacy markers. A requirement, not
+    /// only an extension, so NSPasteboard's own is the one called through
+    /// the protocol.
+    var allTypeNames: [String] { get }
     func data(forType type: String) -> Data?
     func string(forType type: String) -> String?
     var fileURLs: [URL] { get }
@@ -23,8 +27,19 @@ protocol ClipboardPasteboard: AnyObject {
     func write(_ representations: [(type: String, data: Data)], fileURLs: [URL]) -> Int
 }
 
+extension ClipboardPasteboard {
+    /// Every type on every item. Only the privacy markers are checked
+    /// against it: what is kept is read from the first item, but a
+    /// "do not keep" marker on any item is the copying app saying so.
+    var allTypeNames: [String] { typeNames ?? [] }
+}
+
 extension NSPasteboard: ClipboardPasteboard {
     var typeNames: [String]? { pasteboardItems?.first?.types.map(\.rawValue) ?? types?.map(\.rawValue) }
+
+    var allTypeNames: [String] {
+        (pasteboardItems ?? []).flatMap { $0.types.map(\.rawValue) } + (types ?? []).map(\.rawValue)
+    }
 
     func data(forType type: String) -> Data? { data(forType: PasteboardType(type)) }
 
@@ -94,7 +109,9 @@ struct ClipboardCapture {
     static func read(_ pasteboard: ClipboardPasteboard, options: Options) -> Result<ClipboardCapture, Skip> {
         guard let types = pasteboard.typeNames, !types.isEmpty else { return .failure(.empty) }
         if types.contains(ClipboardTypes.restoredMarker) { return .failure(.ownRestore) }
-        if types.contains(where: ClipboardTypes.doNotKeep.contains) { return .failure(.markedPrivate) }
+        if (types + pasteboard.allTypeNames).contains(where: ClipboardTypes.doNotKeep.contains) {
+            return .failure(.markedPrivate)
+        }
 
         let string = pasteboard.string(forType: ClipboardTypes.string)
         let hasString = !(string ?? "").isEmpty

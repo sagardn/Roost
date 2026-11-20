@@ -65,7 +65,7 @@ final class DiskTile: NSView {
     func update(_ volume: DiskReadings.Volume,
                 activity: DiskReadings.Activity,
                 history: [Double]) {
-        let band = LoadBand.of(volume.percent)
+        let band = LoadBand.of(volume.percent, on: .disk)
         value.stringValue = "\(Int((volume.percent * 100).rounded()))%"
         value.textColor = band.color
         value.font = .systemFont(ofSize: 22, weight: band.weight)

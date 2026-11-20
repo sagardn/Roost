@@ -26,6 +26,7 @@ final class Recents {
         // seed with whatever is in front right now, otherwise it stays unranked
         // until the next switch
         if let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
+            if front != Bundle.main.bundleIdentifier { lastActiveID = front }
             record(front)
         }
     }
@@ -38,6 +39,7 @@ final class Recents {
               isRealApp(app)
         else { return }
         WindowControl.invalidateState(bundleID)
+        lastActiveID = bundleID
         record(bundleID)
     }
 
@@ -142,8 +144,16 @@ final class Recents {
 
     private var cycler = Cycler<NSRunningApplication>()
 
+    /// The last real app that came to the front, Roost aside.
+    private var lastActiveID: String?
+
+    /// The app the person is "in". While Roost's own panel is up, Roost is
+    /// frontmost, and asking macOS made the app they came from rank first on
+    /// every keystroke after the first: typing and deleting a letter, then
+    /// Return, minimised the app they were in instead of switching away.
     private var frontmostID: String? {
-        NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        return front == Bundle.main.bundleIdentifier ? lastActiveID : front
     }
 
     /// The cycle order: most recently used first, the app you are in last.

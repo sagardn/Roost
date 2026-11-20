@@ -283,6 +283,16 @@ enum WindowControl {
         return .visible
     }
 
+    /// Whether anything of the app is put away: hidden, or any one of its
+    /// windows minimised. `state(of:)` looks at the main window only, and
+    /// after one of two windows is minimised the main one is the other.
+    static func hasPutAway(_ bundleID: String) -> Bool {
+        guard let running = runningApp(bundleID) else { return false }
+        if running.isHidden { return true }
+        return windows(of: appElement(running.processIdentifier))
+            .contains { bool($0, kAXMinimizedAttribute as String) }
+    }
+
     // MARK: - Actions
 
     static func launch(_ bundleID: String) -> Bool {
@@ -318,7 +328,11 @@ enum WindowControl {
     /// that made "click the app you are in to minimise it" depend on a
     /// timer. Nil means ask macOS, which is right for a hotkey: nothing of
     /// Roost's was in front.
-    static func toggle(_ entry: AppEntry, activeApp: String? = nil) {
+    /// `honoursClickSetting` is false for the Dock: its own switch is what
+    /// asked for a put-away, and "click an app in front to minimise it" being
+    /// off turned every Dock click into a raise of an app already in front --
+    /// a click that did nothing.
+    static func toggle(_ entry: AppEntry, activeApp: String? = nil, honoursClickSetting: Bool = true) {
         defer { invalidateState(entry.bundleID) }
         let running = runningApp(entry.bundleID)
         let active = activeApp ?? NSWorkspace.shared.frontmostApplication?.bundleIdentifier
@@ -357,7 +371,7 @@ enum WindowControl {
         // click brings an app forward and never puts it away. Applied here
         // rather than in `ClickToggle`, so the decision stays pure and the
         // preference governs the panel and the per-app hotkeys together.
-        if !Prefs.clickMinimizes {
+        if honoursClickSetting && !Prefs.clickMinimizes {
             switch action {
             case .minimize, .hide, .refuseFullScreen: action = .raise
             default: break
@@ -419,7 +433,7 @@ enum WindowControl {
     /// The item is searched for rather than indexed: it is usually File > New
     /// Window, but Finder calls it New Finder Window, terminals offer New
     /// Window and New Tab, and the menu is localized. Matching on the words
-    /// survives all three; an exact "new window" wins over a longer title so
+    /// survives all three (see `windowWords`); an exact "new window" wins over a longer title so
     /// Chrome's "New Incognito Window" never gets picked first.
     static func newWindow(_ app: NSRunningApplication) -> Bool {
         let axApp = appElement(app.processIdentifier)
@@ -439,12 +453,18 @@ enum WindowControl {
             for item in items {
                 guard let title = (attribute(item, kAXTitleAttribute as String) as? String)?
                         .lowercased() else { continue }
-                guard title.contains("window") else { continue }
+                guard windowWords.contains(where: title.contains) else { continue }
 
                 if title == "new window" {
                     return press(item, of: app)
                 }
-                if title.hasPrefix("new"), fallback == nil {
+                // ⌘N is the New Window item in any language; the English
+                // "new" prefix is the other way to tell it from "Window" or
+                // "Bring All Windows to Front".
+                // Plain ⌘N only: ⌘⇧N is Chrome's Incognito window.
+                let key = (attribute(item, kAXMenuItemCmdCharAttribute as String) as? String)?.lowercased()
+                let mods = (attribute(item, kAXMenuItemCmdModifiersAttribute as String) as? Int) ?? -1
+                if fallback == nil, title.hasPrefix("new") || (key == "n" && mods == 0) {
                     fallback = item
                 }
             }
@@ -455,6 +475,16 @@ enum WindowControl {
         }
         return false
     }
+
+    /// "Window" in the languages Roost is translated into most. The match was
+    /// English only, so on a German Mac ("Neues Fenster") every app said it
+    /// had no New Window command. ⌘N alone is not enough: in Calendar, Notes
+    /// and Contacts it makes an event, a note or a card, so the item must
+    /// also say it is about a window.
+    static let windowWords = ["window", "fenster", "fenêtre", "ventana", "finestra", "janela",
+                              "venster", "fönster", "vindue", "vindu", "ikkuna", "okno", "ablak",
+                              "окно", "вікно", "παράθυρο", "pencere", "ウインドウ", "ウィンドウ",
+                              "窗口", "視窗", "윈도우", "창", "חלון", "نافذة", "cửa sổ", "หน้าต่าง"]
 
     private static func press(_ item: AXUIElement, of app: NSRunningApplication) -> Bool {
         // Some apps only build their menus once frontmost, so raise first and

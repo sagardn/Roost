@@ -175,6 +175,7 @@ enum CheckUp {
     /// back the same way, ticked.
     static func entries(leftovers: [OrphanedData.Item], downloads: [StaleDownloads.Item],
                         assistants: [AIAssistants.Item], assistantDays: Int? = nil,
+                        assistantRoots: [URL] = [],
                         known: Set<String>,
                         now: Date = Date()) -> (entries: [Entry], heldBack: Int64) {
         var seen = Set<String>()
@@ -186,7 +187,16 @@ enum CheckUp {
         // `Application Support/com.openai.chat` holds its saved sessions, and
         // ticking that one row would move the conversations this list
         // promises to leave out -- and count the cache inside it twice.
-        let assistantPaths = assistants.map { canonical($0.url) }
+        //
+        // Every root that exists counts, not only those something was found
+        // in: a ChatGPT folder whose caches were empty had no item inside it,
+        // so the guard did not fire and the whole folder, conversations and
+        // all, came back as an "App data" leftover.
+        //
+        // Lower-cased: the roots are templates ("…/Application Support/claude")
+        // and the folder on a case-insensitive disk is "Claude".
+        let assistantPaths = (assistants.map { canonical($0.url) } + assistantRoots.map(canonical))
+            .map { $0.lowercased() }
 
         func add(_ entry: Entry) {
             // Resolved, so `/private/var/x` and `/var/x` are one file.
@@ -209,8 +219,8 @@ enum CheckUp {
             out.append(Entry(source: .assistant(item), isTickedByDefault: item.kind.isTickedByDefault))
         }
         for item in leftovers {
-            let path = canonical(item.url)
-            if assistantPaths.contains(where: { $0.hasPrefix(path + "/") }) { continue }
+            let path = canonical(item.url).lowercased()
+            if assistantPaths.contains(where: { $0 == path || $0.hasPrefix(path + "/") }) { continue }
             add(Entry(source: .leftover(item), isTickedByDefault: OrphanedData.isTicked(item, known: known)))
         }
         for item in downloads {
@@ -347,8 +357,11 @@ extension CheckUp {
         let assistants = AIAssistants.find(home: home).flatMap(\.items)
         guard !shouldStop() else { return (stopped(report), context) }
 
+        let roots = AIAssistants.known.flatMap { AIAssistants.roots(for: $0, home: home) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
         let merged = entries(leftovers: leftovers, downloads: downloads, assistants: assistants,
-                             assistantDays: context.assistantDays, known: context.known)
+                             assistantDays: context.assistantDays, assistantRoots: roots,
+                             known: context.known)
         report.entries = merged.entries
         report.heldBack = merged.heldBack
 

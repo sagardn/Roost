@@ -241,6 +241,16 @@ final class SMCKit {
             head.reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
         }
 
+        /// Two's complement at `size` bytes, by shifting the sign bit to the
+        /// top and back. The subtraction this replaces trapped converting an
+        /// 8-byte value with its top bit set to Int64; over 8 bytes there is
+        /// no Int64 to hold it, so nil.
+        func signed(_ raw: UInt64) -> Int64? {
+            guard size <= 8 else { return nil }
+            let shift = UInt64(64 - size * 8)
+            return Int64(bitPattern: raw << shift) >> shift
+        }
+
         switch type {
         case "flt ":
             guard size == 4 else { return nil }
@@ -254,10 +264,7 @@ final class SMCKit {
             return Double(unsigned())
 
         case "si8 ", "si16", "si32":
-            let raw = unsigned()
-            let bits = UInt64(size * 8)
-            let sign = UInt64(1) << (bits - 1)
-            return raw >= sign ? Double(Int64(raw) - Int64(sign << 1)) : Double(raw)
+            return signed(unsigned()).map(Double.init)
 
         case "hex_", "ch8*", "{ala", "{alc", "{ali", "{alp", "{alr", "{alv":
             // Structured or opaque payloads: not a single number.
@@ -274,10 +281,7 @@ final class SMCKit {
             let raw = unsigned()
             let divisor = Double(1 << fraction)
             if kind == "sp" {
-                let bits = UInt64(size * 8)
-                let sign = UInt64(1) << (bits - 1)
-                let signed = raw >= sign ? Double(Int64(raw) - Int64(sign << 1)) : Double(raw)
-                return signed / divisor
+                return signed(raw).map { Double($0) / divisor }
             }
             return Double(raw) / divisor
         }

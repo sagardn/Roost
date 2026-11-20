@@ -388,7 +388,9 @@ final class GeneralPane: NSStackView {
         appUpdater.check { [weak self] result in
             DispatchQueue.main.async {
                 guard self != nil else { return }
-                let window = UpdateWindow(updater: appUpdater)
+                // The app's one update window. A new one per click gave two
+                // windows that could both download, held by nothing.
+                let window = (NSApp.delegate as? AppDelegate)?.ensureUpdateWindow() ?? UpdateWindow(updater: appUpdater)
                 switch result {
                 case .success(.available(let release)): window.offer(release)
                 case .success(.upToDate):               window.reportUpToDate()

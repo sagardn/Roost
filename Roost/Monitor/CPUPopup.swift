@@ -211,8 +211,13 @@ final class CPUModule: PopupContent {
     func refresh() {
         ticks += 1
 
-        if let temperature = Temperature.cpu() {
-            temperatureReading.set(text: String(format: "%.0f", temperature), unit: "°C")
+        // Applied here, not once when the view is built: switching it off in
+        // Settings left the reading on screen until Roost was relaunched,
+        // and the sensors were walked every second for a row nobody saw.
+        temperatureReading.isHidden = !CPUSettings.showsTemperature
+        if CPUSettings.showsTemperature, let temperature = Temperature.cpu() {
+            temperatureReading.set(text: String(format: "%.0f", TemperatureUnit.shown(temperature)),
+                                   unit: TemperatureUnit.symbol)
         }
 
         let uptime = CPUReadings.uptime().map { CPUReadings.describe(uptime: $0) }

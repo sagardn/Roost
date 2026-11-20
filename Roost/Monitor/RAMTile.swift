@@ -65,7 +65,8 @@ final class RAMTile: NSView {
     /// Drawn from the sample the menu bar reading already took.
     func update(_ usage: MemoryReadings.Usage, swap: MemoryReadings.Swap?,
                 pressure: MemoryReadings.Pressure) {
-        let band = LoadBand.of(usage.percent)
+        // By pressure, as the menu bar figure is: 82% "used" is mostly cache.
+        let band = LoadBand.of(zone: pressure == .critical ? 2 : pressure == .warning ? 1 : 0)
         value.stringValue = "\(Int((usage.percent * 100).rounded()))%"
         value.textColor = band.color
         value.font = .systemFont(ofSize: 22, weight: band.weight)

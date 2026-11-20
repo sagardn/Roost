@@ -134,7 +134,16 @@ final class UninstallModel: ObservableObject {
         return q.isEmpty ? tools : tools.filter { $0.name.localizedCaseInsensitiveContains(q) }
     }
 
-    var chosen: [AppLeftovers.Item] { leftovers.filter { selected.contains($0.url) } }
+    /// What is ticked, less anything inside something else ticked: `~/.bun`
+    /// and `~/.bun/bin/bun` together counted the binary twice, moved it once.
+    var chosen: [AppLeftovers.Item] {
+        let ticked = leftovers.filter { selected.contains($0.url) }
+        let folders = ticked.map { $0.url.standardizedFileURL.path + "/" }
+        return ticked.filter { item in
+            let path = item.url.standardizedFileURL.path
+            return !folders.contains { path.hasPrefix($0) }
+        }
+    }
     var chosenBytes: Int64 { chosen.reduce(0) { $0 + $1.bytes } }
     var totalBytes: Int64 { leftovers.reduce(0) { $0 + $1.bytes } }
 
@@ -315,7 +324,11 @@ final class UninstallModel: ObservableObject {
                         // about have not, so the leftovers stay on screen
                         // under the tool's name rather than being cleared.
                         self.tools.removeAll { $0 == tool }
-                        self.chosenTool = CommandLineTools.Tool.removed(tool)
+                        // Only if still on screen: rows stay clickable while a
+                        // command runs, and a late finish retitled the next pick.
+                        if self.chosenTool?.location == tool.location {
+                            self.chosenTool = CommandLineTools.Tool.removed(tool)
+                        }
                     } else {
                         // Its own words. "Cannot uninstall, it is required by
                         // ..." is the useful part and no summary of ours beats it.
