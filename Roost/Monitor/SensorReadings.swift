@@ -287,7 +287,13 @@ extension SMCKit: SensorReadings.SMCSource {
 /// so the sensor layer needs nothing of the settings layer to compile.
 enum TemperatureUnit {
 
+    /// Set by the test suites, which cannot rely on a defaults write or on
+    /// the locale of the machine they run on -- a US CI runner is
+    /// Fahrenheit under "System". nil everywhere in the app.
+    static var forced: Bool?
+
     static var isFahrenheit: Bool {
+        if let forced { return forced }
         switch UserDefaults.standard.string(forKey: "temperature_units") ?? "system" {
         case "fahrenheit": return true
         case "celsius":    return false

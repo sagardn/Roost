@@ -132,8 +132,16 @@ do {
           sensors.first { $0.id == "F0Ac" }?.formatted == "2400 rpm")
     check("power is formatted in watts",
           sensors.first { $0.id == "PSTR" }?.formatted == "18.50 W")
+    // The unit follows Settings, and "System" follows the locale -- which
+    // is Fahrenheit on a US runner. Pinned, so this checks the format
+    // rather than where the suite happens to run.
+    TemperatureUnit.forced = false
     check("temperature is formatted in degrees",
           sensors.first { $0.id == "TB0T" }?.formatted == "31°")
+    TemperatureUnit.forced = true
+    check("and in Fahrenheit when that is the setting",
+          TemperatureUnit.shown(100) == 212 && TemperatureUnit.symbol == "°F")
+    TemperatureUnit.forced = nil
 }
 
 do {
