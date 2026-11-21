@@ -315,7 +315,11 @@ enum RAMThreshold: String, CaseIterable, ThresholdKind {
     var defaultValue: Int {
         switch self {
         case .total:    return 75
-        case .free:     return 75
+        // Below this, not above: the alert is for free memory running out.
+        // It was 75, copied from "used", and with a Mac's memory typically
+        // 70-80% used -- 79% on the Mac this was measured on -- free sat
+        // near 21%, so switching the alert on fired it at once and for good.
+        case .free:     return 10
         case .pressure: return 2        // warning
         case .swap:     return 1024     // the 1 GB the old default meant
         }
@@ -362,7 +366,11 @@ enum RAMThreshold: String, CaseIterable, ThresholdKind {
         let prefs = Preferences.shared
         switch self {
         case .pressure:
-            guard let word = UserDefaults.standard.string(forKey: valueKey) else { return }
+            // Only a value that is still a word. `string(forKey:)` hands
+            // back a number as text too -- 4 reads as "4" -- so every read
+            // of the migrated level fell to `default:` and was rewritten as
+            // a warning: Critical or Normal could be chosen, and came back.
+            guard let word = UserDefaults.standard.object(forKey: valueKey) as? String else { return }
             let level: Int
             switch word {
             case "critical": level = 4

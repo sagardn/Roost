@@ -268,5 +268,15 @@ check("a battery that is not present is none", BatteryHealth.charge(from: source
 check("a zero maximum is not a reading", BatteryHealth.charge(from: source([kIOPSMaxCapacityKey: 0])) == nil)
 check("charge never reads over 100%", BatteryHealth.charge(from: source([kIOPSCurrentCapacityKey: 120]))?.percent == 100)
 
+print("\nRestart reminder")
+check("a Mac on for a week is not told to restart", Health.issues([.uptime(days: 7)]).isEmpty)
+check("one on for a month is", Health.issues([.uptime(days: 30)]).first?.module == Health.restartModule)
+check("as something to look at, not an alarm",
+      Health.issues([.uptime(days: 45)]).first?.level == .elevated)
+check("and the days are in what it says",
+      Health.issues([.uptime(days: 45)]).first?.title.contains("45") == true)
+check("with no module on, the reminder is still the summary, not 'nothing to report'",
+      Health.summary(Health.issues([.uptime(days: 45)]), watching: 0).contains("45"))
+
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

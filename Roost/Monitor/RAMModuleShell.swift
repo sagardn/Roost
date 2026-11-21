@@ -119,10 +119,16 @@ final class RAMSettingsPage: NSView {
                 MenuBarStyles.store(self.styles.filter(chosen.contains), for: "RAM")
             }])
 
+        // One app, not the whole Mac: the thresholds above say memory is
+        // short, and this says who is taking it while it can still be quit.
+        let growth = Controls.row(
+            localized("An app keeps using more memory"),
+            Controls.toggle(MemoryGrowth.isEnabled) { MemoryGrowth.isEnabled = $0 },
+            detail: localized("Notified once when an app has grown by at least 1 GB in the last hour and now uses 2 GB or more."))
         let alerts = Controls.section(localized("Notify me when"),
             RAMThreshold.allCases.filter { $0.isAvailable }.map { threshold in
                 Controls.row(threshold.title, control(for: threshold))
-            })
+            } + [growth])
 
         let column = NSStackView(views: [shapes, popup, alerts])
         column.orientation = .vertical

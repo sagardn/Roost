@@ -140,18 +140,57 @@ final class Preferences {
     /// were keys nothing reads, so the import reported success and the windows
     /// still forgot where they were. They go through the same renaming as the
     /// first-launch migration.
+    ///
+    /// Replaces, as it says: everything but the bookkeeping is cleared first.
+    /// It used to write the file's keys over what was there, so a module
+    /// switched on since the backup -- a key the backup never had -- stayed
+    /// on after "restoring" it. And it took any plist with a dictionary at
+    /// the top, so another app's preferences or an Info.plist imported as
+    /// "37 settings" and lived in Roost's domain from then on.
     @discardableResult
     func importAll(_ data: Data) throws -> Int {
         let parsed = try PropertyListSerialization.propertyList(from: data, format: nil)
-        guard let values = parsed as? [String: Any] else {
+        guard let values = parsed as? [String: Any], Self.isRoostExport(values.keys) else {
             throw CocoaError(.propertyListReadCorrupt)
         }
-        for (key, value) in values {
+        for key in (defaults.persistentDomain(forName: domain) ?? [:]).keys
+        where !Self.isBookkeeping(key) {
+            defaults.removeObject(forKey: key)
+        }
+        var written = 0
+        for (key, value) in values where !Self.isBookkeeping(key) {
             defaults.set(FormerName.Plan.renamedKeys(value, to: domain),
                          forKey: FormerName.Plan.renamed(key, to: domain))
+            written += 1
         }
         NotificationCenter.default.post(name: Preferences.didChange, object: nil)
-        return values.count
+        return written
+    }
+
+    /// Keys that record this Mac's history with the app rather than a
+    /// choice: neither taken from a backup nor cleared by one. A backup's
+    /// `version` is the version that made it, and restoring an older one
+    /// set the record back, so the next launch announced an update that had
+    /// not happened; its `setupProcess` decides whether first-run shows.
+    static func isBookkeeping(_ key: String) -> Bool {
+        ["version", "setupProcess", "runAtLoginInitialized", "LaunchAtLoginNext",
+         "update_last_check"].contains(key)
+            || key.hasPrefix("support_")
+    }
+
+    /// Whether a plist's keys look like this app's. Any one is enough: a
+    /// backup holds only what was ever changed, and a Perch backup can be a
+    /// window frame and a switch.
+    static func isRoostExport<Keys: Sequence>(_ keys: Keys) -> Bool where Keys.Element == String {
+        let named: Set<String> = ["version", "setupProcess", "dockIcon", "temperature_units",
+                                  "update-interval", "pause"]
+        let prefixes = ["CPU_", "GPU_", "RAM_", "Disk_", "Sensors_", "Network_", "Clipboard_",
+                        "Battery_", "CombinedModules", "Dashboard", "Launcher", "AICleaner_",
+                        "NSWindow Frame com.sagar."]
+        return keys.contains { key in
+            named.contains(key) || key.hasSuffix("_state")
+                || prefixes.contains { key.hasPrefix($0) }
+        }
     }
 
     /// Forgets everything. The caller restarts the app.

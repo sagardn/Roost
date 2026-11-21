@@ -58,7 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
     internal var menuBarItem: NSStatusItem?
     internal var modulesMounted = false
 
-    internal let updateActivity = NSBackgroundActivityScheduler(
+    /// Replaced, not reused, when the schedule changes: a scheduler cannot
+    /// be scheduled again once invalidated.
+    internal var updateActivity = NSBackgroundActivityScheduler(
         identifier: "com.sagar.roost.updateCheck")
     internal let supportActivity = NSBackgroundActivityScheduler(
         identifier: "com.sagar.roost.support")
@@ -127,6 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
         let arguments = LaunchArguments.parse(CommandLine.arguments)
         parseArguments()
         parseVersion()
+        applyDisabledModules()
 
         // The modules start inside `setup`'s completion, because on a first
         // run that completion does not come until the first-run window is
@@ -139,7 +142,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate,
             // their items come straight back down, in the same turn of the
             // run loop, so nothing is drawn in between.
             if self.pauseState { ModuleRegistry.shared.stopAll() }
-            RunawayApps.shared.start()
+            RunawayApps.quitApp = WindowControl.quit
+            if !self.pauseState {
+                RunawayApps.shared.start()
+                MemoryGrowth.shared.start()
+            }
             Throttling.startWatching()
             // After the modules: the menu bar is built from what they say
             // about themselves, so started first the combined row would be

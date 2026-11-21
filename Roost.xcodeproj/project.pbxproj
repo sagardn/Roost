@@ -128,6 +128,11 @@
 		FEEDFACEB103000000000000 /* Gesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF103000000000000 /* Gesture.swift */; };
 		FEEDFACEB2E7000000000000 /* QuickSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E7000000000000 /* QuickSearch.swift */; };
 		FEEDFACEB2E8000000000000 /* QuickActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E8000000000000 /* QuickActions.swift */; };
+		C0FFEE0000BE000000000000 /* SpeedTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000BD000000000000 /* SpeedTest.swift */; };
+		C0FFEE0000BC000000000000 /* RoostTimers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000BB000000000000 /* RoostTimers.swift */; };
+		C0FFEE0000BA000000000000 /* AudioOutputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000B9000000000000 /* AudioOutputs.swift */; };
+		C0FFEE0000B8000000000000 /* DiskEject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000B7000000000000 /* DiskEject.swift */; };
+		C0FFEE0000B6000000000000 /* KeepAwake.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000B5000000000000 /* KeepAwake.swift */; };
 		FEEDFACEB2E3000000000000 /* Snap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E3000000000000 /* Snap.swift */; };
 		FEEDFACE0EC0000000000000 /* ClickToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACE0EC1000000000000 /* ClickToggle.swift */; };
 		FEEDFACEB2E4000000000000 /* WindowSnapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E4000000000000 /* WindowSnapper.swift */; };
@@ -149,6 +154,7 @@
 		FEEDFACEB205000000000000 /* NetworkPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF205000000000000 /* NetworkPopup.swift */; };
 		FEEDFACEB2E0000000000000 /* PopupParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E0000000000000 /* PopupParts.swift */; };
 		FEEDFACEB2E5000000000000 /* RunawayApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E5000000000000 /* RunawayApps.swift */; };
+		C0FFEE0000C0000000000000 /* MemoryGrowth.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE0000BF000000000000 /* MemoryGrowth.swift */; };
 		FEEDFACEB3A1000000000000 /* ProcessIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */; };
 		FEEDFACEB2E6000000000000 /* Throttling.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF2E6000000000000 /* Throttling.swift */; };
 		FEEDFACEB206000000000000 /* Popup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDFACEF206000000000000 /* Popup.swift */; };
@@ -418,6 +424,11 @@
 		FEEDFACEF103000000000000 /* Gesture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Gesture.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E7000000000000 /* QuickSearch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuickSearch.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E8000000000000 /* QuickActions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuickActions.swift; sourceTree = "<group>"; };
+		C0FFEE0000BD000000000000 /* SpeedTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTest.swift; sourceTree = "<group>"; };
+		C0FFEE0000BB000000000000 /* RoostTimers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoostTimers.swift; sourceTree = "<group>"; };
+		C0FFEE0000B9000000000000 /* AudioOutputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputs.swift; sourceTree = "<group>"; };
+		C0FFEE0000B7000000000000 /* DiskEject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskEject.swift; sourceTree = "<group>"; };
+		C0FFEE0000B5000000000000 /* KeepAwake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwake.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E3000000000000 /* Snap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Snap.swift; sourceTree = "<group>"; };
 		FEEDFACE0EC1000000000000 /* ClickToggle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClickToggle.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E4000000000000 /* WindowSnapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowSnapper.swift; sourceTree = "<group>"; };
@@ -439,6 +450,7 @@
 		FEEDFACEF205000000000000 /* NetworkPopup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkPopup.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E0000000000000 /* PopupParts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PopupParts.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E5000000000000 /* RunawayApps.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RunawayApps.swift; sourceTree = "<group>"; };
+		C0FFEE0000BF000000000000 /* MemoryGrowth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryGrowth.swift; sourceTree = "<group>"; };
 		FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProcessIdentity.swift; sourceTree = "<group>"; };
 		FEEDFACEF2E6000000000000 /* Throttling.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Throttling.swift; sourceTree = "<group>"; };
 		FEEDFACEF206000000000000 /* Popup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Popup.swift; sourceTree = "<group>"; };
@@ -641,6 +653,11 @@
 				FEEDFACEF103000000000000 /* Gesture.swift */,
 				FEEDFACEF2E7000000000000 /* QuickSearch.swift */,
 				FEEDFACEF2E8000000000000 /* QuickActions.swift */,
+				C0FFEE0000BD000000000000 /* SpeedTest.swift */,
+				C0FFEE0000BB000000000000 /* RoostTimers.swift */,
+				C0FFEE0000B9000000000000 /* AudioOutputs.swift */,
+				C0FFEE0000B7000000000000 /* DiskEject.swift */,
+				C0FFEE0000B5000000000000 /* KeepAwake.swift */,
 				FEEDFACEF2E3000000000000 /* Snap.swift */,
 				FEEDFACE0EC1000000000000 /* ClickToggle.swift */,
 				FEEDFACEF2E4000000000000 /* WindowSnapper.swift */,
@@ -744,6 +761,7 @@
 				FEEDFACEF205000000000000 /* NetworkPopup.swift */,
 				FEEDFACEF2E0000000000000 /* PopupParts.swift */,
 				FEEDFACEF2E5000000000000 /* RunawayApps.swift */,
+				C0FFEE0000BF000000000000 /* MemoryGrowth.swift */,
 				FEEDFACEF3A1000000000000 /* ProcessIdentity.swift */,
 				FEEDFACEF2E6000000000000 /* Throttling.swift */,
 				FEEDFACEF206000000000000 /* Popup.swift */,
@@ -1101,6 +1119,11 @@
 				FEEDFACEB103000000000000 /* Gesture.swift in Sources */,
 				FEEDFACEB2E7000000000000 /* QuickSearch.swift in Sources */,
 				FEEDFACEB2E8000000000000 /* QuickActions.swift in Sources */,
+				C0FFEE0000BE000000000000 /* SpeedTest.swift in Sources */,
+				C0FFEE0000BC000000000000 /* RoostTimers.swift in Sources */,
+				C0FFEE0000BA000000000000 /* AudioOutputs.swift in Sources */,
+				C0FFEE0000B8000000000000 /* DiskEject.swift in Sources */,
+				C0FFEE0000B6000000000000 /* KeepAwake.swift in Sources */,
 				FEEDFACEB2E3000000000000 /* Snap.swift in Sources */,
 				FEEDFACE0EC0000000000000 /* ClickToggle.swift in Sources */,
 				FEEDFACEB2E4000000000000 /* WindowSnapper.swift in Sources */,
@@ -1122,6 +1145,7 @@
 				FEEDFACEB205000000000000 /* NetworkPopup.swift in Sources */,
 				FEEDFACEB2E0000000000000 /* PopupParts.swift in Sources */,
 				FEEDFACEB2E5000000000000 /* RunawayApps.swift in Sources */,
+				C0FFEE0000C0000000000000 /* MemoryGrowth.swift in Sources */,
 				FEEDFACEB3A1000000000000 /* ProcessIdentity.swift in Sources */,
 				FEEDFACEB2E6000000000000 /* Throttling.swift in Sources */,
 				FEEDFACEB206000000000000 /* Popup.swift in Sources */,
@@ -1377,7 +1401,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Roost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagar.roost;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1409,7 +1433,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Roost;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sagar.roost;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -273,23 +273,82 @@ not running. Apps in your ⌃Tab cycle are marked `⌃⇥`.
 
 ### Sums, conversions and actions
 
+Not sure what to type? Type `?` (or `help`): the panel lists everything it
+can do, with an example for each. Choosing a line puts its example in the
+search field, where you can change it before pressing ↩.
+
 When the query is unmistakably one of these, a row appears above the apps:
 
 | You type | The row | ↩ does |
 |---|---|---|
 | `12*8+5`, `(2+3)*4`, `2^10`, `sqrt(2)`, `10%3` | `12*8+5 = 101` | Copies `101` |
 | `5 km in miles`, `72 f to c`, `2 gb in mb`, `10 kg to lb` | `5 km in miles = 3.107 mi` | Copies `3.107 mi` |
-| `lock` · `sleep` · `sleep display` · `screen saver` · `dark` · `empty bin` | The action | Runs it |
+| `lock` · `sleep` · `sleep display` · `screen saver` · `dark` · `empty bin` · `awake` · `eject` | The action | Runs it |
+| `awake 45m`, `awake 2h`, `keep awake for 1h30m` | Keep Mac Awake for that long | Keeps it awake until then |
+| `sound`, `sound airpods`, `speakers` | Play Sound Through each output | Switches the sound output |
+| `restart` · `shut down` · `log out` · `quit all` | The action | Asks, then runs it |
+| `timer 10m`, `timer 25m tea`, `set a timer for 1h30m` | Start a timer | Starts it |
+| `timer` | Stop Timer, for each one running | Stops it |
+| `vol 30`, `volume 75%` | Set Volume to 30% | Sets it |
+| `mute` · `mute mic` | Mute Sound · Mute Microphone | Mutes, or turns back on |
+| `color` | Pick a Colour from the Screen | Copies the hex, like `#1A334D` |
+| `speed test` | Test Internet Speed | Shows ↓ ↑ and responsiveness |
 
 Sums take `+ - * / % ^`, brackets, `pi`, `e`, and `sqrt abs round floor ceil
-sin cos tan ln log`. Conversions cover length, weight, temperature, data,
-volume, speed and time, with `in`, `to`, `as` or `into` between the units.
+sin cos tan ln log`. A comma before three digits groups thousands (`1,000`);
+any other comma is a decimal point (`1,5*2 = 3`). Conversions cover length,
+weight, temperature, data, volume, speed and time, with `in`, `to`, `as` or
+`into` between the units.
 
 A plain number is not a sum, and actions need three letters, so `sa` still
 finds Safari and `sl` still finds Slack. **Empty Bin** asks first, with
 Cancel as the default, because it cannot be undone. **Toggle Dark Mode** and
 **Empty Bin** go through System Events and Finder, so macOS asks once
 whether Roost may control them; **Lock Screen** uses the Accessibility grant.
+
+**Keep Mac Awake** stops the Mac and its display from sleeping until you
+choose it again (it then reads **Allow Sleep Again**) or quit Roost. While it
+is on, **Allow Sleep Again** is also in the menu a right-click on any Roost
+reading gives. It is not remembered across launches, so a Mac never stays
+awake because of a choice made last week. **Eject All Disks** ejects external
+drives, card readers, mounted disk images and network shares under
+`/Volumes`, never the startup disk or another internal volume, and names any
+disk it could not eject because something is using it.
+
+**Keep awake for a while.** `awake` on its own offers both until you turn it
+off and for an hour; add a time -- `45m`, `2h`, `1h30m`, `1.5h`, up to a day
+-- for exactly that. The time is by the clock: an hour started at two ends at
+three, even if the lid was shut for part of it. While a timed keep-awake is
+on, the right-click menu says when it ends.
+
+**Sound output.** `sound` (or `audio`, `output`, `speakers`, `headphones`)
+lists every output, with the one playing now last; add part of a name to
+narrow it: `sound airpods`. Typing a device's name alone also finds it, but
+below the apps, so `mac` still finds your apps before MacBook Air Speakers.
+It sets the same output as Sound settings.
+
+**Timers** end with a notification, a sound and a message on screen, so you
+hear one even with Roost's notifications off. The time is by the clock, like
+Keep awake's. While one runs, the right-click menu shows when it ends and can
+stop it. Timers are not kept if Roost quits.
+
+**Volume and mute** set the output macOS is using now. `mute` toggles: it
+reads **Turn Sound Back On** while muted. Not every microphone can be muted
+from outside the app using it; Roost says so when one cannot.
+
+**Colour picker** shows macOS's own magnifier; click anywhere and the colour
+is copied as sRGB hex. It needs no permission.
+
+**Speed test** uses Apple's own `networkQuality`, against Apple's servers,
+and takes about 20 seconds. The result shows download and upload speed and
+Apple's own responsiveness grade -- how well the connection keeps up while
+busy, which is what a video call feels. It uses the network only when you
+ask.
+
+**Restart, Shut Down, Log Out and Quit All Apps** need four letters, so
+`log` still finds Logic Pro, and each asks first with Cancel as the default.
+Open apps are asked to quit, as the Apple menu does, so one with unsaved work
+can stop it. Quit All Apps leaves Finder, Roost and menu bar apps running.
 
 ### The options menu
 
@@ -478,6 +537,14 @@ which asks it to quit the way ⌘Q does, so unsaved work still gets to ask. A
 command-line tool or system process is named, with a pointer to Activity
 Monitor, and no button. It is reported once per busy stretch, not every
 half minute.
+
+**An app keeps using more memory.** On the Memory page, on by default. It
+says so once when one app -- helpers included, as above -- has grown by at
+least 1 GB in the last hour, by half as much again, and now uses 2 GB or
+more: the slow leak that is quiet on the processor until the whole Mac is
+short of memory. The size is the app's footprint, the figure Activity
+Monitor's Memory column shows. It has the same **Quit** button, and is said
+again only after the app shrinks back or is reopened.
 
 **Throttling.** When macOS slows the processor down to cool it -- a fanless
 MacBook Air under sustained load does -- the CPU popup's status line says
@@ -676,7 +743,9 @@ Overview samples nothing of its own.
   seconds at 80% or more), macOS slowing the processor to cool it, memory
   *pressure* raised or critical (the kernel's own level, not how full memory
   is), the watched volume past 90% or 95%, or no network interface up. Each
-  has a **Details** button to the module's page.
+  has a **Details** button to the module's page. After 30 days without a
+  restart it also suggests one, with a **Restart…** button that asks first
+  and lets open apps save.
 - **Cards** for CPU, Memory, Disk and Network, each with its figure, its
   verdict in words, recent history and two or three supporting figures. Click
   a card to open that module's page. A module that is off says so and offers
@@ -829,19 +898,21 @@ Roost installs no helper, daemon or extension.
 
 Roost collects no telemetry or analytics and has no account. Clipboard
 history never leaves the Mac, and its content is never written to a log. It
-talks to the network in three cases:
+talks to the network in four cases:
 
 - **Update check** — a plain read of
   `https://api.github.com/repos/sagardn/Roost/releases/latest`, on the schedule
   set in **Check for updates**. Nothing about your Mac is sent. **Never** stops it.
-- **Connectivity check** — while the Network popup is open, a TCP handshake
-  with `1.1.1.1` on port 53, every few seconds, to measure latency and whether
-  the internet answers. No data is sent over it.
+- **Connectivity check** — while the Network popup is open, or while the
+  **Connection comes or goes** alert is on, a TCP handshake with `1.1.1.1` on
+  port 53, every few seconds, to measure latency and whether the internet
+  answers. No data is sent over it.
 - **Public IP** — `https://ifconfig.co/json`, while **Look up the public
   address** is on in the Network module. **It is on by default.** The request
   is made when the Network popup opens, every two minutes for as long as it
-  stays open, and again when the connection changes — not on a background
-  timer, and never while the popup is closed. The reply carries your public
+  stays open, and again when the connection changes. With the **Public address
+  changes** alert on, it is also made every two minutes while the popup is
+  closed -- that is what the alert watches. The reply carries your public
   address and the country and network operator that address belongs to, which
   is what the row shows; nothing about your Mac is sent to get it. Switch
   **Look up the public address** off and no request is made at all.
@@ -849,6 +920,10 @@ talks to the network in three cases:
   `ifconfig.co` runs [echoip](https://github.com/mpolden/echoip), which is
   open source and self-hostable if you would rather not depend on someone
   else's server; repoint the endpoint in `Roost/Monitor/NetworkInfo.swift`.
+
+- **Speed test** — only when you choose **Test Internet Speed** in the search
+  panel: macOS's own `networkQuality` measures against Apple's servers for
+  about 20 seconds. Roost sends nothing of its own.
 
 ---
 

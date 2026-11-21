@@ -14,10 +14,17 @@ extension AppDelegate {
     /// a module only if it is enabled, and `stop()` hides it without saving
     /// anything, so the choices come through a pause untouched.
     @objc internal func listenForAppPause() {
+        // The per-app watchers too: they read every process twice a minute
+        // and notify, and "Pause the readings" left them doing both beside
+        // the paused icon.
         if pauseState {
             ModuleRegistry.shared.stopAll()
+            RunawayApps.shared.stop()
+            MemoryGrowth.shared.stop()
         } else {
             ModuleRegistry.shared.startAll()
+            RunawayApps.shared.start()
+            MemoryGrowth.shared.start()
         }
         refreshPausedMenuBarItem()
     }

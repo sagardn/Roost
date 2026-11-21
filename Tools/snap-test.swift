@@ -80,5 +80,24 @@ let above = CGRect(x: 0, y: -1440, width: 2560, height: 1440)  // a display abov
 check("a display above the primary comes out above it",
       Snap.appKit(fromAX: above, primaryHeight: primaryHeight).minY == primaryHeight)
 
+print("\nA window that refuses the size")
+do {
+    // Asked for the right third (x 980, 490 wide) by an app whose minimum is
+    // 600 wide: it stays 600 at x 980, and ends at 1580 -- 110pt off screen.
+    let landed = CGRect(x: 980, y: 70, width: 600, height: 849)
+    let fixed = Snap.keepInside(landed, visible)
+    check("moved back so its right edge is on screen", fixed.maxX == visible.maxX)
+    check("and not resized", fixed.size == landed.size)
+    // A bottom quarter asked of a window at least 500 tall: under the Dock.
+    let low = Snap.keepInside(CGRect(x: 735, y: -5, width: 735, height: 500), visible)
+    check("one under the Dock comes back up above it", low.minY == visible.minY)
+    // Bigger than the screen: the top-left, with the title bar, stays on it.
+    let huge = Snap.keepInside(CGRect(x: 200, y: 0, width: 2000, height: 1200), visible)
+    check("one larger than the screen keeps its left edge on it", huge.minX == visible.minX)
+    check("and its top edge, where the title bar is", huge.maxY == visible.maxY)
+    let fine = CGRect(x: 100, y: 100, width: 300, height: 300)
+    check("a window already inside is left where it is", Snap.keepInside(fine, visible) == fine)
+}
+
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

@@ -226,6 +226,8 @@ enum HealthSignal: Equatable {
     /// answers: that probe runs only while the Network popup is open, and a
     /// stale answer here would be a claim about a network nobody checked.
     case network(linkUp: Bool)
+    /// Whole days since the Mac last started.
+    case uptime(days: Int)
     // No temperature case, deliberately. The first version had one, fed
     // by the Sensors module's hottest reading, and its first render on an
     // idle M2 Air said "Running very hot: TpOA reads 102 °C". TpOA is one
@@ -251,6 +253,12 @@ enum Health {
     /// an app launching; ten is something that is still going.
     static let cpuWindow = 10
 
+    /// Days on before the Overview suggests a restart.
+    static let restartAfterDays = 30
+    /// The issue's `module`: not a page, so the row offers Restart instead
+    /// of Details.
+    static let restartModule = "Restart"
+
     /// The issues these signals add up to, worst first.
     ///
     /// The thresholds are the ones every other part of Roost uses
@@ -273,6 +281,19 @@ enum Health {
                         title: localized("The processor is busy"),
                         explanation: localized("CPU load has averaged %0 over the last %1 seconds. The CPU page lists what is using it.",
                                                "\(Int((load * 100).rounded()))%", "\(cpuWindow)")))
+                }
+
+            case let .uptime(days):
+                // A month, not a week: plenty of Macs are fine for weeks, and
+                // a reminder that turns up every Monday is one people learn
+                // to look past. By a month, updates are usually waiting for
+                // the restart and long-running apps have had time to bloat.
+                if days >= restartAfterDays {
+                    found.append(HealthIssue(
+                        level: .elevated, module: Health.restartModule,
+                        title: localized("Your Mac has been on for %0 days", "\(days)"),
+                        explanation: localized(
+                            "A restart finishes installing updates and gives back memory that apps have held on to. Open apps are asked to quit first.")))
                 }
 
             case let .memory(pressure):
@@ -323,7 +344,11 @@ enum Health {
 
     /// One line for the header.
     static func summary(_ issues: [HealthIssue], watching: Int) -> String {
-        guard watching > 0 else { return localized("No modules are on, so there is nothing to report") }
+        // An issue that needs no module -- the restart reminder -- is still
+        // one: "nothing to report" above it contradicted the row below.
+        guard watching > 0 || !issues.isEmpty else {
+            return localized("No modules are on, so there is nothing to report")
+        }
         switch issues.count {
         case 0:  return localized("Everything looks normal")
         case 1:  return issues[0].title

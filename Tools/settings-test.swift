@@ -121,6 +121,33 @@ do {
     check("junk is rejected", true)
 }
 
+// Found in review: any dictionary plist was taken, merged over what was
+// there, with the backup's own version and first-run record.
+do {
+    let other = try PropertyListSerialization.data(
+        fromPropertyList: ["CFBundleIdentifier": "com.example.other", "LSUIElement": true],
+        format: .xml, options: 0)
+    _ = try Preferences(defaults: suite).importAll(other)
+    check("another app's plist is rejected", false)
+} catch {
+    check("another app's plist is rejected", true)
+}
+do {
+    let targetName = scratchName()
+    let target = UserDefaults(suiteName: targetName)!
+    target.set(true, forKey: "GPU_state")          // switched on after the backup
+    target.set("1.2.0", forKey: "version")
+    let backup: [String: Any] = ["CPU_state": true, "version": "1.0.0"]
+    let data = try PropertyListSerialization.data(fromPropertyList: backup, format: .xml, options: 0)
+    let count = try Preferences(defaults: target, domain: targetName).importAll(data)
+    check("an import replaces: a setting the backup lacks is gone", target.object(forKey: "GPU_state") == nil)
+    check("and the backup's own are there", target.bool(forKey: "CPU_state"))
+    check("the backup's version is not taken", target.string(forKey: "version") == "1.2.0")
+    check("and the count is what was imported", count == 1)
+} catch {
+    check("a replacing import", false)
+}
+
 // A plist that parses but is not a dictionary must not be accepted either.
 do {
     let array = try PropertyListSerialization.data(fromPropertyList: ["a", "b"], format: .xml, options: 0)

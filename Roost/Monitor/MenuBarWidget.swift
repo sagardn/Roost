@@ -436,15 +436,25 @@ final class MenuBarWidget: NSView {
         let height = MenuBarMetrics.drawHeight
         let bottom = rect.midY - height / 2
 
-        let total = CGFloat(values.count) * MenuBarMetrics.barWidth
-            + CGFloat(values.count - 1) * MenuBarMetrics.barGap
+        // Narrower bars when the slot is capped. `barChartWidth` stops at
+        // 118pt, and bars of the full width overran it from thirty cores up
+        // -- by 9pt on a 32-core Mac and about 105 on a 56-thread Mac Pro --
+        // drawing over whatever sat next to the chart.
+        let count = CGFloat(values.count)
+        var gap = MenuBarMetrics.barGap
+        var barWidth = MenuBarMetrics.barWidth
+        if count * barWidth + (count - 1) * gap > rect.width {
+            barWidth = (rect.width - (count - 1) * gap) / count
+            if barWidth < 1 { gap = 0; barWidth = max(0.5, rect.width / count) }
+        }
+        let total = count * barWidth + (count - 1) * gap
         // Centred, so a four-core bar chart is not jammed against the figure
         // beside it when the width floor is doing the work.
         var x = rect.minX + max(0, (rect.width - total) / 2)
 
         for value in values {
             let clamped = proportion(value)
-            let track = NSRect(x: x, y: bottom, width: MenuBarMetrics.barWidth, height: height)
+            let track = NSRect(x: x, y: bottom, width: barWidth, height: height)
             ink.withAlphaComponent(0.12).setFill()
             NSBezierPath(roundedRect: track, xRadius: 1, yRadius: 1).fill()
 
@@ -453,10 +463,10 @@ final class MenuBarWidget: NSView {
             let filled = max(1, clamped * height)
             LoadBand.of(clamped).color.setFill()
             NSBezierPath(roundedRect: NSRect(x: x, y: bottom,
-                                             width: MenuBarMetrics.barWidth, height: filled),
+                                             width: barWidth, height: filled),
                          xRadius: 1, yRadius: 1).fill()
 
-            x += MenuBarMetrics.barWidth + MenuBarMetrics.barGap
+            x += barWidth + gap
         }
     }
 

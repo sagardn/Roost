@@ -335,6 +335,21 @@ final class CombinedBar {
 
     @objc private func handlePress() {
         guard let window = item?.button?.window else { return }
+        let x = row.convert(window.convertPoint(fromScreen: NSEvent.mouseLocation), from: nil).x
+
+        // A right-click or Control-click gets the app's menu, as a separate
+        // item's does. Every press used to open a popup here, so with the
+        // modules combined there was no right-click menu on the bar at all --
+        // no Pause, no Quit -- where AppMenu says it is. Named after the
+        // reading under the pointer unless the row is one details button.
+        let event = NSApp.currentEvent
+        if event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true {
+            let name = prefs.combinedPopup ? nil : layout.slot(atX: x)?.name
+            item?.menu = AppMenu.make(for: name)
+            item?.button?.performClick(nil)
+            item?.menu = nil
+            return
+        }
 
         // "Combined details" on: the whole row is one button onto one popup
         // holding every module's tile. Off: the row is as many buttons as it
@@ -344,8 +359,7 @@ final class CombinedBar {
             return
         }
 
-        press(atX: row.convert(window.convertPoint(fromScreen: NSEvent.mouseLocation),
-                               from: nil).x)
+        press(atX: x)
     }
 
     /// Open one module's popup by name, as a press on its reading would.

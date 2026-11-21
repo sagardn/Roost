@@ -120,6 +120,26 @@ enum Snap {
     /// measured against the primary display, whose height is the only number
     /// the conversion needs -- including for displays above or below it,
     /// which simply come out with negative or large coordinates.
+    /// `actual` moved, without resizing, so none of it is outside `bounds`
+    /// -- or as little as can be, when it is larger than `bounds` itself:
+    /// then its top and left edges are the ones kept on screen, where the
+    /// title bar and close button are.
+    ///
+    /// For a window that refused the size it was given. Its position was
+    /// worked out from the size asked for, so a window with a minimum width
+    /// snapped to a third of the screen kept its width at the third's x, and
+    /// hung 110pt past the right edge (measured on snap-test's own screen,
+    /// minimum 600 wide); a bottom quarter left one 75pt under the Dock.
+    static func keepInside(_ actual: CGRect, _ bounds: CGRect) -> CGRect {
+        var frame = actual
+        if frame.maxX > bounds.maxX { frame.origin.x = bounds.maxX - frame.width }
+        if frame.minX < bounds.minX { frame.origin.x = bounds.minX }
+        // AppKit's y runs upwards: the bottom edge is minY, the top maxY.
+        if frame.minY < bounds.minY { frame.origin.y = bounds.minY }
+        if frame.maxY > bounds.maxY { frame.origin.y = bounds.maxY - frame.height }
+        return frame
+    }
+
     static func appKit(fromAX frame: CGRect, primaryHeight: CGFloat) -> CGRect {
         CGRect(x: frame.minX, y: primaryHeight - frame.maxY, width: frame.width, height: frame.height)
     }

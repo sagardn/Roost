@@ -76,7 +76,9 @@ final class WindowSnapper {
     func startAndReport() {
         guard !start().isEmpty else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            guard let self else { return }
+            // Switched off in the three seconds since: the retry must not
+            // register the keys again behind the switch.
+            guard let self, Prefs.windowSnapping else { return }
             let taken = self.start()
             guard !taken.isEmpty else { return }
             if taken.count == Self.bindings.count {
@@ -93,8 +95,15 @@ final class WindowSnapper {
 
     func perform(_ action: Snap.Action) {
         guard WindowControl.ensureTrusted(for: localized("Window snapping")) else { return }
-        guard let app = NSWorkspace.shared.frontmostApplication,
-              app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
+        guard let app = NSWorkspace.shared.frontmostApplication else { return }
+        // Roost's own windows too. It used to return here whenever Roost was
+        // in front, which is every time its Settings window is -- the one
+        // window somebody is most likely to try a new shortcut on -- and the
+        // keys did nothing at all.
+        if app.bundleIdentifier == Bundle.main.bundleIdentifier {
+            performOnOwnWindow(action)
+            return
+        }
         let axApp = WindowControl.appElement(app.processIdentifier)
         guard let window = Self.element(Self.attribute(axApp, kAXFocusedWindowAttribute))
         else { return }
@@ -111,21 +120,64 @@ final class WindowSnapper {
         guard let index = Snap.screenIndex(for: current, among: screens) else { return }
 
         let key = "\(app.processIdentifier)-\(CFHash(window))"
+        guard let target = target(for: action, current: current, screens: screens, index: index, key: key)
+        else { return }
+
+        Self.setFrame(window, Snap.ax(fromAppKit: target, primaryHeight: primaryHeight), app: axApp)
+
+        // Read back, because an app may refuse the size: its minimum is the
+        // app's, and the position above assumed the size asked for. Moved
+        // inside the screen the target is on, without resizing again.
+        guard let landed = Self.frame(of: window).map({ Snap.appKit(fromAX: $0, primaryHeight: primaryHeight) }),
+              let screen = Snap.screenIndex(for: target, among: screens) else { return }
+        let inside = Snap.keepInside(landed, screens[screen])
+        guard inside != landed else { return }
+        var origin = Snap.ax(fromAppKit: inside, primaryHeight: primaryHeight).origin
+        if let position = AXValueCreate(.cgPoint, &origin) {
+            AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, position)
+        }
+    }
+
+    /// Where `action` sends a window at `current`, remembering where it was
+    /// so ⌃⌥⌫ can put it back. Shared by other apps' windows and Roost's own.
+    private func target(for action: Snap.Action, current: CGRect, screens: [CGRect],
+                        index: Int, key: String) -> CGRect? {
         let target: CGRect?
         switch action {
         case .restore:
             target = before.removeValue(forKey: key)
         case .nextDisplay, .previousDisplay:
-            guard screens.count > 1 else { return }
+            guard screens.count > 1 else { return nil }
             let step = action == .nextDisplay ? 1 : screens.count - 1
             target = Snap.move(current, from: screens[index], to: screens[(index + step) % screens.count])
         default:
             target = Snap.frame(for: action, in: screens[index], current: current)
         }
-        guard let target else { return }
-        if action != .restore, before[key] == nil { before[key] = current }
+        if target != nil, action != .restore, before[key] == nil { before[key] = current }
+        return target
+    }
 
-        Self.setFrame(window, Snap.ax(fromAppKit: target, primaryHeight: primaryHeight), app: axApp)
+    /// Roost's own key window, moved directly: it is ours, so there is no
+    /// need to go through Accessibility to reach it. Only an ordinary titled
+    /// window -- never the search panel or a popup, which are panels placed
+    /// where they belong, and never one in full screen.
+    private func performOnOwnWindow(_ action: Snap.Action) {
+        guard let window = NSApp.keyWindow, !(window is NSPanel),
+              window.styleMask.contains(.titled), !window.styleMask.contains(.fullScreen),
+              window.styleMask.contains(.resizable) || action == .restore
+                  || action == .nextDisplay || action == .previousDisplay || action == .center
+        else { return }
+        let screens = NSScreen.screens.map(\.visibleFrame)
+        guard let index = Snap.screenIndex(for: window.frame, among: screens) else { return }
+        let key = "own-\(ObjectIdentifier(window).hashValue)"
+        guard var frame = target(for: action, current: window.frame, screens: screens, index: index, key: key)
+        else { return }
+        // `setFrame` does not hold a window to its minimum size, so this does,
+        // and then keeps the result on the screen it was meant for.
+        frame.size.width = max(frame.width, window.minSize.width)
+        frame.size.height = max(frame.height, window.minSize.height)
+        let screen = Snap.screenIndex(for: frame, among: screens) ?? index
+        window.setFrame(Snap.keepInside(frame, screens[screen]), display: true, animate: false)
     }
 
     // MARK: Accessibility

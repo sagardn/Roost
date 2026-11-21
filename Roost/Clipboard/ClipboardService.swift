@@ -69,6 +69,17 @@ final class ClipboardService: ObservableObject {
     /// The change count Roost's own last restore produced.
     private var ownWrite: Int?
     private var settingsObserver: NSObjectProtocol?
+    private var activationObserver: NSObjectProtocol?
+    /// Every app that came to the front since the last look at the
+    /// clipboard. The check runs up to a second after a copy, and by then the
+    /// app it came from may be behind another: copy a password in an excluded
+    /// app, ⌘-Tab away at once, and the frontmost app at the check was the
+    /// new one -- the password was kept, and filed under the wrong app.
+    private var activatedSinceCheck: Set<String> = []
+    /// Retention is otherwise enforced only when something is added, so with
+    /// no new copies a one-day entry outlived its day by as long as nobody
+    /// copied anything.
+    private var retentionTimer: Timer?
     private var started = false
 
     init(pasteboard: ClipboardPasteboard, store: ClipboardStore,
@@ -98,8 +109,22 @@ final class ClipboardService: ObservableObject {
                 history = ClipboardHistory(entries: entries)
                 problem = trouble
                 isLoaded = true
+                // A quit that never reached `stop()` -- a crash, a forced
+                // quit -- left the unpinned entries the setting promised to
+                // clear. Cleared now, which is what that quit would have done.
+                if ClipboardSettings.clearUnpinnedOnQuit { clear(keepingPinned: true) }
                 apply()
+                let timer = Timer(timeInterval: 3600, repeats: true) { [weak self] _ in self?.enforce() }
+                timer.tolerance = 300
+                RunLoop.main.add(timer, forMode: .common)
+                retentionTimer = timer
             }
+        }
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            if let id = app?.bundleIdentifier { self?.activatedSinceCheck.insert(id) }
         }
         settingsObserver = NotificationCenter.default.addObserver(
             forName: Preferences.didChange, object: nil, queue: .main
@@ -113,18 +138,45 @@ final class ClipboardService: ObservableObject {
     /// to a queue now would never run.
     func stop() {
         stopWatching()
+        retentionTimer?.invalidate()
+        retentionTimer = nil
         if let settingsObserver { NotificationCenter.default.removeObserver(settingsObserver) }
         settingsObserver = nil
-        if ClipboardSettings.clearUnpinnedOnQuit {
-            store.delete(history.clear(keepingPinned: true))
+        if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
+        activationObserver = nil
+        // Nothing to save until the history on disk has been read. Before
+        // that, `history` is empty -- and saving it wrote an empty index over
+        // the real one, after which the next launch deleted every image and
+        // rich-text payload as an orphan. A quit during the first-run window
+        // after a Reset, or in the moment after launch while the load is
+        // still on its queue, did exactly that. Left alone, the file on disk
+        // is the history, unchanged.
+        guard isLoaded else { return }
+        let removed = ClipboardSettings.clearUnpinnedOnQuit ? history.clear(keepingPinned: true) : []
+        let entries = history.entries
+        // On the store's own queue, which is the only place the store may be
+        // used: run here on main, it raced a save that a copy just before
+        // quitting had queued. That save, holding the older list, could land
+        // after this one -- cleared entries came back next launch, pointing
+        // at payloads already deleted -- or recreate a session-only folder
+        // after `close()` had wiped it. `sync` cannot deadlock: this is main,
+        // and the queue only ever reaches main with `async`.
+        Self.queue.sync { [store] in
+            if !removed.isEmpty { store.delete(removed) }
+            try? store.save(entries)
+            store.close()
         }
-        try? store.save(history.entries)
-        store.close()
     }
 
     /// Brings everything in line with the settings: the timer on or off,
     /// the store's persistence, the limits.
     func apply() {
+        // Not before the history on disk is read. A settings change in that
+        // moment -- or any change at all, since a change with no key is
+        // taken as possibly the clipboard's -- started the watching timer,
+        // and the first copy then saved a one-entry history over the real
+        // one. The load calls this itself once it is done.
+        guard isLoaded else { return }
         let current = options()
         store.persistent = current.persistent
         if current.monitoring { startWatching() } else { stopWatching() }
@@ -156,6 +208,8 @@ final class ClipboardService: ObservableObject {
     /// without a timer.
     func check() {
         let changed = pasteboard.changeCount
+        let recentlyFront = activatedSinceCheck
+        activatedSinceCheck = []
         guard changed != lastSeen else { return }
         lastSeen = changed
         // Roost's own restore. The marker type catches it too, but this
@@ -169,7 +223,12 @@ final class ClipboardService: ObservableObject {
             return
         }
         let source = frontmost()
-        if let id = source.id, current.excludedApps.contains(id) {
+        // The app in front now, or any that was in front since the last
+        // look: one of them made the copy, and if any is excluded the copy
+        // is not kept. Erring this way loses an ordinary copy at worst;
+        // the other way kept a password.
+        let candidates = recentlyFront.union([source.id].compactMap { $0 })
+        if !candidates.isDisjoint(with: current.excludedApps) {
             count(.excludedApp)
             return
         }
@@ -230,16 +289,35 @@ final class ClipboardService: ObservableObject {
 
     func clear(keepingPinned: Bool) {
         discard(history.clear(keepingPinned: keepingPinned))
+        // Clear All also takes the indexes once set aside as unreadable:
+        // they hold copied text too, and "all" that left them was not all.
+        // After `discard`'s work, on the same queue, so the save comes first.
+        guard !keepingPinned else { return }
+        let kept = history.entries
+        background { [self] in store.discardSetAside(keeping: kept) }
     }
 
-    private func enforce() {
+    func enforce() {
         let removed = history.enforce(options().limits)
         if !removed.isEmpty { discard(removed) }
     }
 
+    /// The index first, then the files, in one piece of work. The other way
+    /// round, a crash in between left an index naming payloads already
+    /// deleted -- and after Clear All, the cleared text, which lives in the
+    /// index, came back.
     private func discard(_ entries: [ClipboardEntry]) {
-        background { [self] in store.delete(entries) }
-        save()
+        let kept = history.entries
+        background { [self] in
+            do {
+                try store.save(kept)
+                store.delete(entries)
+            } catch {
+                foreground { [self] in
+                    problem = localized("The clipboard history could not be saved: %0", error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func save() {

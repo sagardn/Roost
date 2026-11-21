@@ -86,6 +86,17 @@ final class MonitorBar {
                 item.menu = nil
                 return
             }
+            open()
+        }
+
+        /// Opens the popup, without asking what the current event was.
+        ///
+        /// For a keyboard shortcut, which came through `press()` and so
+        /// through its right-click test -- where the current event is the
+        /// shortcut's own keyDown. A shortcut with ⌃ in it, which the
+        /// recorder allows, read as a Control-click and opened the
+        /// Turn off / Settings / Quit menu instead of the popup, every time.
+        func open() {
             guard let frame = item.button?.window?.frame else { return }
             segment.activate(anchor: frame, offsetX: 0)
         }
@@ -179,7 +190,7 @@ final class MonitorBar {
     @discardableResult
     func openPopup(for name: String) -> Bool {
         if let entry = entries[name] {
-            entry.press()
+            entry.open()
             return true
         }
         return combined.press(on: name)
@@ -283,7 +294,15 @@ final class MonitorBar {
         // stable: on an untouched install the row would otherwise come out in
         // whatever order the sort happened to produce, and a different one
         // next launch.
-        let registered = ModuleRegistry.shared.enabled.enumerated()
+        // Only the modules that have asked to be drawn. Enabled is not the
+        // same thing since Pause stopped switching modules off: it stops
+        // them, which takes them out of `requested` and leaves `isEnabled`
+        // alone -- and reading the enabled list here rebuilt every paused
+        // module's segment, so the combined row stayed up and kept sampling
+        // beside the paused icon.
+        let registered = ModuleRegistry.shared.enabled
+            .filter { requested.contains($0.moduleName) }
+            .enumerated()
             .sorted { ($0.element.combinedPosition, $0.offset)
                     < ($1.element.combinedPosition, $1.offset) }
             .map { $0.element }

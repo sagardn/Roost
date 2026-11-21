@@ -181,6 +181,9 @@ final class DashboardModel: ObservableObject {
         self.states = states
         self.watching = watching
         self.basis = basis
+        if let boot = DeviceInfo.bootDate {
+            signals.append(.uptime(days: Int(Date().timeIntervalSince(boot) / 86_400)))
+        }
         self.issues = Health.issues(signals)
         uptime = DeviceInfo.bootDate.map { Uptime.describe(seconds: Date().timeIntervalSince($0)) } ?? "—"
     }

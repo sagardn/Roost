@@ -167,7 +167,10 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         contentView = background
 
         field.font = .systemFont(ofSize: 22, weight: .regular)
-        field.placeholderString = localized("Search apps…")
+        // Says the panel does more than apps. Its sums, timers, sound
+        // switching and the rest were found only by somebody who already
+        // knew to type for them; "?" lists every one, with an example.
+        field.placeholderString = localized("Search apps, or type ? for more")
         field.isBordered = false
         field.drawsBackground = false
         field.focusRingType = .none
@@ -402,13 +405,22 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         // Above every app, but only for a query that is unmistakably a sum,
         // a conversion or an action -- QuickSearch never answers a query
         // that could be the start of an app's name.
-        let quick = QuickSearch.results(for: query).enumerated().map { index, result in
-            Row(name: result.title, bundleID: "roost.quick.\(index)",
-                icon: NSImage(systemSymbolName: result.symbol, accessibilityDescription: nil)?
-                    .withSymbolConfiguration(.init(pointSize: 20, weight: .regular)),
-                state: .notRunning, score: Int.max, quick: result)
+        // The sound outputs are read only once a query is long enough to
+        // name one: CoreAudio is quick, but not something to ask on every
+        // keystroke of a two-letter app search.
+        let outputs = query.trimmingCharacters(in: .whitespaces).count >= 3 ? AudioOutputs.all() : []
+        func quickRows(_ results: [QuickSearch.Result], _ tag: String) -> [Row] {
+            results.enumerated().map { index, result in
+                Row(name: result.title, bundleID: "roost.\(tag).\(index)",
+                    icon: NSImage(systemSymbolName: result.symbol, accessibilityDescription: nil)?
+                        .withSymbolConfiguration(.init(pointSize: 20, weight: .regular)),
+                    state: .notRunning, score: Int.max, quick: result)
+            }
         }
-        rows = quick + rows
+        // Outputs matched by name alone go under the apps -- see
+        // `AudioOutputs.matching`.
+        rows = quickRows(QuickSearch.results(for: query, outputs: outputs), "quick") + rows
+            + quickRows(QuickSearch.trailing(for: query, outputs: outputs), "after")
 
         table.reloadData()
         let restored = previous.flatMap { id in rows.firstIndex { $0.bundleID == id } }
@@ -566,6 +578,14 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
         guard rows.indices.contains(index) else { return }
         let row = rows[index]
         if let quick = row.quick {
+            // A help row is an example to try, not an action: it goes into
+            // the field, where it can be read, changed and run.
+            if let fill = quick.fill {
+                field.stringValue = fill
+                field.currentEditor()?.selectedRange = NSRange(location: (fill as NSString).length, length: 0)
+                reload()
+                return
+            }
             dismissThen { quick.perform() }
             return
         }
@@ -717,10 +737,15 @@ final class SearchPanel: NSPanel, NSTableViewDataSource, NSTableViewDelegate, NS
                     WindowControl.minimize(row.bundleID)
                     self?.refresh()
                 })
-                menu.addItem(ActionItem(localized("Hide")) { [weak self] in
-                    WindowControl.hide(running)
-                    self?.refresh()
-                })
+                // Not for a full-screen app: ⌘H tears its Space down, and
+                // `WindowControl` records that it does not come back -- the
+                // reason toggle() refuses it there.
+                if row.state == .visible {
+                    menu.addItem(ActionItem(localized("Hide")) { [weak self] in
+                        WindowControl.hide(running)
+                        self?.refresh()
+                    })
+                }
             case .noWindow, .notRunning:
                 break
             }

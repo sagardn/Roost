@@ -55,9 +55,11 @@ explains this and how to open a browser download instead.
       <h3>App launcher and switcher</h3>
       Press <code>⌃Space</code>, type a few letters, press Return. Roost
       opens the app, brings it forward, or minimises it if it is already in
-      front. It also does quick sums and unit conversions, cycles your
-      favourite apps with <code>⌃Tab</code>, and snaps windows to halves
-      and quarters.
+      front. Type <code>?</code> to see everything else it does: sums and
+      unit conversions, timers, a colour picker, the sound output and
+      volume, an internet speed test, keeping the Mac awake, ejecting every
+      disk, and restarting. It also cycles your favourite apps with
+      <code>⌃Tab</code> and snaps windows to halves and quarters.
     </td>
     <td width="50%" valign="top">
       <h3>System monitor</h3>
@@ -72,7 +74,7 @@ explains this and how to open a browser download instead.
       Readings are coloured by load: teal when calm, amber when busy, red when
       something needs you. Choose from nine shapes, or combine modules into one
       item. Get notified when a reading crosses your limit, or when one app has
-      kept the CPU busy for minutes.
+      kept the CPU busy for minutes, or keeps taking more memory.
     </td>
     <td width="50%" valign="top">
       <h3>Overview and battery health</h3>
@@ -141,9 +143,10 @@ snapping and the keys inside the search panel, is in the manual.
 
 - **Nothing is collected.** No analytics, crash reporting or account.
 - **Network use is limited and listed:** a daily update check against GitHub,
-  a connection test to `1.1.1.1` while the Network popup is open, and your
-  public IP from `ifconfig.co` (on by default; turn it off in the Network
-  settings).
+  a connection test to `1.1.1.1` while the Network popup is open or the
+  "Connection comes or goes" alert is on, your public IP from `ifconfig.co`
+  (on by default; turn it off in the Network settings), and a speed test
+  against Apple's servers only when you ask for one.
 - **Clipboard history** stays on your Mac, unencrypted, in
   `~/Library/Application Support/Roost/`. Copies that apps mark as private,
   such as passwords from a password manager, are never kept.

@@ -39,7 +39,15 @@ extension AppDelegate {
             Log.debug("--reset: clearing the settings store")
             Preferences.shared.reset()
         }
+    }
 
+    /// `--disable`, applied after `parseVersion()` rather than with the rest.
+    /// A store with no version recorded -- every `--reset`, and every first
+    /// launch -- is cleared by `parseVersion()`, and written before it the
+    /// switches were cleared with it: `--reset --disable cpu` came up with
+    /// CPU on.
+    internal func applyDisabledModules() {
+        let arguments = LaunchArguments.parse(CommandLine.arguments)
         for name in arguments.disabledModules {
             guard let module = ModuleRegistry.shared.all.first(where: {
                 $0.moduleName.lowercased() == name
@@ -119,9 +127,12 @@ extension AppDelegate {
         }
 
         Log.debug("showing the setup window")
+        SetupWindow.isFirstRun = true
         let window = ensureSetupWindow()
         window.finishHandler = {
             Log.debug("setup finished; starting the app")
+            // Opened again from Settings later this launch, it is not one.
+            SetupWindow.isFirstRun = false
             completion()
         }
         window.show()
@@ -141,7 +152,15 @@ extension AppDelegate {
         }
 
         scheduleSupportChecks()
-        scheduleUpdateChecks()
+        scheduleUpdateChecks(atLaunch: true)
+        // Changed in Settings or the first-run window, it takes effect now.
+        // It was read once, at launch: Daily changed to Never went on
+        // checking every day until the next relaunch.
+        NotificationCenter.default.addObserver(forName: Preferences.didChange, object: nil,
+                                               queue: .main) { [weak self] note in
+            guard note.object as? String == "update-interval" else { return }
+            self?.scheduleUpdateChecks(atLaunch: false)
+        }
     }
 
     /// Two schedules, not one, and they ask different questions.
@@ -169,11 +188,21 @@ extension AppDelegate {
         }
     }
 
-    private func scheduleUpdateChecks() {
+    /// When the last automatic check ran, in seconds since 1970. A weekly
+    /// or monthly interval counted from each launch, with nothing kept, so
+    /// on a Mac restarted more often than that it never came round at all.
+    private static let lastCheckKey = "update_last_check"
+
+    private func checkAndRecord() {
+        Preferences.shared.set(Self.lastCheckKey, Date().timeIntervalSince1970)
+        checkForNewVersion()
+    }
+
+    private func scheduleUpdateChecks(atLaunch: Bool) {
+        updateActivity.invalidate()
         guard let interval = UpdateInterval.interval(from: Preferences.shared.string(
             "update-interval", default: UpdateInterval.defaultStored)) else { return }
-
-        updateActivity.invalidate()
+        updateActivity = NSBackgroundActivityScheduler(identifier: "com.sagar.roost.updateCheck")
         Log.debug("update interval is '\(interval.rawValue)'")
 
         // `.atStart` and `.silent` check once, now. `.never` checks never.
@@ -182,6 +211,8 @@ extension AppDelegate {
         // interval on an NSBackgroundActivityScheduler fires as often as the
         // system allows.
         guard let seconds = StartupDecisions.updateCheckInterval(interval) else {
+            // "On startup" means at launch, not at the moment it is chosen.
+            guard atLaunch else { return }
             switch interval {
             case .atStart: checkForNewVersion()
             case .silent:  checkForNewVersion(silent: true)
@@ -190,10 +221,15 @@ extension AppDelegate {
             return
         }
 
+        // Overdue already -- never checked, or last checked longer ago than
+        // the interval -- so now, and the schedule from here.
+        let last = UserDefaults.standard.double(forKey: Self.lastCheckKey)
+        if Date().timeIntervalSince1970 - last >= seconds { checkAndRecord() }
+
         updateActivity.repeats = true
         updateActivity.interval = seconds
-        updateActivity.schedule { completion in
-            self.checkForNewVersion()
+        updateActivity.schedule { [weak self] completion in
+            DispatchQueue.main.async { self?.checkAndRecord() }
             completion(.finished)
         }
     }

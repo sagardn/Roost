@@ -197,6 +197,22 @@ do {
     UserDefaults.standard.removeObject(forKey: legacy)
 }
 
+do {
+    // Found in review: the pressure level was migrated from its old word
+    // form on every read, and a number read as text fell through to the
+    // default -- Critical snapped back to Warning.
+    let pressure = RAMThreshold.pressure
+    let key = pressure.valueKey
+    let before = UserDefaults.standard.object(forKey: key)
+    pressure.level = 4
+    check("a pressure level chosen as Critical stays Critical", pressure.level == 4)
+    pressure.level = 1
+    check("and Normal stays Normal", pressure.level == 1)
+    UserDefaults.standard.set("critical", forKey: key)
+    check("the old word form is still carried over", pressure.level == 4)
+    UserDefaults.standard.set(before, forKey: key)
+}
+
 // MARK: - Watching the other way up
 
 print("\nThresholdTracker, below")

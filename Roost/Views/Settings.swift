@@ -42,6 +42,7 @@ final class SettingsWindow: NSWindow, NSWindowDelegate {
     private lazy var appSettings = GeneralPane(width: SettingsMetrics.width) {
         _ = restartRoost()
     }
+    private lazy var appSettingsPage = ScrollingPage(appSettings)
 
     init() {
         super.init(
@@ -146,7 +147,7 @@ final class SettingsWindow: NSWindow, NSWindowDelegate {
 
         case .appSettings:
             appSettings.viewWillAppear()
-            view = appSettings
+            view = appSettingsPage
 
         case .tool(.storage):
             storage.viewWillAppear()

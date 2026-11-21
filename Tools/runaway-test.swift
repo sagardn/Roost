@@ -98,7 +98,16 @@ do {
     let burner = Process()
     burner.executableURL = copy
     try! burner.run()
-    Thread.sleep(forTimeInterval: 2)
+    // Until it has used a second of CPU, up to fifteen seconds, rather than
+    // a fixed two. Run alone it gets there in two; run beside forty other
+    // suites, a binary compiled a moment ago sometimes had not started yet --
+    // ps and this both read 0.0s, and the suite failed on the machine's load
+    // rather than on the conversion it exists to check.
+    func ownTime() -> Double {
+        Double(RunawayApps.cpuByApp().first { $0.key == copy.lastPathComponent }?.cpuNanoseconds ?? 0) / 1e9
+    }
+    let waitedUntil = Date().addingTimeInterval(15)
+    repeat { Thread.sleep(forTimeInterval: 0.25) } while ownTime() < 1 && Date() < waitedUntil
 
     let ours = RunawayApps.cpuByApp().first { $0.key == copy.lastPathComponent }?.cpuNanoseconds ?? 0
     let ps = Process()

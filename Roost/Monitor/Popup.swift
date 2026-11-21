@@ -24,6 +24,13 @@ final class ReadingPopup: NSPanel {
     /// settled on.
     private var outsideClickMonitor: Any?
     private var tick: Timer?
+    /// Opened and not yet closed, which is not the same as visible. Hiding
+    /// the app orders this window out before it is told anything, so
+    /// `hide()` -- which asked `isVisible` -- found it already invisible and
+    /// skipped the rest: the timer kept running, the outside-click monitor
+    /// stayed, the module never heard it had closed, and the next `show()`
+    /// started a second timer beside the first.
+    private var isOpen = false
 
     /// Suppresses the outside-click dismissal while a menu of our own is up,
     /// which costs the panel key status without the user having clicked away.
@@ -120,7 +127,10 @@ final class ReadingPopup: NSPanel {
     /// popup hangs under it, nudged back on screen if the item sits near a
     /// corner.
     func show(below anchor: NSRect) {
+        // Put away by something other than `hide()`: finish closing first.
+        if isOpen && !isVisible { hide() }
         guard !isVisible else { return }
+        isOpen = true
 
         content.willShow()
         content.refresh()
@@ -154,7 +164,8 @@ final class ReadingPopup: NSPanel {
     }
 
     func hide() {
-        guard isVisible else { return }
+        guard isOpen else { return }
+        isOpen = false
         tick?.invalidate()
         tick = nil
         stopWatchingForOutsideClick()

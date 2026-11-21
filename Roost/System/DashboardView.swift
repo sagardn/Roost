@@ -107,13 +107,13 @@ struct DashboardView: View {
     }
 
     private var summary: String {
-        if model.watching == 0, model.states.values.contains(where: Self.isPending) {
+        if model.watching == 0, model.issues.isEmpty, model.states.values.contains(where: Self.isPending) {
             return localized("Waiting for the first readings")
         }
         // On, but with nothing in the menu bar, a module is not sampled and
         // reports nothing -- which the summary below took for "no modules
         // are on", above cards that each said they were.
-        if model.watching == 0, model.states.values.contains(where: Self.isUnsampled) {
+        if model.watching == 0, model.issues.isEmpty, model.states.values.contains(where: Self.isUnsampled) {
             return localized("Nothing that is on is in the menu bar, so nothing is being measured")
         }
         return model.summary
@@ -125,7 +125,7 @@ struct DashboardView: View {
     }
 
     private var summaryTone: StatusTone {
-        model.watching == 0 ? .neutral : StatusTone(model.level)
+        model.watching == 0 && model.issues.isEmpty ? .neutral : StatusTone(model.level)
     }
 
     private static func isPending(_ state: DashboardModel.CardState) -> Bool {
@@ -322,9 +322,16 @@ private struct IssueRow: View {
                 Button(localized("Free up space")) { open("Free up space") }
                     .controlSize(.small)
             }
-            Button(localized("Details")) { open(issue.module) }
-                .controlSize(.small)
-                .help(localized("Open the %0 page", localized(issue.module)))
+            if issue.module == Health.restartModule {
+                // Through the launcher's own action, so it asks with Cancel
+                // as the default and lets open apps save first.
+                Button(localized("Restart…")) { QuickSearch.Action.restart.perform() }
+                    .controlSize(.small)
+            } else {
+                Button(localized("Details")) { open(issue.module) }
+                    .controlSize(.small)
+                    .help(localized("Open the %0 page", localized(issue.module)))
+            }
         }
     }
 }

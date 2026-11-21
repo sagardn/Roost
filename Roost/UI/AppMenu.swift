@@ -43,6 +43,32 @@ enum AppMenu {
         pause.target = target
         menu.addItem(pause)
 
+        // Only while it is on. Keep awake is started from the search panel
+        // and nothing else on screen says it is holding the Mac awake, so
+        // the menu somebody opens to get rid of something is where it can
+        // be seen and stopped. Off, it is not a row here: this menu is not
+        // a place to put features.
+        if KeepAwake.shared.isOn {
+            // With when it ends, for a timed one: the menu is where somebody
+            // looks to find out why the Mac has not slept.
+            let title = KeepAwake.shared.endsAt.map {
+                localized("Allow Sleep Again (awake until %0)", KeepAwake.time($0))
+            } ?? localized("Allow Sleep Again")
+            let awake = NSMenuItem(title: title,
+                                   action: #selector(Target.allowSleep), keyEquivalent: "")
+            awake.target = target
+            menu.addItem(awake)
+        }
+        // Running timers, the same way: started from the search panel, seen
+        // and stopped here.
+        for timer in RoostTimers.shared.running {
+            let stop = NSMenuItem(title: localized("Stop Timer (%0)", RoostTimers.describe(timer)),
+                                  action: #selector(Target.stopTimer(_:)), keyEquivalent: "")
+            stop.target = target
+            stop.representedObject = timer.id
+            menu.addItem(stop)
+        }
+
         menu.addItem(.separator())
 
         // No confirmation. Quitting a menu bar app loses nothing -- every
@@ -88,6 +114,16 @@ enum AppMenu {
             let paused = Preferences.shared.bool("pause", default: false)
             Preferences.shared.set("pause", !paused)
             NotificationCenter.default.post(name: .pause, object: nil)
+        }
+
+        @objc func allowSleep() {
+            KeepAwake.shared.turnOff()
+            Notify.show(localized("The Mac can sleep again"), symbol: "moon.zzz")
+        }
+
+        @objc func stopTimer(_ sender: NSMenuItem) {
+            guard let id = sender.representedObject as? UUID else { return }
+            RoostTimers.shared.cancel(id)
         }
 
         @objc func quit() { NSApp.terminate(nil) }

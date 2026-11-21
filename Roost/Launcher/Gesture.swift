@@ -150,7 +150,18 @@ final class TapRecognizer {
     /// when both counts are accepted.
     private var runFingers = 0
 
+    /// Taken by both methods. `frame` runs on the multitouch framework's
+    /// own thread, about a hundred times a second while a finger is down,
+    /// and `configure` on main when a gesture setting changes -- usually
+    /// clicked with that same trackpad. Unlocked, main could replace
+    /// `acceptedFingers`, a Set, while the touch thread was reading it: a
+    /// data race on a reference-counted buffer, which can crash, and at the
+    /// least a torn tap count that fires or drops a gesture.
+    private let lock = NSLock()
+
     func configure(fingers: Set<Int>, taps: Int) {
+        lock.lock()
+        defer { lock.unlock() }
         // Filtered here as well as in Prefs, so no caller can reintroduce the
         // two-finger tap -- a lower bound rather than a fixed set, which
         // leaves five fingers possible if a trackpad ever reports one.
@@ -163,6 +174,8 @@ final class TapRecognizer {
 
     /// Feed one contact frame. True when the gesture just completed.
     func frame(fingers count: Int, at timestamp: Double) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         var fired = false
 
         if count > fingersDown {

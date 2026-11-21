@@ -253,7 +253,7 @@ final class RunawayApps {
          "/bin/", "/sbin/"].contains { path.hasPrefix($0) }
     }
 
-    private static func allPIDs() -> [pid_t] {
+    static func allPIDs() -> [pid_t] {
         let count = proc_listallpids(nil, 0)
         guard count > 0 else { return [] }
         var pids = [pid_t](repeating: 0, count: Int(count) + 32)
@@ -279,7 +279,7 @@ final class RunawayApps {
         return base
     }()
 
-    private static func executablePath(_ pid: pid_t) -> String? {
+    static func executablePath(_ pid: pid_t) -> String? {
         var buffer = [CChar](repeating: 0, count: 4 * Int(MAXPATHLEN))
         guard proc_pidpath(pid, &buffer, UInt32(buffer.count)) > 0 else { return nil }
         return String(cString: buffer)
@@ -287,10 +287,19 @@ final class RunawayApps {
 
     // MARK: The alert
 
+    /// How the Quit button quits. `terminate()` until launch sets it to
+    /// `WindowControl.quit`, which presses the app's own Quit item: the Apple
+    /// Event `terminate()` sends is gated behind the Automation permission,
+    /// which Roost never asks for, so on its own it returned true and left
+    /// the app open (measured on TextEdit -- see `WindowControl.quit`). Set
+    /// from outside so this file still compiles in its test without the
+    /// launcher.
+    static var quitApp: (NSRunningApplication) -> Void = { $0.terminate() }
+
     static let category = "roost.runaway"
     static let quitAction = "quit"
 
-    private static func registerCategory() {
+    static func registerCategory() {
         let quit = UNNotificationAction(identifier: quitAction, title: localized("Quit"),
                                         options: [.destructive])
         let category = UNNotificationCategory(identifier: Self.category, actions: [quit],
@@ -306,16 +315,26 @@ final class RunawayApps {
         let canQuit = bundle.map { url in
             NSWorkspace.shared.runningApplications.contains { $0.bundleURL == url }
         } ?? false
+        notify(id: "runaway-\(name)",
+               title: localized("%0 is working hard", name),
+               body: localized("%0% CPU for %1 minutes.", String(Int(percent.rounded())), String(minutes))
+                   + (canQuit ? "" : " " + localized("Open Activity Monitor to see why.")),
+               quitting: canQuit ? bundle : nil)
+    }
+
+    /// A notification about one app, with a Quit button when `quitting` is
+    /// that app's bundle. Shared with the memory-growth alert, so the two
+    /// cannot drift apart in how they ask permission or what Quit does.
+    static func notify(id: String, title: String, body: String, quitting bundle: URL?) {
         let content = UNMutableNotificationContent()
-        content.title = localized("%0 is working hard", name)
-        content.body = localized("%0% CPU for %1 minutes.", String(Int(percent.rounded())), String(minutes))
-            + (canQuit ? "" : " " + localized("Open Activity Monitor to see why."))
+        content.title = title
+        content.body = body
         content.sound = .default
-        if canQuit, let bundle {
+        if let bundle {
             content.categoryIdentifier = category
             content.userInfo = ["runawayBundle": bundle.path]
         }
-        let request = UNNotificationRequest(identifier: "runaway-\(name)", content: content, trigger: nil)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         let centre = UNUserNotificationCenter.current()
         if centre.delegate == nil { centre.delegate = NSApp.delegate as? UNUserNotificationCenterDelegate }
         centre.getNotificationSettings { settings in
@@ -341,7 +360,7 @@ final class RunawayApps {
         if response.actionIdentifier == quitAction,
            let path = content.userInfo["runawayBundle"] as? String {
             let url = URL(fileURLWithPath: path)
-            NSWorkspace.shared.runningApplications.filter { $0.bundleURL == url }.forEach { $0.terminate() }
+            NSWorkspace.shared.runningApplications.filter { $0.bundleURL == url }.forEach(quitApp)
         }
         return true
     }

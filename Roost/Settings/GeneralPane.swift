@@ -14,16 +14,6 @@ import UserNotifications
 /// `setRowVisibility(_:newState:)` call per row addressed by *index* — change
 /// the order of the rows and the wrong ones hide. Rows here hold their own
 /// behaviour and visibility.
-/// A stack whose coordinates start at the top.
-///
-/// An NSScrollView whose document view is not flipped puts the origin at the
-/// bottom, so it opens showing the *end* of the content. The pane looked as
-/// though it was clipping the app icon; it was scrolled past it. Four attempts
-/// at the image view went nowhere because the image was never the problem.
-private final class FlippedStack: NSStackView {
-    override var isFlipped: Bool { true }
-}
-
 final class GeneralPane: NSStackView {
 
     private let prefs = Preferences.shared
@@ -41,51 +31,28 @@ final class GeneralPane: NSStackView {
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: 0))
         self.translatesAutoresizingMaskIntoConstraints = false
 
-        let scroll = NSScrollView()
-        scroll.drawsBackground = false
-        scroll.hasVerticalScroller = true
-        scroll.translatesAutoresizingMaskIntoConstraints = false
+        // A column like every other settings page, scrolled and held to a
+        // readable width by `ScrollingPage`. It had a scroll view of its
+        // own, which nothing held to `maxContentWidth`: on a wide window each
+        // switch sat a thousand points from the setting it belonged to.
+        orientation = .vertical
+        alignment = .leading
+        spacing = RoostMetrics.sectionSpacing
+        edgeInsets = NSEdgeInsets(top: RoostMetrics.pageTop, left: RoostMetrics.pageInset,
+                                  bottom: RoostMetrics.pageInset, right: RoostMetrics.pageInset)
 
-        let column = FlippedStack()
-        column.orientation = .vertical
-        column.alignment = .leading
-        column.spacing = 14
-        // `contentTop`, not 44: the 44 was for a title bar the detail view
-        // scrolled under, but it is now placed below the toolbar already,
-        // and the two together left a 100pt band above the first card.
-        column.edgeInsets = NSEdgeInsets(top: RoostMetrics.contentTop, left: 18, bottom: 18, right: 18)
-        column.translatesAutoresizingMaskIntoConstraints = false
-
-        // Each section is pinned to the column's width. Without this a stack
-        // with .leading alignment gives every card its natural width, so the
-        // cards came out ~380pt wide inside a 1,100pt pane and labels
-        // truncated while most of the pane sat empty.
-        // Ordered by how often each is reached for: how Roost starts, then
-        // how it looks, then the things somebody comes here once for -- a
-        // permission, a backup, the welcome tour. The launcher's rows have
-        // a page of their own now, Search & switcher in the sidebar.
-        let sections = [identity(), general(), menuBar(), colours(),
-                        permissions(), backup(), help()]
-        for section in sections {
-            column.addArrangedSubview(section)
-            section.widthAnchor.constraint(equalTo: column.widthAnchor,
-                                           constant: -(column.edgeInsets.left + column.edgeInsets.right)
-                                          ).isActive = true
+        // Grouped the way System Settings groups its own: how Roost starts
+        // and what it looks like, then keeping it up to date, then the menu
+        // bar and its colours, then the things somebody comes here once
+        // for -- a permission, a backup, the manual. The version card that
+        // headed the page went: the sidebar names the app and its version,
+        // and the version belongs beside the button that checks for a newer
+        // one.
+        for section in [general(), updates(), menuBar(), colours(), permissions(), backup(), help()] {
+            addArrangedSubview(section)
+            section.widthAnchor.constraint(equalTo: widthAnchor,
+                                           constant: -RoostMetrics.pageInset * 2).isActive = true
         }
-
-        // The column *is* the document, and only its width is tied to the
-        // scroll view. Wrapping it in a container pinned on all four edges
-        // forced the content to the height of the visible area -- the stack
-        // then had less room than its subviews needed and clipped the first
-        // one, which is why the app icon arrived as the bottom third of
-        // itself. A scrolling column must be free to be taller than its
-        // clip view; that is the entire point of it.
-        scroll.documentView = column
-        column.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
-
-        self.addArrangedSubview(scroll)
-        scroll.widthAnchor.constraint(equalTo: self.widthAnchor).isActive = true
-        scroll.heightAnchor.constraint(equalTo: self.heightAnchor).isActive = true
 
         syncDependentRows()
     }
@@ -101,53 +68,34 @@ final class GeneralPane: NSStackView {
 
     // MARK: - Sections
 
-    /// Icon, name and version on one line, with the update button at its end.
-    ///
-    /// A row rather than the centred 96pt icon over three lines it replaces,
-    /// which took 200pt -- a fifth of the window -- before the first setting.
-    private func identity() -> NSView {
-        let icon = NSImageView()
-        icon.image = Self.appIcon(40)
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        icon.widthAnchor.constraint(equalToConstant: 40).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
-
-        let name = NSTextField(labelWithString: "Roost")
-        name.font = .systemFont(ofSize: 15, weight: .semibold)
-        let version = NSTextField(labelWithString: Version.current.map { "Version \($0)" } ?? "")
-        version.font = .systemFont(ofSize: 11)
-        version.textColor = .secondaryLabelColor
-        version.isSelectable = true
-
-        let words = NSStackView(views: [name, version])
-        words.orientation = .vertical
-        words.alignment = .leading
-        words.spacing = 1
-
-        let update = Controls.button("Check for update") { [weak self] in self?.checkForUpdate() }
-
-        let spacer = NSView()
-        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
-
-        let row = NSStackView(views: [icon, words, spacer, update])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 10
-        row.edgeInsets = NSEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
-        row.translatesAutoresizingMaskIntoConstraints = false
-        // On a card like every section under it, so the page reads as one
-        // set of surfaces rather than a loose header over a stack of them.
-        return Controls.section(nil, [row])
-    }
-
     private func general() -> NSView {
-        // Switches first, then the two menus, so like controls line up.
+        // Switches first, then the menu, so like controls line up.
         Controls.section(localized("General"), symbol: "gearshape.fill", tint: .systemGray, [
             Controls.row(localized("Start at login"), launchAtLoginToggle()),
             Controls.row(localized("Show in Dock"), Controls.toggle(prefs.dockIcon) { [weak self] on in
                 self?.prefs.dockIcon = on
                 NSApp.setActivationPolicy(on ? .regular : .accessory)
-            }),
+            }, detail: localized("Also gives Roost a menu bar of its own while it is in front.")),
+            Controls.row(localized("Temperature unit"), Controls.choice(
+                [(localized("System"), "system"), (localized("Celsius"), "celsius"),
+                 (localized("Fahrenheit"), "fahrenheit")],
+                selected: prefs.temperatureUnits) { [weak self] value in
+                    self?.prefs.temperatureUnits = value
+                })
+        ])
+    }
+
+    /// The version, a way to check now, and how often to check by itself.
+    ///
+    /// A section of its own. The schedule sat between Show in Dock and the
+    /// temperature unit, under a caption -- "The last choice replaces Roost
+    /// with the new version without asking" -- that only made sense to
+    /// somebody who had opened the menu and counted to its last item.
+    private func updates() -> NSView {
+        let version = Controls.label(Version.current.map { "\($0)" } ?? "—")
+        let check = Controls.button(localized("Check Now")) { [weak self] in self?.checkForUpdate() }
+        return Controls.section(localized("Updates"), symbol: "arrow.down.circle.fill", tint: .systemBlue, [
+            Controls.row(localized("Roost version"), Controls.group([version, check])),
             // Built from the schedule itself. It was a hand-written list
             // that offered "Once per hour", which the scheduler has no case
             // for -- so picking it switched update checks off without a word.
@@ -155,12 +103,7 @@ final class GeneralPane: NSStackView {
                 UpdateInterval.offered.map { ($0.title, $0.rawValue) },
                 selected: UpdateInterval.interval(from: prefs.updateInterval)?.rawValue ?? prefs.updateInterval) { [weak self] value in
                     self?.prefs.updateInterval = value
-                }, detail: localized("The last choice replaces Roost with the new version without asking.")),
-            Controls.row(localized("Temperature unit"), Controls.choice(
-                [("System", "system"), ("Celsius", "celsius"), ("Fahrenheit", "fahrenheit")],
-                selected: prefs.temperatureUnits) { [weak self] value in
-                    self?.prefs.temperatureUnits = value
-                })
+                }, detail: localized("Roost checks GitHub for a new version. Only the last choice installs one without asking."))
         ])
     }
 
@@ -258,12 +201,16 @@ final class GeneralPane: NSStackView {
             .foregroundColor: NSColor.systemRed,
             .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         ])
-        return Controls.section(localized("Backup"), symbol: "archivebox.fill", tint: .systemIndigo, [
-            Controls.row(localized("Your settings"), Controls.group([
+        // Reset on a row of its own, under what it does. Beside Export and
+        // Import it was one more button of the same size, and the one that
+        // cannot be undone deserves a sentence before it is pressed.
+        return Controls.section(localized("Backup and reset"), symbol: "archivebox.fill", tint: .systemIndigo, [
+            Controls.row(localized("Settings file"), Controls.group([
                 Controls.button("Export…") { [weak self] in self?.export() },
-                Controls.button("Import…") { [weak self] in self?.importSettings() },
-                reset
-            ])),
+                Controls.button("Import…") { [weak self] in self?.importSettings() }
+            ]), detail: localized("Save every setting to a file, or bring them back from one.")),
+            Controls.row(localized("Reset all settings"), reset,
+                         detail: localized("Puts every setting back to how Roost came, then restarts it. Clipboard history is kept.")),
             // Next to Export because it is the same kind of thing -- text
             // about this install, for somewhere else. It carries no serial
             // number, network name or address; see Diagnostics.
@@ -297,27 +244,6 @@ final class GeneralPane: NSStackView {
     }
 
     // MARK: - Behaviour
-
-    /// The app icon drawn into a bitmap of exactly `side` points.
-    ///
-    /// Neither `imageScaling` nor setting the image's `size` fixed this: the
-    /// asset catalogue hands back a 1024pt image whose representations are
-    /// drawn at their own size, and every scaling mode still produced the
-    /// bottom third of the icon in a 96pt box. Rasterising it once at the size
-    /// it is displayed at removes the question.
-    private static func appIcon(_ side: CGFloat) -> NSImage? {
-        guard let source = NSImage(named: NSImage.Name("AppIcon")) else { return nil }
-        let size = NSSize(width: side, height: side)
-        return NSImage(size: size, flipped: false) { rect in
-            source.draw(in: rect,
-                        from: .zero,
-                        operation: .sourceOver,
-                        fraction: 1,
-                        respectFlipped: true,
-                        hints: [.interpolation: NSImageInterpolation.high])
-            return true
-        }
-    }
 
     /// The button goes once there is nothing left to allow.
     private func syncAccessibility() {

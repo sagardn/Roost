@@ -426,5 +426,26 @@ watcher.setPinned(firstID, true)
 watcher.clear(keepingPinned: true)
 check("clearing unpinned keeps the pin", watcher.history.entries.map(\.id) == [firstID])
 
+// Found in review: a quit before the history had loaded saved the empty
+// history over the real one -- after a Reset, quitting from the first-run
+// window wiped it, images and all.
+let kept = root.appendingPathComponent("kept")
+let saved = ClipboardStore(directory: kept, persistent: true)
+_ = saved.open()
+try! saved.save([entry("still here", at: now)])
+saved.close()
+let early = ClipboardService(pasteboard: FakePasteboard(),
+                             store: ClipboardStore(directory: kept, persistent: true),
+                             options: { on }, frontmost: { (nil, nil) })
+early.background = { _ in }     // the load never gets its turn
+early.foreground = { $0() }
+early.accessDenied = { false }
+early.start()
+early.apply()
+check("a settings change before the load does not start capturing", !early.isWatching)
+early.stop()
+check("quitting before the history loaded leaves it on disk",
+      ClipboardStore(directory: kept, persistent: true).open().map(\.text) == ["still here"])
+
 print(failures == 0 ? "\nall passed" : "\n\(failures) failed")
 exit(failures == 0 ? 0 : 1)

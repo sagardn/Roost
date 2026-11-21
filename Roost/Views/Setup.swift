@@ -25,6 +25,12 @@ private let footerHeight: CGFloat = 60
 
 final class SetupWindow: NSWindow, NSWindowDelegate {
 
+    /// Whether this launch is the Mac's first, set by the startup path that
+    /// decides to show this window. Read by the preset page, which is built
+    /// only when somebody reaches it -- by which time `setupProcess` has been
+    /// written, so the page cannot tell for itself.
+    static var isFirstRun = false
+
     /// Called when the window closes, however it closes — the Finish button
     /// and the red dot both mean "I am done with this".
     var finishHandler: () -> Void = {}
@@ -436,7 +442,13 @@ private final class PresetPage: NSView {
             caption.widthAnchor.constraint(lessThanOrEqualTo: column.widthAnchor)
         ])
 
-        select(SetupPreset.defaultIndex, apply: false)
+        // Applied on a first run, shown and nothing more on a second. The
+        // page drew Default as chosen and wrote nothing, so a new Mac got the
+        // modules' own defaults instead -- Sensors among them, which the
+        // Default preview does not show -- unless somebody clicked another
+        // preset and back. Opened again later from Settings, the window must
+        // not rewrite a menu bar somebody has since arranged.
+        select(SetupPreset.defaultIndex, apply: SetupWindow.isFirstRun)
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -682,9 +694,13 @@ private final class UpdatesPage: NSView {
 
     private static func caption(for interval: UpdateInterval) -> String {
         switch interval {
-        case .silent:       return localized("Do everything silently in the background (recommended)")
+        // Daily is the one recommended, as it is the default. Silent was:
+        // it installs without asking, and releases are signed ad hoc, so
+        // each silent update also took away the Accessibility grant -- window
+        // control stopped working, with nothing on screen to say why.
+        case .silent:       return localized("Install new versions silently in the background")
         case .atStart:      return localized("Check for a new version on startup")
-        case .oncePerDay:   return localized("Check for a new version every day (once a day)")
+        case .oncePerDay:   return localized("Check for a new version every day (recommended)")
         case .oncePerWeek:  return localized("Check for a new version every week (once a week)")
         case .oncePerMonth: return localized("Check for a new version every month (once a month)")
         case .never:        return localized("Never check for updates (not recommended)")
